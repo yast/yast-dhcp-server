@@ -76,9 +76,9 @@ sub AnalyzeTSIGKeyFile {
     my $contents = SCR::Read (".target.string", $filename);
     if ($contents =~ /.*key[ \t]+([^ \t}{;]+).* {/)
     {
-        return ($1);
+        return [$1];
     }
-    return ();
+    return [];
 }
 
 BEGIN{$TYPEINFO{AddTSIGKey}=["function", "boolean", "string"];}
@@ -144,21 +144,24 @@ sub DeleteTSIGKey {
 
 BEGIN{$TYPEINFO{ListNewKeyIncludes}=["function", ["list","any"]];}
 sub ListNewKeyIncludes {
-    return map {
+    my @ret = map {
 	$_->{"filename"};
     } @new_tsig_keys;
+    return \@ret;
 }
 
 BEGIN{$TYPEINFO{ListDeletedKeyIncludes}=["function",["list","any"]];}
 sub ListDeletedKeyIncludes {
-    return map {
+    my @ret = map {
 	$_->{"filename"};
     } @deleted_tsig_keys;
+    return \@ret;
 }
 
 BEGIN{$TYPEINFO{StoreTSIGKeys}=["function","void",["list",["map","string","string"]]];}
 sub StoreTSIGKeys {
     @tsig_keys = @{$_[0]};
+    return;
 }
 
 # EOF
