@@ -180,7 +180,7 @@ y2error ("not saving $filename");
 	$ret;
     } @directives;
 
-    my $includes = SCR::Read (".sysconfig.dhcpd.DHCPD_CONF_INCLUDE_FILES");
+    my $includes = SCR::Read (".sysconfig.dhcpd.DHCPD_CONF_INCLUDE_FILES")|| "";
     my @includes = split (/ /, $includes);
     @includes = grep {
 	my $current_grepped = $_;
@@ -641,6 +641,11 @@ sub SetModified {
     $modified = 1;
 }
 
+BEGIN{$TYPEINFO{GetModified} = ["function", "boolean"];}
+sub GetModified {
+    return Boolean ($modified);
+}
+
 BEGIN { $TYPEINFO{SetWriteOnly} = ["function", "void", "boolean" ]; }
 sub SetWriteOnly {
     $write_only = $_[0];
@@ -729,11 +734,11 @@ sub Read {
 
     $start_service = Service::Enabled ("dhcpd");
     y2milestone ("Service start: $start_service");
-    $chroot = (SCR::Read (".sysconfig.dhcpd.DHCPD_RUN_CHROOTED") ne "no")
+    $chroot = ((SCR::Read (".sysconfig.dhcpd.DHCPD_RUN_CHROOTED")||"") ne "no")
 	? 1
 	: 0;
     y2milestone ("Chroot: $chroot");
-    my $ifaces_list = SCR::Read (".sysconfig.dhcpd.DHCPD_INTERFACE");
+    my $ifaces_list = SCR::Read (".sysconfig.dhcpd.DHCPD_INTERFACE") || "";
     @allowed_interfaces = split (/ /, $ifaces_list);
 
     my $ag_settings_ref = SCR::Read (".etc.dhcpd_conf");

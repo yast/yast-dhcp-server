@@ -16,7 +16,7 @@ sub get_lines {
     my $comment_before = "";
     my $comment_after = "";
     @lines = ();
-    open (INFILE, "$filename");
+    open (INFILE, "$filename") || return;
     my $in_quotes = 0;
     my $line = "";
     my $finished = 0;

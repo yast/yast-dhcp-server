@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Mar 10 08:44:13 CET 2004 - jsrain@suse.de
+
+- fixed crash if configuration fiels are missing (#35515)
+- not asking before aborting if nothing was changed (#35516)
+- 2.9.7
+
+-------------------------------------------------------------------
 Tue Mar  9 09:09:59 CET 2004 - jsrain@suse.de
 
 - Require -> Package

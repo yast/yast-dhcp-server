@@ -69,8 +69,9 @@ global define symbol MainDialog () ``{
 
     Wizard::SetContentsButtons (caption, contents, help,
 	Label::BackButton (), Label::FinishButton ());
+    Wizard::HideBackButton();
 
-    return CWM::Run (w, functions);
+    return CWM::Run (w, $[`abort : confirmAbortIfChanged]);
 }
 
 /**
@@ -325,7 +326,7 @@ global define symbol SectionTypeChoose () ``{
     string help = getSelectDeclarationTypeHelp (possible);
 
     Wizard::SetContentsButtons (caption, contents, help,
-	Label::BackButton (), Label::OKButton ());
+	Label::BackButton (), Label::NextButton ());
 
     symbol ret = nil;
     while (ret == nil)
@@ -333,6 +334,8 @@ global define symbol SectionTypeChoose () ``{
 	ret = (symbol)UI::UserInput ();
 	if (ret == `cancel)
 	    ret = `abort;
+	if (ret == `abort && ! confirmAbort ())
+	    ret = nil;
 	if (ret != `next && ret != `abort && ret != `back)
 	    ret = nil;
     }

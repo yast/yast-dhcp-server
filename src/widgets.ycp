@@ -147,9 +147,9 @@ global define void configTreeInit (string id);
 	return ret;
     }
 
+
     /**
-      * Check whether settings were changed and if yes, ask for exit
-      * without saving
+      * Ask for exit without saving
       * @return event that should be handled, nil if user canceled the exit
       */
     global define boolean confirmAbort () ``{
@@ -157,6 +157,17 @@ global define void configTreeInit (string id);
 // Yes-No popup
 _("Really leave the DHCP server configuration without saving?
 All changes will be lost."));
+    }
+
+    /**
+      * Check whether settings were changed and if yes, ask for exit
+      * without saving
+      * @return event that should be handled, nil if user canceled the exit
+      */
+    global define boolean confirmAbortIfChanged () ``{
+	if (! DhcpServer::GetModified ())
+	    return true;
+	return confirmAbort ();
     }
 
 /**
