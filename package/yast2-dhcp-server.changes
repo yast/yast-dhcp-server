@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Tue Oct 19 14:02:02 CEST 2004 - jsrain@suse.cz
+
+- use unified messages from Label.ycp and Confirm.ycp
+
+-------------------------------------------------------------------
 Thu Oct 14 15:17:19 CEST 2004 - jsrain@suse.cz
 
 - set "ntp-servers" instead of "time-servers" in dhcpd.conf

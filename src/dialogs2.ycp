@@ -11,6 +11,7 @@
 
 textdomain "dhcp-server";
 
+import "Confirm";
 import "Label";
 import "Wizard";
 import "DhcpServer";
@@ -1007,7 +1008,7 @@ Use Change instead."), name ) );
 	    return nil;
 	}
 	// yes-no popup
-	if ( ! Popup::YesNo (sformat (_("Really delete '%1'?"), id ) ) )
+	if ( ! Confirm::Delete (id))
 	{
 	    return nil;
 	}
