@@ -127,6 +127,10 @@ sub parse_section {
 		    $pool_counter++;
 		}
 	    }
+	    else
+	    {
+		($type, $key) = split (/ /, $key, 3);
+	    }
 	}
 	elsif ($line =~ /^[ \t]*option[ \t]+([^ \t]+)[ \t]+([^ \t].*);[ \t]*$/)
 	{
@@ -136,7 +140,7 @@ sub parse_section {
 	}
 	elsif ($line =~ /^[ \t]*([^ \t]+)[ \t]+([^ \t].*);[ \t]*$/)
 	{
-	    $type = "daemon_option";
+	    $type = "directive";
 	    $key = $1;
 	    $value = $2;
 	}
@@ -180,7 +184,7 @@ sub store_section {
 	my $key = $record{"key"};
 	my $value = $record{"value"};
 	print OUTFILE "$indent$cb\n" if ($cb ne "");
-	if ($type eq "daemon_option")
+	if ($type eq "directive")
 	{
 	    print OUTFILE "$indent$key $value;";
 	}
@@ -199,6 +203,10 @@ sub store_section {
 		}
 		$key = "group" if ($type eq "group");
 		$key = "pool" if ($type eq "pool");
+	    }
+	    else
+	    {
+		$key = "$type $key";
 	    }
 	    print OUTFILE "$indent$key {";
 	    print OUTFILE " $ca" if ($ca ne "");
