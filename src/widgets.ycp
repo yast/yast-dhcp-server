@@ -1126,6 +1126,7 @@ global define void InitWidgets () ``{
 	"tsig_keys" : CWMTsigKeys::CreateWidget ($[
 	    "get_keys_info" : DhcpServer::GetKeysInfo,
 	    "set_keys_info" : DhcpServer::SetKeysInfo,
+	    "list_used_keys" : DhcpServer::ListUsedKeys,
 	]),
 	"config_summary" : $[
 	    "widget" : `custom,
