@@ -93,6 +93,9 @@ else if (func == "Reset") {
     DhcpServer::Import($[]);
     ret = $[];
 }
+else if (func == "GetModified") {
+    ret = DhcpServer::modified;
+}
 /* Change configuration (run AutoSequence) */
 else if (func == "Change") {
     ret = DhcpServerUI::DhcpAutoSequence();
