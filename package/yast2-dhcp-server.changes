@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Apr  2 16:05:40 CEST 2004 - jsrain@suse.de
+
+- changed license to GPL
+- 2.9.15
+
+-------------------------------------------------------------------
 Fri Apr  2 09:14:10 CEST 2004 - jsrain@suse.de
 
 - added missing 'range' directive to directives possible to be
