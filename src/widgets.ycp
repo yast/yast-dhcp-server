@@ -139,6 +139,7 @@ global define symbol chrootHandle (string id, map event);
 		],
 		"option_delete": commonTableEntryDelete,
 		"add_items":  add_values,
+		"add_items_keep_order" : true,
 	    ]
 	);
 	return ret;
@@ -857,13 +858,23 @@ define map getTsigKeysWidget () ``{
 }
 
 
+define list<string> optsort (list<string> options) ``{
+    options = toset (options);
+    options = sort (options);
+    list<string> o1
+	= filter (string o, options, ``(regexpmatch (o, "^option .+$")));
+    list<string> o2
+	= filter (string o, options, ``(! regexpmatch (o, "^option .+$")));
+    return (list<string>)merge (o2, o1);
+}
+
 /**
   * Initialize widgets
   * Create description map and copy it into appropriate variable of the
   *  DhcpServer module
   */
 global define void InitWidgets () ``{
-    list options = [
+    list<string> options = [
 "option subnet-mask",
 "option broadcast-address",
 "option routers",
@@ -897,45 +908,67 @@ global define void InitWidgets () ``{
 "option netbios-scope",
     ];
 
-    list common_commands = [
+    list<string> common_commands = [
 "max-lease-time",
 "default-lease-time",
 "filename",
 "next-server",
     ];
 
-    list global_commands = [
+    list<string> global_commands = [
 "authoritative",
 "ddns-update-style none",
 "ddns-updates off",
 "log-facility",
     ];
 
-    list subnet_commands = [
+    list<string> subnet_commands = [
 "range",
     ];
 
-    list host_commands = [
+    list<string> host_commands = [
 "hardware",
 "fixed-address",
     ];
 
-    list class_commands = [
+    list<string> class_commands = [
 "match",
     ];
 
-    common_commands = merge (common_commands, options);
-    global_commands = toset (merge (global_commands, common_commands));
-    subnet_commands = toset (merge (subnet_commands, common_commands));
-    host_commands = toset (merge (host_commands, common_commands));
+    list<string> shared_net_commands = [
+
+    ];
+
+    list<string> pool_commands = [
+	"range",
+    ];
+
+    list<string> group_commands = [
+
+    ];
+
+    common_commands = optsort ((list<string>)
+	merge (common_commands, options));
+    global_commands = optsort ((list<string>)
+	merge (global_commands, common_commands));
+    subnet_commands = optsort ((list<string>)
+	merge (subnet_commands, common_commands));
+    host_commands = optsort ((list<string>)
+	merge (host_commands, common_commands));
+    shared_net_commands = optsort((list<string>)
+	merge (shared_net_commands, common_commands));
+    pool_commands = optsort ((list<string>)
+	merge (pool_commands, common_commands));
+    group_commands = optsort ((list<string>)
+	merge (group_commands, common_commands));
 
     map w = $[
 	"global_table" : getOptionsTableWidget (global_commands),
 	"host_table" : getOptionsTableWidget (host_commands),
 	"subnet_table" : getOptionsTableWidget (subnet_commands),
-	"shared-network_table" : getOptionsTableWidget (common_commands),
-	"pool_table" : getOptionsTableWidget (common_commands),
-	"group_table" : getOptionsTableWidget (common_commands),
+	"shared-network_table" : getOptionsTableWidget (shared_net_commands),
+	"pool_table" : getOptionsTableWidget (pool_commands),
+	"group_table" : getOptionsTableWidget (group_commands),
 	"class_table" : getOptionsTableWidget (class_commands),
 	"dyn_dns_button" : $[
 	    "init" : DynDnsButtonInit,

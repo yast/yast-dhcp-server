@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Fri Apr  2 09:14:10 CEST 2004 - jsrain@suse.de
+
+- added missing 'range' directive to directives possible to be
+  added to address pool (#37846)
+- sorting first directives and then options in the list of options
+  to add to a declaration (#37846)
+
+-------------------------------------------------------------------
 Wed Mar 31 10:54:40 CEST 2004 - jsrain@suse.de
 
 - again fixed behavior of some directives (weren't read and saved
