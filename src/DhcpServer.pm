@@ -1803,7 +1803,7 @@ sub IsConfigurationSimple {
 		my $size = scalar (grep {
 		    $_ eq $opt_ref->{"key"}
 		} ("domain-name", "domain-name-servers", "routers",
-		    "time-servers", "lpr-servers", "netbios-name-servers"));
+		    "ntp-servers", "lpr-servers", "netbios-name-servers"));
 		if ($size == 0)
 		{
 		    y2milestone ("Non-trivial option of root found");

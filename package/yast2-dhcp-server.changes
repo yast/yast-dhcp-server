@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Oct 14 15:17:19 CEST 2004 - jsrain@suse.cz
+
+- set "ntp-servers" instead of "time-servers" in dhcpd.conf
+  (#47029)
+
+-------------------------------------------------------------------
 Mon Sep 27 14:37:01 CEST 2004 - jsrain@suse.cz
 
 - fixed error reported after configuration was saved even it it was
