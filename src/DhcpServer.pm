@@ -9,6 +9,9 @@ use strict;
 
 use ycp;
 use YaST::YCP qw(Boolean);
+
+#YaST::YCP::debug (1);
+
 use Data::Dumper;
 use Time::localtime;
 
@@ -62,13 +65,16 @@ YaST::YCP::Import ("Service");
 YaST::YCP::Import ("Progress");
 YaST::YCP::Import ("Report");
 YaST::YCP::Import ("SuSEFirewall");
-YaST::YCP::Import ("DhcpTsigKeys");
+#YaST::YCP::Import ("DhcpTsigKeys");
+use DhcpTsigKeys;
 
 
 ##-------------------------------------------------------------------------
 ##----------------- various routines --------------------------------------
 
 sub AdaptFirewall {
+    my $self = shift;
+
     if (! $adapt_firewall)
     {
 	return 1;
@@ -118,7 +124,9 @@ sub AdaptFirewall {
 }
 
 sub InitTSIGKeys {
-    my @directives = @{GetEntryDirectives ("", "") || []};
+    my $self = shift;
+
+    my @directives = @{$self->GetEntryDirectives ("", "") || []};
     my @read_keys = ();
     foreach my $dir_ref (@directives) {
 	my %dir = %{$dir_ref};
@@ -126,7 +134,7 @@ sub InitTSIGKeys {
 	{
 	    my $filename = $dir{"value"};
 	    $filename =~ s/^[\" \t]*(.*[^\" \t])[\" \t]*$/$1/;
-	    my @new_keys = @{DhcpTsigKeys::AnalyzeTSIGKeyFile ($filename)};
+	    my @new_keys = @{DhcpTsigKeys->AnalyzeTSIGKeyFile ($filename)};
 	    foreach my $new_key (@new_keys) {
 		y2milestone ("Having key $new_key, file $filename");
 		push @read_keys, {
@@ -136,22 +144,24 @@ sub InitTSIGKeys {
 	    }
 	}
     }
-    DhcpTsigKeys::StoreTSIGKeys (\@read_keys);
+    DhcpTsigKeys->StoreTSIGKeys (\@read_keys);
     return;
 }
 
 sub AdaptDDNS {
+    my $self = shift;
+
     # FIXME temporary hack because of testsuite
     if (Mode::test ())
     {
 	return 1;
     }
-    my @directives = @{GetEntryDirectives ("", "") || []};
+    my @directives = @{$self->GetEntryDirectives ("", "") || []};
     my %includes = ();
 
-    my @current_keys = @{DhcpTsigKeys::ListTSIGKeys () || []};
-    my @deleted_keys = @{DhcpTsigKeys::ListDeletedKeyIncludes () || []};
-    my @new_keys = @{DhcpTsigKeys::ListNewKeyIncludes () || []};
+    my @current_keys = @{DhcpTsigKeys->ListTSIGKeys () || []};
+    my @deleted_keys = @{DhcpTsigKeys->ListDeletedKeyIncludes () || []};
+    my @new_keys = @{DhcpTsigKeys->ListNewKeyIncludes () || []};
 
     @directives = grep {
 	my %dir = %{$_};
@@ -165,7 +175,7 @@ sub AdaptDDNS {
 	    } @deleted_keys;
 	    if (@found)
 	    {
-y2error ("not saving $filename");
+		y2debug ("not saving $filename");
 		$ret = 0;
 	    }
 	}
@@ -216,14 +226,15 @@ y2error ("not saving $filename");
 	};
     }
 
-    SetEntryDirectives ("", "", \@directives);
+    $self->SetEntryDirectives ("", "", \@directives);
 
     return 1;
 }
 
 sub PreprocessSettings {
-    my $sect_ref = $_[0];
-    my $header_ref = $_[1];
+    my $self = shift;
+    my $sect_ref = shift;
+    my $header_ref = shift;
 
     my $parent_id = $header_ref->{"parent_id"} || "";
     my $parent_type = $header_ref->{"parent_type"} || "";
@@ -259,7 +270,7 @@ sub PreprocessSettings {
 		"comment_before" => $r_cb,
 		"comment_after" => $r_ca,
 	    );
-	    my $new_sect_ref = PreprocessSettings ($r_value, \%parent_act_rec);
+	    my $new_sect_ref = $self->PreprocessSettings ($r_value, \%parent_act_rec);
 	    push @children, {
 		"type" => $r_type,
 		"id" => $r_key,
@@ -282,10 +293,11 @@ sub PreprocessSettings {
 }
 
 sub PrepareToSave {
-    my $type = $_[0];
-    my $id = $_[1];
+    my $self = shift;
+    my $type = shift;
+    my $id = shift;
 
-    my $record_index = FindEntry ($type, $id);
+    my $record_index = $self->FindEntry ($type, $id);
 
     return [] if ($record_index == -1);
     my %record = %{$settings[$record_index]};
@@ -305,7 +317,7 @@ sub PrepareToSave {
     foreach my $child_ref (@{$record{"children"}}) {
 	my $c_type = $child_ref->{"type"};
 	my $c_id = $child_ref->{"id"};
-	my $processed_child_ref = PrepareToSave ($c_type, $c_id);
+	my $processed_child_ref = $self->PrepareToSave ($c_type, $c_id);
 	push @to_save, $processed_child_ref;
     }
 
@@ -325,8 +337,9 @@ sub PrepareToSave {
 
 
 sub FindEntry {
-    my $type = $_[0];
-    my $id = $_[1];
+    my $self = shift;
+    my $type = shift;
+    my $id = shift;
 
     my $index = -1;
     my $found = -1;
@@ -342,12 +355,13 @@ sub FindEntry {
 
 BEGIN {$TYPEINFO{CreateEntry} = [ "function", "boolean", "string", "string", "string", "string" ];}
 sub CreateEntry {
-    my $type = $_[0];
-    my $id = $_[1];
-    my $parent_type = $_[2];
-    my $parent_id = $_[3];
+    my $self = shift;
+    my $type = shift;
+    my $id = shift;
+    my $parent_type = shift;
+    my $parent_id = shift;
 
-    my $parent_index = FindEntry ($parent_type, $parent_id);
+    my $parent_index = $self->FindEntry ($parent_type, $parent_id);
     if ($parent_index == -1)
     {
 	y2error ("CreateEntry: Specified non-existing parent entry");
@@ -383,15 +397,16 @@ sub CreateEntry {
 
 BEGIN {$TYPEINFO{DeleteEntry} = [ "function", "boolean", "string", "string" ];}
 sub DeleteEntry {
-    my $type = $_[0];
-    my $id = $_[1];
+    my $self = shift;
+    my $type = shift;
+    my $id = shift;
 
     if ($type eq "" || $id eq "")
     {
 	y2error ("DeleteEntry: Cannot delete root entry");
 	return 0;
     }
-    my $index = FindEntry ($type, $id);
+    my $index = $self->FindEntry ($type, $id);
     if ($index == -1)
     {
 	y2error ("DeleteEntry: Specified non-existint entry");
@@ -403,9 +418,9 @@ sub DeleteEntry {
     foreach my $child_ref (@children) {
 	my $c_type = $child_ref->{"type"};
 	my $c_id = $child_ref->{"id"};
-	DeleteEntry ($c_type, $c_id);
+	$self->DeleteEntry ($c_type, $c_id);
     }
-    my $parent_index = FindEntry ($parent_type, $parent_id);
+    my $parent_index = $self->FindEntry ($parent_type, $parent_id);
     if ($parent_index == -1)
     {
 	y2error ("DeleteEntry: Parent doesn't exist - internal structure error");
@@ -430,15 +445,16 @@ sub DeleteEntry {
 
 BEGIN{$TYPEINFO{GetEntryParent} = [ "function", ["map", "string", "string"], "string", "string"];}
 sub GetEntryParent {
-    my $type = $_[0];
-    my $id = $_[1];
+    my $self = shift;
+    my $type = shift;
+    my $id = shift;
 
     if ($type eq "" || $id eq "")
     {
 	y2error ("GetEntryParent: Cannot get parent of root entry");
 	return undef;
     }
-    my $index = FindEntry ($type, $id);
+    my $index = $self->FindEntry ($type, $id);
     if ($index == -1)
     {
 	y2error ("GetEntryParent: Specified non-existint entry");
@@ -453,23 +469,24 @@ sub GetEntryParent {
 
 BEGIN{$TYPEINFO{SetEntryParent} = [ "function", "boolean", "string", "string", "string", "string" ];}
 sub SetEntryParent {
-    my $type = $_[0];
-    my $id = $_[1];
-    my $new_parent_type = $_[2];
-    my $new_parent_id = $_[3];
+    my $self = shift;
+    my $type = shift;
+    my $id = shift;
+    my $new_parent_type = shift;
+    my $new_parent_id = shift;
 
     if ($type eq "" || $id eq "")
     {
 	y2error ("SetEntryParent: Cannot set parent of root entry");
 	return 0;
     }
-    my $index = FindEntry ($type, $id);
+    my $index = $self->FindEntry ($type, $id);
     if ($index == -1)
     {
 	y2error ("SetEntryParent: Specified non-existint entry");
 	return 0;
     }
-    my $new_parent_index = FindEntry ($new_parent_type, $new_parent_id);
+    my $new_parent_index = $self->FindEntry ($new_parent_type, $new_parent_id);
     if ($new_parent_index == -1)
     {
 	y2error ("SetEntryParent: Specified non-existint new parent entry");
@@ -477,7 +494,7 @@ sub SetEntryParent {
     }
     my $old_parent_type = $settings[$index]->{"parent_type"};
     my $old_parent_id = $settings[$index]->{"parent_id"};
-    my $old_parent_index = FindEntry ($old_parent_type, $old_parent_id);
+    my $old_parent_index = $self->FindEntry ($old_parent_type, $old_parent_id);
     if ($old_parent_index == -1)
     {
 	y2error ("SetEntryParent: Current parent entry not found.");
@@ -503,10 +520,11 @@ sub SetEntryParent {
 
 BEGIN{$TYPEINFO{GetChildrenOfEntry} = ["function", ["list", ["map", "string", "string"]], "string", "string"];}
 sub GetChildrenOfEntry {
-    my $type = $_[0];
-    my $id = $_[1];
+    my $self = shift;
+    my $type = shift;
+    my $id = shift;
 
-    my $index = FindEntry ($type, $id);
+    my $index = $self->FindEntry ($type, $id);
     if ($index == -1)
     {
 	y2error ("GetChildrenOfEntry: Specified non-existint entry");
@@ -517,10 +535,11 @@ sub GetChildrenOfEntry {
 
 BEGIN{$TYPEINFO{GetEntryOptions} = ["function", ["list", ["map", "string", "string"]], "string", "string"];}
 sub GetEntryOptions {
-    my $type = $_[0];
-    my $id = $_[1];
+    my $self = shift;
+    my $type = shift;
+    my $id = shift;
 
-    my $index = FindEntry ($type, $id);
+    my $index = $self->FindEntry ($type, $id);
     if ($index == -1)
     {
 	y2error ("GetEntryoptions: Specified non-existint entry");
@@ -531,11 +550,14 @@ sub GetEntryOptions {
 
 BEGIN{$TYPEINFO{SetEntryOptions} = ["function", "boolean", "string", "string", ["list", ["map", "string", "string"]]];}
 sub SetEntryOptions {
-    my $type = $_[0];
-    my $id = $_[1];
-    my @records = @{$_[2]};
+    my $self = shift;
+    my $type = shift;
+    my $id = shift;
+    my $records_ref = shift;
 
-    my $index = FindEntry ($type, $id);
+    my @records = @{$records_ref};
+
+    my $index = $self->FindEntry ($type, $id);
     if ($index == -1)
     {
 	y2error ("SetEntryOptions: Specified non-existint entry");
@@ -547,10 +569,11 @@ sub SetEntryOptions {
 
 BEGIN{$TYPEINFO{GetEntryDirectives} = ["function", ["list", ["map", "string", "string"]], "string", "string"];}
 sub GetEntryDirectives {
-    my $type = $_[0];
-    my $id = $_[1];
+    my $self = shift;
+    my $type = shift;
+    my $id = shift;
 
-    my $index = FindEntry ($type, $id);
+    my $index = $self->FindEntry ($type, $id);
     if ($index == -1)
     {
 	y2error ("GetEntryDirectives: Specified non-existint entry");
@@ -561,11 +584,13 @@ sub GetEntryDirectives {
 
 BEGIN{$TYPEINFO{SetEntryDirectives} = ["function", "boolean", "string", "string", ["list", ["map", "string", "string"]]];}
 sub SetEntryDirectives {
-    my $type = $_[0];
-    my $id = $_[1];
-    my @records = @{$_[2]};
+    my $self = shift;
+    my $type = shift;
+    my $id = shift;
+    my $records_ref = shift;
+    my @records = @{$records_ref};
 
-    my $index = FindEntry ($type, $id);
+    my $index = $self->FindEntry ($type, $id);
     if ($index == -1)
     {
 	y2error ("SetEntryDirectives: Specified non-existint entry");
@@ -577,21 +602,23 @@ sub SetEntryDirectives {
 
 BEGIN{$TYPEINFO{ExistsEntry} = ["function", "boolean", "string", "string"];}
 sub ExistsEntry {
-    my $type = $_[0];
-    my $id = $_[1];
+    my $self = shift;
+    my $type = shift;
+    my $id = shift;
 
-    my $index = FindEntry ($type, $id);
+    my $index = $self->FindEntry ($type, $id);
     return $index != -1;
 }
 
 BEGIN{$TYPEINFO{ChangeEntry} = ["function", "boolean", "string", "string", "string", "string"];}
 sub ChangeEntry {
-    my $old_type = $_[0];
-    my $old_id = $_[1];
-    my $new_type = $_[2];
-    my $new_id = $_[3];
+    my $self = shift;
+    my $old_type = shift;
+    my $old_id = shift;
+    my $new_type = shift;
+    my $new_id = shift;
 
-    my $index = FindEntry ($old_type, $old_id);
+    my $index = $self->FindEntry ($old_type, $old_id);
     if ($index == -1)
     {
 	y2error ("ChangeEntry: Specified non-existint entry");
@@ -632,62 +659,84 @@ sub ChangeEntry {
 
 BEGIN { $TYPEINFO{GetStartService} = [ "function", "boolean" ];}
 sub GetStartService {
+    my $self = shift;
+
     return Boolean($start_service);
 }
 
 BEGIN{$TYPEINFO{SetStartService} = ["function", "void", "boolean"];}
 sub SetStartService {
-    $start_service = $_[0];
+    my $self = shift;
+    $start_service = shift;
 }
 
 BEGIN{$TYPEINFO{SetModified} = ["function", "void"];}
 sub SetModified {
+    my $self = shift;
+
     $modified = 1;
 }
 
 BEGIN{$TYPEINFO{GetModified} = ["function", "boolean"];}
 sub GetModified {
+    my $self = shift;
+
     return Boolean ($modified);
 }
 
 BEGIN { $TYPEINFO{SetWriteOnly} = ["function", "void", "boolean" ]; }
 sub SetWriteOnly {
-    $write_only = $_[0];
+    my $self = shift;
+
+    $write_only = shift;
 }
 
 BEGIN{$TYPEINFO{GetAllowedInterfaces} = ["function", ["list", "string"] ];}
 sub GetAllowedInterfaces {
+    my $self = shift;
+
     return \@allowed_interfaces;
 }
 
 BEGIN{$TYPEINFO{SetAllowedInterfaces} = ["function", "void", ["list", "string"]];}
 sub SetAllowedInterfaces {
-    @allowed_interfaces = @{$_[0]};
+    my $self = shift;
+    my $allowed_interfaces_ref = shift;
+
+    @allowed_interfaces = @{$allowed_interfaces_ref};
 }
 
 BEGIN{$TYPEINFO{GetAdaptFirewall} = ["function", "boolean"];}
 sub GetAdaptFirewall {
+    my $self = shift;
+
     return Boolean($adapt_firewall);
 }
 
 BEGIN{$TYPEINFO{SetAdaptFirewall} = ["function", "void", "boolean"];}
 sub SetAdaptFirewall {
-    $adapt_firewall = $_[0];
+    my $self = shift;
+    $adapt_firewall = shift;
 }
 
 BEGIN{$TYPEINFO{GetAdaptDdnsSettings} = ["function", "boolean"];}
 sub GetAdaptDdnsSettings {
+    my $self = shift;
+
     return Boolean($adapt_ddns_settings);
 }
 BEGIN{$TYPEINFO{SetAdaptDdnsSettings} = ["function", "void", "boolean"];}
 sub SetAdaptDdnsSettings {
-    $adapt_ddns_settings = $_[0];
+    my $self = shift;
+    $adapt_ddns_settings = shift;
 }
 
 ##------------------------------------
 
 BEGIN { $TYPEINFO{AutoPackages} = ["function", ["map","any","any"]];}
 sub AutoPackages {
+    my $self = shift;
+
     return {
 	"install" => ["dhcp-server"],
 	"remote" => [],
@@ -696,6 +745,7 @@ sub AutoPackages {
 
 BEGIN { $TYPEINFO{Read} = ["function", "boolean"]; }
 sub Read {
+    my $self = shift;
 
     # Dhcp-server read dialog caption
     my $caption = _("Initializing DHCP Server Configuration");
@@ -748,9 +798,9 @@ sub Read {
     my $ag_settings_ref = SCR::Read (".etc.dhcpd_conf");
 
     @settings = ();
-    PreprocessSettings ($ag_settings_ref, {});
+    $self->PreprocessSettings ($ag_settings_ref, {});
 
-    InitTSIGKeys ();
+    $self->InitTSIGKeys ();
 
     Progress::NextStage ();
 
@@ -759,6 +809,7 @@ sub Read {
 
 BEGIN { $TYPEINFO{Write} = ["function", "boolean"]; }
 sub Write {
+    my $self = shift;
 
     # Dhcp-server read dialog caption */
     my $caption = _("Saving DHCP Server Configuration");
@@ -792,13 +843,13 @@ sub Write {
     Progress::NextStage ();
 
     #adapt firewall
-    $ok = AdaptFirewall () && $ok;
+    $ok = $self->AdaptFirewall () && $ok;
 
     #adapt dynamic DNS settings
-    $ok = AdaptDDNS () && $ok;
+    $ok = $self->AdaptDDNS () && $ok;
 
     #save globals
-    my $settings_to_save_ref = PrepareToSave ("", "");
+    my $settings_to_save_ref = $self->PrepareToSave ("", "");
 
     $ok = SCR::Write (".etc.dhcpd_conf", $settings_to_save_ref) && $ok;
 
@@ -843,6 +894,8 @@ sub Write {
 
 BEGIN { $TYPEINFO{Export}  =["function", [ "map", "any", "any" ] ]; }
 sub Export {
+    my $self = shift;
+
     my %ret = (
 	"start_service" => $start_service,
 	"chroot" => $chroot,
@@ -853,7 +906,9 @@ sub Export {
 }
 BEGIN { $TYPEINFO{Import} = ["function", "void", [ "map", "any", "any" ] ]; }
 sub Import {
-    my %settings = %{$_[0]};
+    my $self = shift;
+    my $settings_ref = shift;
+    my %settings = %{$settings_ref};
 
     $start_service = $settings{"start_service"} || 0;
     $chroot = $settings{"chroot"} || 1;
@@ -867,6 +922,8 @@ sub Import {
 
 BEGIN { $TYPEINFO{Summary} = ["function", [ "list", "string" ] ]; }
 sub Summary {
+    my $self = shift;
+
     my @ret = ();
 
     if ($start_service)
@@ -888,29 +945,32 @@ sub Summary {
 
 BEGIN{$TYPEINFO{AddSubnet} = ["function","boolean","string","string"];}
 sub AddSubnet {
+    my $self = shift;
     my $subnet = shift;
     my $netmask = shift;
 
     $modified = 1;
-    return CreateEntry ("subnet", "$subnet netmask $netmask", "", "");
+    return $self->CreateEntry ("subnet", "$subnet netmask $netmask", "", "");
 }
 
 BEGIN{$TYPEINFO{DeleteSubnet} = ["function","boolean","string","string"];}
 sub DeleteSubnet {
+    my $self = shift;
     my $subnet = shift;
     my $netmask = shift;
 
     $modified = 1;
-    return DeleteEntry ("subnet", "$subnet netmask $netmask");
+    return $self->DeleteEntry ("subnet", "$subnet netmask $netmask");
 }
 
 BEGIN{$TYPEINFO{AddHost} = ["function","boolean","string","string","string"];}
 sub AddHost {
+    my $self = shift;
     my $fix_addr = shift;
     my $hw_type = shift;
     my $hw_addr = shift;
 
-    my $ret = CreateEntry ("host", "$fix_addr", "", "");
+    my $ret = $self->CreateEntry ("host", "$fix_addr", "", "");
 
     my @directives = (
 	{
@@ -922,7 +982,7 @@ sub AddHost {
 	    "value" => "$hw_type $hw_addr",
 	}
     );
-    $ret = $ret && SetEntryDirectives ("host", "$fix_addr", \@directives);
+    $ret = $ret && $self->SetEntryDirectives ("host", "$fix_addr", \@directives);
 
     $modified = 1;
     return Boolean ($ret);
@@ -930,14 +990,16 @@ sub AddHost {
 
 BEGIN{$TYPEINFO{DeleteHost} = ["function","boolean","string"];}
 sub DeleteHost {
+    my $self = shift;
     my $id = shift;
 
     $modified = 1;
-    return DeleteEntry ("host", "$id");
+    return $self->DeleteEntry ("host", "$id");
 }
 
 BEGIN{$TYPEINFO{SetOption} = ["function", ["list",["map","string","string"]],["list",["map","string","string"]],"string","string"];}
 sub SetOption {
+    my $self = shift;
     my $options_ref = shift;
     my $key = shift;
     my $value = shift;
@@ -980,6 +1042,7 @@ sub SetOption {
 
 BEGIN{$TYPEINFO{SetGlobalOption} = ["function","boolean","string","string"];}
 sub SetGlobalOption {
+    my $self = shift;
     my $option = shift;
     my $value = shift;
 
@@ -988,20 +1051,20 @@ sub SetGlobalOption {
 
     if (substr ($option, 0, 7) eq "option ")
     {
-	@options = @{GetEntryOptions ("", "") || []};
+	@options = @{$self->GetEntryOptions ("", "") || []};
     }
     else
     {
-	@options = @{GetEntryDirectives ("", "") || []};
+	@options = @{$self->GetEntryDirectives ("", "") || []};
     }
     @options = @{SetOption (\@options, $option, $value) || []};
     if (substr ($option, 0, 7) eq "option ")
     {
-	$ret = SetEntryOptions ("", "", \@options);
+	$ret = $self->SetEntryOptions ("", "", \@options);
     }
     else
     {
-	$ret = SetEntryDirectives ("", "", \@options);
+	$ret = $self->SetEntryDirectives ("", "", \@options);
     }
     $modified = 1;
     return Boolean ($ret);
@@ -1009,6 +1072,7 @@ sub SetGlobalOption {
 
 BEGIN{$TYPEINFO{SetSubnetOption} = ["function","boolean","string","string","string","string"];}
 sub SetSubnetOption {
+    my $self = shift;
     my $subnet = shift;
     my $netmask = shift;
     my $option = shift;
@@ -1019,20 +1083,20 @@ sub SetSubnetOption {
 
     if (substr ($option, 0, 7) eq "option ")
     {
-	@options = @{GetEntryOptions ("subnet", "") || []};
+	@options = @{$self->GetEntryOptions ("subnet", "") || []};
     }
     else
     {
-	@options = @{GetEntryDirectives ("subnet", "") || []};
+	@options = @{$self->GetEntryDirectives ("subnet", "") || []};
     }
     @options = @{SetOption (\@options, $option, $value) || []};
     if (substr ($option, 0, 7) eq "option ")
     {
-	$ret = SetEntryOptions ("subnet", "", \@options);
+	$ret = $self->SetEntryOptions ("subnet", "", \@options);
     }
     else
     {
-	$ret = SetEntryDirectives ("subnet", "", \@options);
+	$ret = $self->SetEntryDirectives ("subnet", "", \@options);
     }
     $modified = 1;
     return Boolean ($ret);
@@ -1040,6 +1104,7 @@ sub SetSubnetOption {
 
 BEGIN{$TYPEINFO{SetHostOption} = ["function","boolean","string","string","string"];}
 sub SetHostOption {
+    my $self = shift;
     my $id = shift;
     my $option = shift;
     my $value = shift;
@@ -1049,20 +1114,20 @@ sub SetHostOption {
 
     if (substr ($option, 0, 7) eq "option ")
     {
-	@options = @{GetEntryOptions ("host", "$id") || []};
+	@options = @{$self->GetEntryOptions ("host", "$id") || []};
     }
     else
     {
-	@options = @{GetEntryDirectives ("host", "$id") || []};
+	@options = @{$self->GetEntryDirectives ("host", "$id") || []};
     }
     @options = @{SetOption (\@options, $option, $value) || []};
     if (substr ($option, 0, 7) eq "option ")
     {
-	$ret = SetEntryOptions ("host", "$id", \@options);
+	$ret = $self->SetEntryOptions ("host", "$id", \@options);
     }
     else
     {
-	$ret = SetEntryDirectives ("host", "$id", \@options);
+	$ret = $self->SetEntryDirectives ("host", "$id", \@options);
     }
     $modified = 1;
     return Boolean ($ret);

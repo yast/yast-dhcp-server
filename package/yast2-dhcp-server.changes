@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Mar 17 17:39:22 CET 2004 - jsrain@suse.cz
+
+- addapted to calling all perl functions as class methods
+  (added $self = shift; ,...)
+
+-------------------------------------------------------------------
 Wed Mar 10 16:25:26 CET 2004 - jsrain@suse.de
 
 - addapted to the new array context - a YCP list is always a

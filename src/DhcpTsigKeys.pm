@@ -49,7 +49,8 @@ sub ListTSIGKeys {
 # FIXME the same function in DNS server component
 BEGIN{$TYPEINFO{NormalizeFilename} = ["function", "string", "string"];}
 sub NormalizeFilename {
-    my $filename = $_[0];
+    my $self = shift;
+    my $filename = shift;
 
     while ($filename ne "" && (substr ($filename, 0, 1) eq " "
         || substr ($filename, 0, 1) eq "\""))
@@ -69,11 +70,16 @@ sub NormalizeFilename {
 # FIXME the same function in DNS server component
 BEGIN{$TYPEINFO{AnalyzeTSIGKeyFile}=["function",["list","string"],"string"];}
 sub AnalyzeTSIGKeyFile {
-    my $filename = $_[0];
+    my $self = shift;
+    my $filename = shift;
 
     y2milestone ("Reading TSIG file $filename");
-    $filename = NormalizeFilename ($filename);
+    $filename = $self->NormalizeFilename ($filename);
     my $contents = SCR::Read (".target.string", $filename);
+    if (! defined ($contents))
+    {
+	return [];
+    }
     if ($contents =~ /.*key[ \t]+([^ \t}{;]+).* {/)
     {
         return [$1];
@@ -83,11 +89,12 @@ sub AnalyzeTSIGKeyFile {
 
 BEGIN{$TYPEINFO{AddTSIGKey}=["function", "boolean", "string"];}
 sub AddTSIGKey {
-    my $filename = $_[0];
+    my $self = shift;
+    my $filename = shift;
 
-    my @new_keys = AnalyzeTSIGKeyFile ($filename);
+    my @new_keys = $self->AnalyzeTSIGKeyFile ($filename);
     y2milestone ("Reading TSIG file $filename");
-    $filename = NormalizeFilename ($filename);
+    $filename = $self->NormalizeFilename ($filename);
     my $contents = SCR::Read (".target.string", $filename);
     if (0 != @new_keys)
     {
@@ -99,7 +106,7 @@ sub AddTSIGKey {
             } @tsig_keys;
             if (@current_keys > 0)
             {
-                DeleteTSIGKey ($new_key);
+                $self->DeleteTSIGKey ($new_key);
             }
             #now add new one
             my %new_include = (
@@ -116,7 +123,8 @@ sub AddTSIGKey {
 
 BEGIN{$TYPEINFO{DeleteTSIGKey}=["function", "boolean", "string"];}
 sub DeleteTSIGKey {
-    my $key = $_[0];
+    my $self = shift;
+    my $key = shift;
 
     y2milestone ("Removing TSIG key $key");
     #add it to deleted list
@@ -144,6 +152,7 @@ sub DeleteTSIGKey {
 
 BEGIN{$TYPEINFO{ListNewKeyIncludes}=["function", ["list","any"]];}
 sub ListNewKeyIncludes {
+    my $self = shift;
     my @ret = map {
 	$_->{"filename"};
     } @new_tsig_keys;
@@ -152,6 +161,7 @@ sub ListNewKeyIncludes {
 
 BEGIN{$TYPEINFO{ListDeletedKeyIncludes}=["function",["list","any"]];}
 sub ListDeletedKeyIncludes {
+    my $self = shift;
     my @ret = map {
 	$_->{"filename"};
     } @deleted_tsig_keys;
@@ -160,7 +170,10 @@ sub ListDeletedKeyIncludes {
 
 BEGIN{$TYPEINFO{StoreTSIGKeys}=["function","void",["list",["map","string","string"]]];}
 sub StoreTSIGKeys {
-    @tsig_keys = @{$_[0]};
+    my $self = shift;
+    my $tsig_keys_ref = shift;
+
+    @tsig_keys = @{$tsig_keys_ref};
     return;
 }
 
