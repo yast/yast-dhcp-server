@@ -248,6 +248,16 @@
 	redraw_list (opt_id, key, event, _("A&ddresses"));
     }
 
+    global define boolean ip_array_validate (any opt_id, string key, map event){
+	if (size (entry_list) == 0)
+	{
+	    // message popup
+	    Popup::Message (_("At least one address must be specified"));
+	    return false;
+	}
+	return true;
+    }
+
     /**
       * Store function of a table entry / popup
       * @param opt_id any option id
@@ -282,6 +292,16 @@
 	redraw_list (opt_id, key, event, _("&Values"));
     }
 
+    global define boolean value_array_validate (any opt_id, string key, map event) ``{
+        if (size (entry_list) == 0)
+        {
+            // message popup
+            Popup::Message (_("At least one address must be specified"));
+            return false;
+        }
+        return true;
+    }
+
     /**
       * Handle the event on the popup
       * @param opt_id any option id
@@ -304,6 +324,16 @@
 	    entry_list = add (entry_list, new_addr);
 	}
 	redraw_list (opt_id, key, event, _("A&ddresses"));
+    }
+
+    global define boolean ip_pair_array_validate (any opt_id, string key, map event){
+	if (size (entry_list) == 0)
+	{
+	    // message popup
+	    Popup::Message (_("At least one address pair must be specified"));
+	    return false;
+	}
+	return true;
     }
 
     /**
@@ -490,6 +520,20 @@ all clients*/
 
     ];
 
+    global define boolean validate_value (any id, string key, map event) ``{
+	if (UI::WidgetExists (`id (key)))
+	{
+	    any value = UI::QueryWidget (`id (key), `Value);
+	    if (value == "")
+	    {
+		// popup message
+		Popup::Message (_("Value must be specified"));
+		return false;
+	    }
+	}
+	return true;
+    }
+
     /**
       * Get popup description map for an option type
       * @return popup description map
@@ -589,6 +633,8 @@ all clients*/
 	    "init" : ip_array_init,
 	    "store" : entry_array_store,
 	    "handle" : ip_array_handle,
+	    "validate_type" : `function,
+	    "validate_function" : ip_array_validate,
 	];
     }
 
@@ -620,6 +666,8 @@ all clients*/
 	    "init" : uint16_array_init,
 	    "store" : entry_array_store,
 	    "handle" : uint16_array_handle,
+	    "validate_type" : `function,
+	    "validate_function" : value_array_validate,
 	];
     }
 
@@ -653,6 +701,8 @@ all clients*/
 	    "init" : ip_array_init,
 	    "store" : entry_array_store,
 	    "handle" : ip_pair_array_handle,
+	    "validate_type" : `function,
+	    "validate_function" : ip_pair_array_validate,
 	];
     }
 
@@ -662,7 +712,8 @@ all clients*/
 	"uint32" : uint32_widget (),
 	"int32" : int32_widget (),
 	"text" : text_widget (),
-	"string" : $[],
+	"string" : $["_fill" : ""], // just to make the map non-empty
+	"time" : $["_fill" : ""], // just to make the map non-empty
 	"ip-address" : ip_address_widget (),
 	"array_ip-address" : array_ip_address_widget (),
 	"array_uint16" : array_uint16_widget (),
@@ -823,6 +874,11 @@ all clients*/
 	    map widget = widget_types[v]:$[];
 	    if (widget != $[])
 	    {
+		if (widget["validate_type"]:nil == nil)
+		{
+		    widget["validate_type"] = `function;
+		    widget["validate_function"] = validate_value;
+		}
 		map entry = $[
 		    "popup" : widget,
 		];
