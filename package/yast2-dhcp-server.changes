@@ -3,6 +3,7 @@ Mon Sep 20 09:41:39 CEST 2004 - jsrain@suse.cz
 
 - fixed "Save and Restart" (the progress was kept instead of
   returning to the main dialog) (#45580)
+- 2.10.6
 
 -------------------------------------------------------------------
 Wed Sep 15 12:40:31 CEST 2004 - jsrain@suse.cz
