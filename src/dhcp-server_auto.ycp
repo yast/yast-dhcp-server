@@ -27,17 +27,53 @@ y2milestone("----------------------------------------");
 y2milestone("DhcpServer auto started");
 
 import "DhcpServer";
-include "dhcp-server/ui.ycp";
+import "DhcpServerUI";
+
+define map KillComments (map exported) ``{
+    list settings = exported["settings"]:[];
+    settings = maplist(map decl, (list<map>)settings, ``{
+	if (haskey (decl, "comment_before"))
+	    decl = remove (decl, "comment_before");
+	if (haskey (decl, "comment_after"))
+	    decl = remove (decl, "comment_after");
+	if (haskey (decl, "options"))
+	{
+	    list<map> options = (list<map>)(decl["options"]:[]);
+	    options = maplist (map m, options, ``{
+		if (haskey (m, "comment_before"))
+		    m = remove (m, "comment_before");
+		if (haskey (m, "comment_after"))
+		    m = remove (m, "comment_after");
+	    });
+	    decl["options"] = options;
+	}
+	if (haskey (decl, "directives"))
+	{
+	    list<map> directives = (list<map>)(decl["directives"]:[]);
+	    directives = maplist (map m, directives, ``{
+		if (haskey (m, "comment_before"))
+		    m = remove (m, "comment_before");
+		if (haskey (m, "comment_after"))
+		    m = remove (m, "comment_after");
+	    });
+	    decl["directives"] = directives;
+	}
+
+	return decl;
+    });
+    exported["settings"] = settings;
+    return exported;
+}
 
 any ret = nil;
 string func = "";
 map param = $[];
 
 /* Check arguments */
-if(size(Args()) > 0 && is(Args(0), string)) {
-    func = WFM::Args(0);
-    if(size(Args()) > 1 && is(Args(1), map))
-        param = WFM::Args(1);
+if(size(WFM::Args()) > 0 && is(WFM::Args(0), string)) {
+    func = (string)(WFM::Args(0));
+    if(size(WFM::Args()) > 1 && is(WFM::Args(1), map))
+        param = (map)(WFM::Args(1));
 }
 y2debug("func=%1", func);
 y2debug("param=%1", param);
@@ -53,7 +89,7 @@ else if (func == "Reset") {
 }
 /* Change configuration (run AutoSequence) */
 else if (func == "Change") {
-    ret = runWizard ();
+    ret = DhcpServerUI::DhcpAutoSequence();
 }
 /* Import configuration */
 else if (func == "Import") {
@@ -61,7 +97,7 @@ else if (func == "Import") {
 }
 /* Return actual state */
 else if (func == "Export") {
-    ret = DhcpServer::Export();
+    ret = KillComments (DhcpServer::Export());
 }
 /* Read current state */
 else if (func == "Read") {
@@ -74,7 +110,7 @@ else if (func == "Read") {
 else if (func == "Write") {
     import "Progress";
     Progress::off();
-    DhcpServer::write_only = true;
+    DhcpServer::SetWriteOnly (true);
     ret = DhcpServer::Write();
     Progress::on();
 }

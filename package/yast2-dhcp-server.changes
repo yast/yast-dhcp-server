@@ -1,4 +1,14 @@
 -------------------------------------------------------------------
+Tue Feb 10 15:42:37 CET 2004 - jsrain@suse.de
+
+- fixed testsuite to updated perl-bindings
+- updated helps
+- added DynDNS support
+- autoinstallation updates
+- several other fixes
+- 2.9.2
+
+-------------------------------------------------------------------
 Fri Feb  6 16:07:23 CET 2004 - jsrain@suse.de
 
 - dropped .y2cc file

@@ -13,7 +13,7 @@ Read	.etc.install_inf.UseSSH nil
 Read	.etc.install_inf.InstMode nil
 Read	.target.tmpdir nil
 Log	Failed to set temporary directory: nil
-Write	.etc.dhcpd_conf nil true
+Write	.etc.dhcpd_conf [] true
 Write	.sysconfig.dhcpd.DHCPD_RUN_CHROOTED "no" true
 Write	.sysconfig.dhcpd.DHCPD_INTERFACE "" true
 Write	.sysconfig.dhcpd nil true

@@ -125,6 +125,7 @@ global define symbol SubnetDialog () ``{
   * @return symbol for wizard sequencer
   */
 global define symbol HostDialog () ``{
+    y2milestone ("Running host dialog");
     list<map> w = CWM::CreateWidgets (["host", "host_table"], widgets);
     term contents = `HBox (`HSpacing (2), `VBox (
 	`VSpacing (1),
@@ -150,6 +151,7 @@ global define symbol HostDialog () ``{
   * @return symbol for wizard sequencer
   */
 global define symbol SharedNetworkDialog () ``{
+    y2milestone ("Running shared network dialog");
     list<map> w = CWM::CreateWidgets (
 	["shared-network", "shared-network_table"], widgets);
     term contents = `HBox (`HSpacing (2), `VBox (
@@ -176,6 +178,7 @@ global define symbol SharedNetworkDialog () ``{
   * @return symbol for wizard sequencer
   */
 global define symbol PoolDialog () ``{
+    y2milestone ("Running pool dialog");
     list<map> w = CWM::CreateWidgets (["pool", "pool_table"], widgets);
     term contents = `HBox (`HSpacing (2), `VBox (
 	`VSpacing (1),
@@ -202,6 +205,7 @@ global define symbol PoolDialog () ``{
   * @return symbol for wizard sequencer
   */
 global define symbol Groupdialog () ``{
+    y2milestone ("Running group dialog");
     list<map> w = CWM::CreateWidgets (["group", "group_table"], widgets);
     term contents = `HBox (`HSpacing (2), `VBox (
 	`VSpacing (1),
@@ -227,6 +231,7 @@ global define symbol Groupdialog () ``{
   * @return symbol for wizard sequencer
   */
 global define symbol ClassDialog () ``{
+    y2milestone ("Running class dialog");
     list<map> w = CWM::CreateWidgets (["class", "class_table"], widgets);
     term contents = `HBox (`HSpacing (2), `VBox (
 	`VSpacing (1),
@@ -253,6 +258,7 @@ global define symbol ClassDialog () ``{
   * @return symbol for wizard sequencer
   */
 global define symbol SectionTypeChoose () ``{
+    y2milestone ("Running section type selection dialog");
     list parents = [];
     string par_id = parent_id;
     string par_type = parent_type;
@@ -343,6 +349,7 @@ global define symbol SectionTypeChoose () ``{
   * @return symbol for wizard sequencer
   */
 global define symbol IfacesDialog () ``{
+    y2milestone ("Running interfaces dialog");
     list<map> w = CWM::CreateWidgets (["interfaces", "adapt_firewall"],widgets);
     term contents = `HBox (`HStretch (), `VBox (
 	`VStretch (),
@@ -361,7 +368,12 @@ global define symbol IfacesDialog () ``{
     return CWM::Run (w, functions);
 }
 
+/**
+  * Run Dynamic DNS dialog
+  * @return symbol for wizard sequencer
+  */
 global define symbol DynDnsDialog () ``{
+    y2milestone ("Running interfaces dialog");
     list<map> w = CWM::CreateWidgets (["ddns_enable", "zone", "zone_ip",
 	"reverse_zone", "reverse_ip", "key_filename", "create_key_file",
 	"update_global_ddns_settings", "key_file_browse_button"],
@@ -381,10 +393,10 @@ global define symbol DynDnsDialog () ``{
 	`VSpacing (2),
 	`Left (w[7, "widget"]:`VSpacing (0)),
 	`HBox (
-	    w[6, "widget"]:`VSpacing (0),
-	    w[8, "widget"]:`VSpacing (0)
+	    w[5, "widget"]:`VSpacing (0),
+	    `VBox (`Label (""), w[8, "widget"]:`VSpacing (0))
 	),
-	w[5, "widget"]:`VSpacing (0),
+	`Left (w[6, "widget"]:`VSpacing (0)),
 	`VStretch ()
     ), `HStretch ());
     // dialog caption
@@ -399,7 +411,12 @@ global define symbol DynDnsDialog () ``{
 
 // fake dialogs - switchers
 
+/**
+  * detect the type of edited declaration
+  * @return symbol for ws
+  */
 global define symbol SelectEditationDialog () ``{
+    y2milestone ("Determining what is selected");
     if (current_entry_type == "")
 	return `global;
     if (current_entry_type == "subnet")
@@ -414,9 +431,14 @@ global define symbol SelectEditationDialog () ``{
 	return `shared_network;
     if (current_entry_type == "class")
 	return `class;
+    y2error ("Unknown declaration was selected");
     return `back;
 }
 
+/**
+  * Store a section (declaration)
+  * @return symbol for ws, always `next
+  */
 global define symbol SectionStore () ``{
     if (current_operation == `edit) // existing entry was edited
     {
@@ -436,6 +458,10 @@ global define symbol SectionStore () ``{
     DhcpServer::SetEntryOptions (current_entry_type, current_entry_id,
 	current_entry_options);
     DhcpServer::SetModified ();
+
+    DhcpServer::SetDDNSFileName (current_ddns_key_file);
+    DhcpServer::SetDDNSFileCreate (current_ddns_key_create);
+
     return `next;
 }
 

@@ -75,8 +75,8 @@
 	"settings":[
 	    $[
 		"children":[],
-		"comment_after":"", // FIXME must work with nil
-		"comment_before":"", // FIXME must work with nil
+		"comment_after":nil,
+		"comment_before":nil,
 		"directives":[],
 		"id":"",
 		"options":[

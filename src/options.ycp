@@ -13,6 +13,7 @@
 
     import "Address";
     import "DhcpServer";
+    import "IP";
     import "Label";
 
 
@@ -161,7 +162,7 @@
 	string value = (string)UI::QueryWidget (`id (key), `Value);
 	if (! Address::Check4 (value))
 	{
-	    Report::Error ("Enter valid address");
+	    Popup::Message (IP::Valid4 ());
 	    UI::SetFocus (`id (key));
 	    return false;
 	}
@@ -198,7 +199,7 @@
       * Initialize a selection box
       * @param opt_id any option id
       * @param key string option key
-      * @param string label of the selection box
+      * @param label string label of the selection box
       */
     global define void init_list (any opt_id, string key, string label) ``{
 	string value = (string)fetchValue (opt_id, key);
@@ -226,19 +227,25 @@
 	init_list (opt_id, key, _("A&ddresses"));
     }
 
-    global define symbol ip_array_handle (any opt_id, string key, map event) ``{
+    /**
+      * Handle the event on the popup
+      * @param opt_id any option id
+      * @param key string option key
+      * @param event map event to be handled
+      */
+    global define void ip_array_handle (any opt_id, string key, map event) ``{
 	if (event["ID"]:nil == `add)
 	{
 	    string new_addr = (string)UI::QueryWidget (`id (`new_addr), `Value);
 	    if (! Address::Check (new_addr))
 	    {
-		Report::Error ("Entered address is not valid");
+		// popup message
+		Popup::Message (_("Entered address is not valid"));
 		return nil;
 	    }
 	    entry_list = add (entry_list, new_addr);
 	}
 	redraw_list (opt_id, key, event, _("A&ddresses"));
-	return nil;
     }
 
     /**
@@ -246,7 +253,7 @@
       * @param opt_id any option id
       * @param key any option key
       */
-    global define void entry_array_store (any opt_id, string key, map event) ``{
+    global define void entry_array_store (any opt_id, string key) ``{
 	storeValue (opt_id, key, mergestring ((list<string>)entry_list,", "));
     }
 
@@ -260,17 +267,28 @@
 	init_list (opt_id, key, _("&Values"));
     }
 
-    global define symbol uint16_array_handle (any opt_id, string key, map event) ``{
+    /**
+      * Handle the event on the popup
+      * @param opt_id any option id
+      * @param key string option key
+      * @param event map event to be handled
+      */
+    global define void uint16_array_handle (any opt_id, string key, map event) ``{
 	if (event["ID"]:nil == `add)
 	{
 	    integer val = (integer)UI::QueryWidget (`id (`new_addr), `Value);
 	    entry_list = add (entry_list, tostring (val));
 	}
 	redraw_list (opt_id, key, event, _("&Values"));
-	return nil;
     }
 
-    global define symbol ip_pair_array_handle (any opt_id, string key, map event) ``{
+    /**
+      * Handle the event on the popup
+      * @param opt_id any option id
+      * @param key string option key
+      * @param event map event to be handled
+      */
+    global define void ip_pair_array_handle (any opt_id, string key, map event) ``{
 	if (event["ID"]:nil == `add)
 	{
 	    string new_addr = (string)UI::QueryWidget (`id (`new_addr), `Value);
@@ -279,13 +297,13 @@
 	    if (! (size (l) == 2 && Address::Check (l[0]:"")
 		&& Address::Check (l[1]:"")))
 	    {
-		Report::Error ("Entered addresses are not valid");
+		// message popup
+		Popup::Message (_("Entered addresses are not valid"));
 		return nil;
 	    }
 	    entry_list = add (entry_list, new_addr);
 	}
 	redraw_list (opt_id, key, event, _("A&ddresses"));
-	return nil;
     }
 
     /**
@@ -303,7 +321,7 @@
       * @param opt_id any option id
       * @param key any option key
       */
-    global define void flagStore (any opt_id, string key, map event) ``{
+    global define void flagStore (any opt_id, string key) ``{
 	boolean value = (boolean)UI::QueryWidget ( `id (key), `Value);
 	storeValue (opt_id, key, value ? "on" : "off");
     }
@@ -654,13 +672,11 @@ all clients*/
     /**
       * Initialization function of a table entry / popup
       * @param opt_id any option id
-      * @param opt_key any option key
+      * @param opt_key string option key
       */
-    global define void hardwareInit (any opt_id, any opt_key) ``{
-	integer index = tointeger(substring (tostring (opt_id), 10));
-	list<string> l = splitstring (
-	    current_entry_directives[index, "value"]:"",
-	    " ");
+    global define void hardwareInit (any opt_id, string opt_key) ``{
+	string value = (string)fetchValue (opt_id, opt_key);
+	list<string> l = splitstring (value, " ");
 	l = filter (string i, l, ``(i != ""));
 	UI::ChangeWidget (`id (`hw), `Value, l[0]:"ethernet");
 	UI::ChangeWidget (`id (`addr), `Value, l[1]:"");
@@ -669,13 +685,72 @@ all clients*/
     /**
       * Store function of a table entry / popup
       * @param opt_id any option id
-      * @param opt_key any option key
+      * @param string_key any option key
       */
-    global define void hardwareStore (any opt_id, any opt_key) ``{
-	integer index = tointeger(substring (tostring (opt_id), 10));
-	current_entry_directives[index, "value"] = sformat ("%1 %2",
+    global define void hardwareStore (any opt_id, string opt_key) ``{
+	storeValue (opt_id, opt_key, sformat ("%1 %2",
 	    (string)UI::QueryWidget (`id (`hw), `Value),
-	    (string)UI::QueryWidget (`id (`addr), `Value));
+	    (string)UI::QueryWidget (`id (`addr), `Value)));
+    }
+
+    /**
+      * Initialization function of a table entry / popup
+      * @param opt_id any option id
+      * @param key string option key
+      */
+    global define void rangeInit (any opt_id, string key) ``{
+	string value = (string)fetchValue (opt_id, key);
+	list<string> l = splitstring (value, " ");
+	l = filter (string i, l, ``(i != ""));
+	integer lindex = 0;
+	if (l[0]:"" == "dynamic-bootp")
+	{
+	    lindex = 1;
+	    UI::ChangeWidget (`id (`bootp), `Value, true);
+	}
+	integer hindex = lindex + 1;
+	UI::ChangeWidget (`id (`lower), `Value, l[lindex]:"");
+	UI::ChangeWidget (`id (`upper), `Value, l[hindex]:"");
+    }
+
+    global define void rangeStore (any opt_id, string key) ``{
+	string val = sformat ("%1 %2",
+	    UI::QueryWidget (`id (`lower), `Value),
+	    UI::QueryWidget (`id (`upper), `Value));
+	if ((boolean)UI::QueryWidget (`id (`bootp), `Value))
+	    val = sformat ("dynamic-bootp %1", val);
+	storeValue (opt_id, key, val);
+    }
+
+    /**
+      * Validate function of a popup
+      * @param opt_id any option id
+      * @param key any option key
+      * @return boolean true if widget settings ok
+      */
+    global define boolean rangeValidate (any opt_id, string key, map event) ``{
+	string lvalue = (string)UI::QueryWidget (`id (`lower), `Value);
+	if (! Address::Check4 (lvalue))
+	{
+	    Popup::Message (IP::Valid4 ());
+	    UI::SetFocus (`id (`lower));
+	    return false;
+	}
+	string uvalue = (string)UI::QueryWidget (`id (`upper), `Value);
+	if (! Address::Check4 (uvalue))
+	{
+	    Popup::Message (IP::Valid4 ());
+	    UI::SetFocus (`id (`upper));
+	    return false;
+	}
+	if (IP::ToInteger (lvalue) > IP::ToInteger (uvalue))
+	{
+	    // popup message
+	    Popup::Message(_("Lowest address must be lower than the highest one"));
+	    UI::SetFocus (`id (`lower));
+	    return false;
+	}
+	return true;
     }
 
     /**
@@ -716,6 +791,25 @@ all clients*/
 		    "widget" : `checkbox,
 		    "init" : flagInit,
 		    "store" : flagStore,
+		],
+	    ],
+	    "range" : $[
+		"popup" : $[
+		    "widget" : `custom,
+		    "custom_widget" : `VBox (
+			`HBox (
+			    // text entry
+			    `TextEntry (`id (`lower), _("&Lowest IP address")),
+			    // text entry
+			    `TextEntry (`id (`upper), _("&Highest IP address"))
+			),
+			// checkbox
+			`CheckBox (`id (`bootp), _("Allow Dynamic &BOOTP"))
+		    ),
+		    "init" : rangeInit,
+		    "store" : rangeStore,
+		    "validate_type" : `function,
+		    "validate_function" : rangeValidate,
 		],
 	    ],
 	];

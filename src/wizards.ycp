@@ -107,6 +107,20 @@ global define symbol MainSequence () ``{
 }
 
 /**
+  * Whole configuration of dns-server in AI mode
+  * @return sequence result
+  */
+global define symbol DhcpAutoSequence() ``{
+
+    Wizard::CreateDialog();
+    Wizard::SetContentsButtons("", `VBox (), "",
+	Label::BackButton(), Label::NextButton());
+    symbol ret = MainSequence();
+    UI::CloseDialog();
+    return ret;
+}
+
+/**
   * Whole configuration of dns-server
   * @return sequence result
   */

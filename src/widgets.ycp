@@ -13,6 +13,7 @@
 
     import "CWM";
     import "DhcpServer";
+    import "IP";
     import "Label";
     import "LogView";
     import "Popup";
@@ -20,6 +21,10 @@
 
 // pre-declarations
 
+/**
+ * Initialize the widget
+ * @param id any widget id
+ */
 global define void configTreeInit (string id);
 
 
@@ -66,9 +71,11 @@ global define void configTreeInit (string id);
 	index = -1;
 	list<string> dirs = maplist (map m, current_entry_directives, ``{
 	    index = index + 1;
-	    return sformat ("directive %1", index);
+	    if (m["key"]:"" != "zone")
+		return sformat ("directive %1", index);
+	    return nil;
 	});
-	return merge (dirs, opts);
+	return filter (string id, merge (dirs, opts), ``(id != nil));
     }
 
     /**
@@ -317,8 +324,15 @@ global define symbol configTreeHandle (string id, map event) ``{
     }
     else if (event["ID"]:nil == `move)
     {
+	return nil;
 // TODO move button
     }
+    if (event["ID"]:nil == `add || event["ID"]:nil == `edit)
+    {
+	current_ddns_key_file = DhcpServer::GetDDNSFileName ();
+	current_ddns_key_create = DhcpServer::GetDDNSFileCreate ();
+    }
+
     return nil;
 }
 
@@ -386,7 +400,7 @@ global define void idStore (string id, map event) ``{
 
 /**
  * Initialize the widget
- * @param id any widget id
+ * @param id string widget id
  */
 global define void interfacesInit (string id) ``{
     list ifaces = DhcpServer::GetAllowedInterfaces ();
@@ -411,7 +425,7 @@ global define void interfacesStore (string id, map event) ``{
 global define void DynDnsButtonInit (string id) ``{
     UI::ReplaceWidget (`_tp_table_repl, `PushButton (`id ("dyn_dns_button"),
 	// push button
-	_("Dynamic DNS")));
+	_("&Dynamic DNS")));
 }
 
 /**
@@ -424,15 +438,26 @@ global define symbol DynDnsButtonHandle (string id, map event) ``{
     return `dyn_dns;
 }
 
-global define void DDNSZonesHandle (any id) ``{
+/**
+ * Handle events of the widget
+ * @param id string widget id
+ * @param event map event that is handled
+ * @return symbol for WS
+ */
+global define symbol DDNSZonesHandle (string id, map event) ``{
     boolean enabled = (boolean)UI::QueryWidget (`id ("ddns_enable"), `Value);
     UI::ChangeWidget (`id ("zone"), `Enabled, enabled);
     UI::ChangeWidget (`id ("zone_ip"), `Enabled, enabled);
     UI::ChangeWidget (`id ("reverse_zone"), `Enabled, enabled);
-    UI::ChangeWidget (`id ("reverse_zone"), `Enabled, enabled);
+    UI::ChangeWidget (`id ("reverse_ip"), `Enabled, enabled);
+    return nil;
 }
 
-global define void DDNSZonesInit (any id) ``{
+/**
+ * Initialize the widget
+ * @param id string widget id
+ */
+global define void DDNSZonesInit (string id) ``{
     string zone = "";
     string ip = "";
     string rev_zone = "";
@@ -443,7 +468,6 @@ global define void DDNSZonesInit (any id) ``{
 	{
 	    string value = (string)(d["value"]:"");
 	    list<string> l = regexptokenize (value, "^[ \t]*([^ \t]+)[ \t]*\\{[ \t]*primary[ \t]+([^ \t]+)[ \t]*;[ \t]*key[ \t]+DHCP_UPDATER[ \t]*;[ \t]*\}[ \t]*$");
-	    y2error ("L: %1", l);
 	    if (size (l) == 2)
 	    {
 		string z = l[0]:"";
@@ -470,16 +494,22 @@ global define void DDNSZonesInit (any id) ``{
 	UI::ChangeWidget (`id ("reverse_ip"), `Value, rev_ip);
     }
     UI::ChangeWidget (`id ("ddns_enable"), `Value, found_ddns);
+    DDNSZonesHandle (id, $[]);
 }
 
-global define void DDNSZonesStore (any id, map event) ``{
+/**
+ * Store settings of the widget
+ * @param id string widget id
+ * @param event map event that caused storing process
+ */
+global define void DDNSZonesStore (string id, map event) ``{
     current_entry_directives = filter (map m, current_entry_directives, ``(
 	m["key"]:"" != "zone"
     ));
     if ((boolean)UI::QueryWidget (`id ("ddns_enable"), `Value))
     {
 	string zone = (string)UI::QueryWidget (`id ("zone"), `Value);
-	string ip = (string)UI::QueryWidget (`id ("ip"), `Value);
+	string ip = (string)UI::QueryWidget (`id ("zone_ip"), `Value);
 	string rev_zone = (string)UI::QueryWidget (`id ("reverse_zone"),`Value);
 	string rev_ip = (string)UI::QueryWidget (`id ("reverse_ip"), `Value);
 	if (ip == "")
@@ -503,6 +533,86 @@ global define void DDNSZonesStore (any id, map event) ``{
 	    ]);
 	}
     }
+}
+
+/**
+ * Handle events of the widget
+ * @param id string widget id
+ * @param event map event that is handled
+ * @return symbol for WS
+ */
+global define symbol DDNSGlobalsHandle (string id, map event) ``{
+    boolean enabled = (boolean)UI::QueryWidget (
+	`id ("update_global_ddns_settings"), `Value);
+    UI::ChangeWidget (`id ("key_filename"), `Enabled, enabled);
+    UI::ChangeWidget (`id ("key_file_browse_button"), `Enabled, enabled);
+    UI::ChangeWidget (`id ("create_key_file"), `Enabled, enabled);
+    return nil;
+}
+
+/**
+ * Initialize the widget
+ * @param id string widget id
+ */
+global define void DDNSGlobalsInit (string id) ``{
+    UI::ChangeWidget (`id ("update_global_ddns_settings"), `Value,
+	current_ddns_key_file != "");
+    UI::ChangeWidget (`id ("key_filename"), `Value, current_ddns_key_file);
+    UI::ChangeWidget (`id ("create_key_file"), `Value,
+	current_ddns_key_create);
+    DDNSGlobalsHandle (id, $[]);
+}
+
+/**
+ * Store settings of the widget
+ * @param id string widget id
+ * @param event map event that caused storing process
+ */
+global define void DDNSGlobalsStore (string id, map event) ``{
+    if ((boolean)UI::QueryWidget (`id ("update_global_ddns_settings"), `Value))
+    {
+	current_ddns_key_file = (string)
+	    UI::QueryWidget (`id ("key_filename"), `Value);
+	current_ddns_key_create = (boolean)
+	    UI::QueryWidget (`id ("create_key_file"), `Value);
+    }
+    else
+    {
+	current_ddns_key_file = "";
+	current_ddns_key_create = false;
+    }
+    return;
+}
+
+/**
+ * Handle events of the widget
+ * @param id string widget id
+ * @param event map event that is handled
+ * @return symbol for WS
+ */
+global define symbol KeyFileBrowseButtonHandle (string id, map event) ``{
+    string filename = (string)UI::QueryWidget (`id ("key_filename"), `Value);
+    filename = UI::AskForExistingFile (filename, "",
+	// popup headline
+	_("Select file with authentication key"));
+    if (filename != nil)
+	UI::ChangeWidget (`id ("key_filename"), `Value, filename);
+    return nil;
+}
+
+/**
+ * Validate the widget
+ * @param id string widget id
+ * @param event map event that is handled
+ * @return boolean true if validation succeeded
+ */
+global define boolean EmptyOrIpValidate (string id, map event) ``{
+    string val = (string)UI::QueryWidget (`id (id), `Value);
+    if (val == "" || IP::Check4 (val))
+	return true;
+    Popup::Message (IP::Valid4 ());
+    UI::SetFocus (`id (id));
+    return false;
 }
 
 /**
@@ -589,6 +699,9 @@ global define void InitWidgets () ``{
 	    "init" : DynDnsButtonInit,
 	    "handle" : DynDnsButtonHandle,
 	    "handle_events" : [ "dyn_dns_button" ],
+	    "help" : HELPS["dyn_dns_button"]:"",
+	    "label" : "&D ",//FIXME CWM should be able to handle virtual widgets
+	    "widget" : `textentry,
 	],
 	"start" : $[
 		"widget" : `checkbox,
@@ -712,39 +825,71 @@ global define void InitWidgets () ``{
 	],
 	"zone" : $[
 	    "widget" : `textentry,
-	    "label" : _("Zone"),
+	    // text entry
+	    "label" : _("&Zone"),
 	    "init" : DDNSZonesInit,
 	    "store" : DDNSZonesStore,
+	    "handle" : DDNSZonesHandle,
+	    "handle_events" : [ "ddns_enable" ],
+	    "help" : HELPS["ddns_zones"]:"",
 	],
 	"zone_ip" : $[
 	    "widget" : `textentry,
-	    "label" : _("Primary DNS server"),
+	    // text entry
+	    "label" : _("&Primary DNS server"),
+	    "help" : " ",
+	    "validate_type" : `function,
+	    "validate_function" : EmptyOrIpValidate,
 	],
         "reverse_zone": $[
 	    "widget" : `textentry,
-	    "label" : _("Reverse Zone"),
+	    // text entry
+	    "label" : _("Re&verse Zone"),
+	    "help" : " ",
 	],
 	"reverse_ip" : $[
 	    "widget" : `textentry,
-	    "label" : _("Primary DNS server of Reverse Zone"),
+	    // text entry
+	    "label" : _("Pr&imary DNS server"),
+	    "help" : " ",
+	    "validate_type" : `function,
+	    "validate_function" : EmptyOrIpValidate,
 	],
 	"key_filename" : $[
+	    "init" : DDNSGlobalsInit,
+	    "store" : DDNSGlobalsStore,
 	    "widget" : `textentry,
-	    "label" : _("Primary DNS server of Reverse Zone"),
+	    // text entry
+	    "label" : _("&Filename with updater key"),
+	    "help" : HELPS["updater_key"]:"",
+	],
+	"key_name" : $[
+	    "widget" : `textentry,
+	    // text entry
+	    "label" : _("Key &name"),
+	    "help" : " ",
 	],
 	"key_file_browse_button" : $[
-//	    "widget" : `pushbutton,
-//	    "label" : Label::BrowseButton (),
+	    "widget" : `push_button,
+	    "label" : Label::BrowseButton (),
+	    "handle_events" : [ "key_file_browse_button" ],
+	    "handle" : KeyFileBrowseButtonHandle,
+	    "help" : " ",
 	],
 	"create_key_file" : $[
 	    "widget" : `checkbox,
-	    "label" : _("Create updater key file"),
+	    // check box
+	    "label" : _("&Create file with updater key"),
+	    "help" : " ",
 	],
         "update_global_ddns_settings" : $[
 	    "widget": `checkbox,
-	    "label": _("Update global DHCP server settings"),
+	    // check box
+	    "label": _("&Update global DHCP server settings"),
 	    "opt" : [ `notify ],
 	    "help" : HELPS["update_global_ddns"]:"",
+	    "handle" : DDNSGlobalsHandle,
+	    "handle_events" : [ "update_global_ddns_settings" ],
 	],
 
 
