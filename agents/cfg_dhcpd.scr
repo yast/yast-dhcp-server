@@ -12,5 +12,5 @@
 .sysconfig.dhcpd
 
 `ag_ini(
-    SysConfigFile("/etc/sysconfig/dhcpd")
+    `SysConfigFile("/etc/sysconfig/dhcpd")
 )
