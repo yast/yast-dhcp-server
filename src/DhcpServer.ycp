@@ -1,0 +1,245 @@
+/**
+ * File:	modules/DhcpServer.ycp
+ * Package:	Configuration of dhcp-server
+ * Summary:	Data for configuration of dhcp-server,
+ *              input and output functions.
+ * Authors:	Jiri Srain <jsrain@suse.cz>
+ *
+ * $Id$
+ *
+ * Representation of the configuration of dhcp-server.
+ * Input and output routines.
+ */
+
+{
+
+    module "DhcpServer";
+    textdomain "dhcp-server";
+
+    import "Progress";
+    import "Report";
+    import "Summary";
+    import "Runlevel";
+
+    include "dhcp-server/routines.ycp";
+    include "dhcp-server/helps.ycp";
+    include "dhcp-server/widgets.ycp";
+    include "dhcp-server/options.ycp";
+
+    /**
+      * Abort function
+      * return boolean return true if abort
+      */
+    global block AbortFunction = nil;
+
+    /**
+      * Data was modified?
+      */
+    global boolean modified = false;
+
+    global boolean proposal_valid = false;
+
+    /**
+      * Write only, used during autoinstallation.
+      * Don't run services and SuSEconfig, it's all done at one place.
+      */
+    global boolean write_only = false;
+
+    global map settings = $[];
+
+    global map widgets = $[];
+
+    global map popups = $[];
+
+    global map current_section = $[];
+
+    global map current_list = $[];
+
+    global string current_identifier = "";
+
+    global boolean cfg_restart_wanted = false;
+
+    /**
+      * Constructor
+      */
+    global define void DhcpServer () ``{
+	InitPopups ();
+	InitWidgets ();
+    }
+
+    /**
+      * Read all dhcp-server settings
+      * @return true on success
+      */
+    global define boolean Read() ``{
+
+	/* Dhcp-server read dialog caption */
+	string caption = _("Initializing DHCP server configuration");
+
+	Progress::New( caption, " ", 1, [
+	    // progress stage
+	    _("Read the settings"),
+	],
+	[
+	    // progress step
+	    _("Reading the settings..."),
+	    // progress step
+	    _("Finished")
+	],
+	getInitReadHelp ()
+	);
+
+	// read database
+	if(UI::PollInput() == `abort) return false;
+	Progress::NextStage();
+
+	map bash_out = SCR::Execute (.target.bash_output,
+"/usr/bin/grep '^# Creation time:' /etc/dhcpd.conf |head -n 1 |sed 's/# Creation time: \\([^$]*\\)/\\1/'");
+
+	bash_out = SCR::Execute (.target.bash_output, sformat ("date --date='%1' +\"%%s\"", bash_out["stdout"]:""));
+
+	map stat = SCR::Read (.target.stat, "/etc/dhcpd.conf");
+
+	integer inode_time = stat["mtime"]:0;
+	integer file_time = tointeger (bash_out["stdout"]:"0");
+
+	integer difference = inode_time - file_time;
+	y2milestone ("Difference between last modification time and value stored in file is %1 seconds", difference);
+
+        settings = SCR::Read (.target.ycp, "/var/lib/YaST2/dhcp_server.ycp");
+        if (settings == nil)
+        {
+	    // yes-no popup
+	    if (! Popup::YesNo (_("Warning!
+
+YaST2 is not able to read /etc/dhcpd.conf file. Because of it
+YaST2 stores the settings in its own file, which is used to 
+create the /etc/dhcpd.conf file. YaST2 didn't find its file
+with settings and creates an initial settings. You must add
+at least one subnet to make DHCP server work.
+
+Remember that YaST2 rewrites /etc/dhcpd.conf when saving the
+configuration.
+
+Continue?")))
+		return false;
+            settings = createSettings ();
+        }
+
+	else if (difference > 3)
+	{
+	    // yes-no popup
+	    if (! Popup::YesNo (_("Warning!
+
+/etc/dhcpd.conf was created or modified manually or using
+other tool than YaST2. YaST2 will rewrite the changes
+when saving the configuration.
+
+Continue?")))
+		return false;
+	}
+
+	if(UI::PollInput() == `abort) return false;
+	modified = false;
+	return true;
+    }
+
+    /**
+      * Write all dhcp-server settings
+      * @return true on success
+      */
+    global define boolean Write() ``{
+
+	/* Dhcp-server read dialog caption */
+	string caption = _("Saving DHCP server configuration");
+
+	// We do not set help text here, because it was set outside
+	Progress::New(caption, " ", 2, [
+	    // progress stage
+	    _("Write the settings"),
+	    // progress stage
+	    _("Restart DHCP server"),
+	], [
+	    // progress step
+	    _("Writing the settings..."),
+	    // progress step
+	    _("Restarting DHCP server"),
+	    // progress step
+	    _("Finished")
+	],
+	getWriteHelp ()
+	);
+
+	// write settings
+	if(UI::PollInput() == `abort) return false;
+	Progress::NextStage();
+	createDhcpdConf ();
+	SCR::Write (.target.ycp, "/var/lib/YaST2/dhcp_server.ycp", settings);
+
+	if(UI::PollInput() == `abort) return false;
+	Progress::NextStage();
+
+	if (settings["__run_dhcp_server"]:false)
+	{
+	    integer ret
+		= SCR::Execute (.target.bash, "/etc/init.d/dhcpd restart");
+	    Runlevel::ServiceAdjust ("dhcpd", "enable");
+	    if (0 != ret)
+	    {
+		// yes-no popup
+		if (Popup::YesNo (_("Warning!
+
+An error occured during starting of DHCP server.
+Display the log and continue with configuration?")))
+		{
+		    DhcpServer::showLogPopup ("", $[]);
+		    cfg_restart_wanted = true;
+		}
+		return false;
+	    }
+	}
+	else
+	{
+	    SCR::Execute (.target.bash, "/etc/init.d/dhcpd stop");
+	    Runlevel::ServiceAdjust ("dhcpd", "disable");
+	}
+
+	if(UI::PollInput() == `abort) return false;
+	return true;
+    }
+
+    /**
+      * Get all dhcp-server settings from the first parameter
+      * (For use by autoinstallation.)
+      * @param import_settings The YCP structure to be imported.
+      * @return boolean True on success
+      */
+    global define boolean Import (map import_settings) ``{
+	settings = import_settings;
+	return true;
+    }
+
+    /**
+      * Dump the dhcp-server settings to a single map
+      * (For use by autoinstallation.)
+      * @return map Dumped settings (later acceptable by Import ())
+      */
+    global define map Export () ``{
+	return settings;
+    }
+
+    /**
+      * Create a textual summary and a list of unconfigured cards
+      * @return summary of the current configuration
+      */
+    global define list Summary() ``{
+	string status = settings["__run_dhcp_server"]:false
+		// summary text
+	    ? _("Start DHCP server at boot time")
+		// summary text
+	    : _("Do not start DHCP server at boot time");
+	return [ status ];
+    }
+
+/* EOF */
+}

@@ -1,0 +1,56 @@
+/**
+ * File:	clients/dhcp-server.ycp
+ * Package:	Configuration of dhcp-server
+ * Summary:	Main file
+ * Authors:	Jiri Srain <jsrain@suse.cz>
+ *
+ * $Id$
+ *
+ * Main file for dhcp-server configuration. Uses all other files.
+ */
+
+{
+
+/***
+ * <h3>Configuration of the dhcp-server</h3>
+ */
+
+    textdomain "dhcp-server";
+
+    /* The main () */
+    y2milestone ("----------------------------------------");
+    y2milestone ("Dhcp-server module started");
+
+    include "dhcp-server/ui.ycp";
+    import "DhcpServer";
+    import "Wizard";
+
+    Wizard::CreateDialog ();
+    boolean read = DhcpServer::Read ();
+    if (! read)
+	return `abort;
+    boolean exit = false;
+    symbol ret = nil;
+    while (! exit)
+    {
+	ret = runWizard ();
+	y2debug("ret=%1", ret);
+	if (ret == `next)
+	{
+	    DhcpServer::cfg_restart_wanted = false;
+	    DhcpServer::Write ();
+	    exit = ! DhcpServer::cfg_restart_wanted;
+	}
+	else
+	    exit = true;
+    }
+    UI::CloseDialog ();
+
+    /* Finish */
+    y2milestone("Dhcp-server module finished");
+    y2milestone("----------------------------------------");
+
+    return ret;
+
+/* EOF */
+}

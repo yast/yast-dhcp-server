@@ -1,0 +1,522 @@
+/**
+ * File:	include/dhcp-server/widgets.ycp
+ * Package:	Configuration of dhcp-server
+ * Summary:	Widgets
+ * Authors:	Jiri Srain <jsrain@suse.cz>
+ *
+ * $Id$
+ */
+
+{
+
+    textdomain "dhcp-server";
+
+    import "DhcpServer";
+    import "CWM";
+
+    import "Popup";
+    import "Label";
+
+    /**
+      * Initialize popups
+      * Create description map and copy it into appropriate variable of the
+      *  DhcpServer module
+      */
+    global define void InitWidgets () ``{
+	list options = [
+"option subnet-mask",
+"option broadcast-address",
+"option routers",
+"option static-routes",
+"option domain-name",
+"option domain-name-servers",
+"option host-name",
+"option root-path",
+"option tftp-server-name",
+"option bootfile-name",
+"option dhcp-server-identifier",
+"option time-servers",
+"option ntp-servers",
+"option log-servers",
+"option lpr-servers",
+"option font-servers",
+"option x-display-managers",
+"option smtp-server",
+"option pop-server",
+"option irc-server",
+"option nis-domain",
+"option nis-servers",
+"option nisplus-domain",
+"option nisplus-servers",
+"option interface-mtu",
+"option vendor-encapsulated-options",
+"option vendor-class-identifier",
+"option netbios-name-servers",
+"option netbios-dd-server",
+"option netbios-note-type",
+"option netbios-scope",
+	];
+
+	list common_commands = [
+"max-lease-time",
+"default-lease-time",
+"filename",
+"next-server",
+	];
+
+	list global_commands = [
+"authoritative",
+"ddns-update-style none",
+"ddns-updates off",
+"log-facility",
+	];
+
+	list subnet_commands = [
+"range",
+	];
+
+	list host_commands = [
+"hardware",
+"fixed-address",
+	];
+
+	common_commands = merge (common_commands, options);
+	global_commands = toset (merge (global_commands, common_commands));
+	subnet_commands = toset (merge (subnet_commands, common_commands));
+	host_commands = toset (merge (host_commands, common_commands));
+
+	map w = $[
+	    "global_table" : getGlobalTableWidget (global_commands),
+	    "host_table" : getHostTableWidget (subnet_commands),
+	    "subnet_table" : getSubnetTableWidget (host_commands),
+	    "subnets" : getSubnetsWidget (),
+	    "hosts" : getHostsWidget (),
+	    "log_button" : $[
+		"widget" : `push_button,
+		// push button
+		"label" : _("&Display log"),
+		"handle" : ``(DhcpServer::showLogPopup ()),
+		"handle_events" : [ "log_button" ],
+		"help" : getLogButtonHelp (),
+	    ],
+
+	];
+	DhcpServer::widgets = w;
+    }
+
+    /**
+      * Handle function of the log button
+      * @param event map event that occured
+      * @return value for wizard sequencer, always nil
+      */
+    global define any showLogPopup (any key, map event) ``{
+	map bash_out = SCR::Execute (.target.bash_output,
+	    "grep 'dhcpd' /var/log/messages | tail -n 50");
+	UI::OpenDialog (`VBox (
+	    // log view header
+	    `HSpacing (70),
+	    // log view header
+	    `LogView (`id (`log), _("DHCP server log"), 20, 50),
+	    `HBox (
+		`HStretch (),
+		`PushButton (`id (`close), Label::CloseButton ()),
+		`HStretch ()
+	    )));
+	UI::ChangeWidget (`id (`log), `Value, bash_out["stdout"]:"");
+	any ret = nil;
+	while (ret != `close)
+	    ret = UI::UserInput ();
+
+	UI::CloseDialog ();
+	return nil;
+    }
+
+    /**
+      * Get map of widget
+      * @param add_values list of values to be offered via the add button
+      * @return map of widget
+      */
+    global define map getGlobalTableWidget (list add_values) ``{
+	map ret = CWM::CreateTableDescr (
+	    $["add_delete" : true, "up_down" : false],
+	    $[
+		"init": ``(DhcpServer::globalsInit ()),
+		"store": ``(DhcpServer::globalsSave ()),
+		"handle": ``(CWM::TableHandle (
+		    DhcpServer::widgets["global_table"]:$[])),
+		"options": DhcpServer::popups,
+		"id2key": ``(DhcpServer::id2key ()),
+		"ids": ``(DhcpServer::getTableContents ()),
+		"help": getGlobalHelp (),
+		"save_exits": [`subnets, `hosts],
+		"fallback" : $[
+		    "init": ``(DhcpServer::commonPopupInit ()),
+		    "store": ``(DhcpServer::commonPopupSave ()),
+		    "summary": ``(DhcpServer::commonTableEntrySummary ()),
+		],
+		"option_delete": ``(DhcpServer::commonTableEntryDelete ()),
+		"what": `global,
+		"add_items":  add_values,
+	    ]
+	);
+	return ret;
+    }
+
+    /**
+      * Initialize the widget
+      */
+    global define void globalsInit (string key) ``{
+	current_section = eval (settings["globals"]:nil);
+	CWM::TableInit (widgets["global_table"]:$[], key);
+    }
+
+    /**
+      * Save the settings of the widget
+      * @param event map event that started the save process
+      * @return any modified event if needed
+      */
+    global define any globalsSave (any key, map event) ``{
+	settings["globals"] = eval (current_section);
+
+	if (event["ID"]:nil == `subnets)
+	    current_list = eval (settings["subnets"]:$[]);
+	else if (event["ID"]:nil == `hosts)
+	    current_list = eval (settings["hosts"]:$[]);
+    }
+
+    /**
+      * Get map of widget
+      * @param add_values list of values to be offered via the add button
+      * @return map of widget
+      */
+    global define map getHostTableWidget (list add_values) ``{
+	map ret = getGlobalTableWidget ([]);
+        ret["init"] = ``(CWM::TableInit (
+            DhcpServer::widgets["host_table"]:$[]));
+	ret["store"] = ``(DhcpServer::hostSave ());
+        ret["handle"] = ``(CWM::TableHandle (
+            DhcpServer::widgets["host_table"]:$[]));
+	ret["help"] = getSectionHelp ();
+	ret["save_exits"] = [];
+	ret["what"] = `host;
+	ret["add_items"] = add_values;
+	return ret;
+    }
+
+    /**
+      * Save the settings of the widget
+      * @param event map event that started the save process
+      * @return any modified event if needed
+      */
+    global define any hostSave (any key, map event) ``{
+        string host = current_section["subnet"]:"";
+        string key = sformat ("host%1", host);
+        current_list = filter (`k, `v, current_list,
+            ``(k != current_identifier));
+	current_list[key] = eval (current_section);
+    }
+
+    /**
+      * Get map of widget
+      * @param add_values list of values to be offered via the add button
+      * @return map of widget
+      */
+    global define map getSubnetTableWidget (list add_values) ``{
+        map ret = getGlobalTableWidget ([]);
+        ret["init"] = ``(CWM::TableInit (
+            DhcpServer::widgets["subnet_table"]:$[]));
+        ret["store"] = ``(DhcpServer::subnetSave ());
+        ret["handle"] = ``(CWM::TableHandle (
+            DhcpServer::widgets["subnet_table"]:$[]));
+        ret["help"] = getSectionHelp ();
+        ret["save_exits"] = [];
+	ret["what"] = `subnet;
+	ret["add_items"] = add_values;
+        return ret;
+    }
+
+    /**
+      * Save the settings of the widget
+      * @param event map event that started the save process
+      * @return any modified event if needed
+      */
+    global define any subnetSave (any key, map event) ``{
+	string subnet = current_section["subnet"]:"";
+	string netmask = current_section["netmask"]:"";
+	string key = sformat ("subnet%1netmask%2", subnet, netmask);
+        current_list = filter (`k, `v, current_list,
+            ``(k != current_identifier));
+	current_list[key] = eval (current_section);
+    }
+
+
+    /**
+      * Get map of widget
+      * @return map of widget
+      */
+    global define map getSubnetsWidget () ``{
+        return $[
+            "custom_widget" : `VBox (
+                `HBox (
+                        `Table (`id (`subnets), `header (
+                        // table header
+                        _("Subnet"),
+                        // table header
+                        _("Netmask")
+                        ), [])
+                ),
+                `HBox (
+                    `PushButton (`id (`add), `opt (`key_F3), Label::AddButton ()),
+                    `PushButton (`id (`edit), `opt (`key_F4), Label::EditButton ()),
+                    `PushButton (`id (`delete), `opt (`key_F5), Label::DeleteButton ()),
+                    `HStretch ()
+                )
+            ),
+	    "widget" : `custom,
+            "init" : ``(DhcpServer::subnetsRead ()),
+	    "store" : ``(DhcpServer::subnetsSave ()),
+            "handle" : ``(DhcpServer::subnetsHandle ()),
+            "help" : getSubnetsHelp (),
+            "exits" : [`add, `edit],
+        ];
+    }
+
+    /**
+      * Read the settings, initialize the widget
+      */
+    global define void subnetsRead (any key) ``{
+	list items = maplist (`k, `v, current_list, ``(
+	    `item (`id (k), v["subnet"]:"", v["netmask"]:"")
+	));
+	UI::ChangeWidget (`id (`subnets), `Items, items);
+    }
+
+    /**
+      * Save the settings of the widget
+      * @param event map event that started the save process
+      * @return any modified event if needed
+      */
+    global define any subnetsSave (any key, map event) ``{
+	settings["subnets"] = eval (current_list);
+    }
+
+    /**
+      * Handle events that occured on the widget
+      * @param event map event that occured
+      * @return any modified event if needed
+      */
+    global define any subnetsHandle (any key, map event) ``{
+	string current = UI::QueryWidget (`id (`subnets), `CurrentItem);
+	if (event["ID"]:nil == `add || event["ID"]:nil == `edit)
+	{
+	    if (event["ID"]:nil == `add)
+	    {
+		current_section = createNewSection (`subnet);
+		current_identifier = "";
+	    }
+	    else
+	    {
+		current_section = eval (current_list[current]:$[]);
+		current_identifier = current;
+	    }
+	    return `edit;
+	}
+	else if (event["ID"]:nil == `delete)
+	{
+	    current_list = filter (`k, `v, current_list, ``(k != current));
+	    subnetsRead (key);
+	    return nil;
+	}
+    }
+
+
+
+    /**
+      * Get map of widget
+      * @return map of widget
+      */
+    global define map getHostsWidget () ``{
+        return $[
+            "custom_widget" : `VBox (
+                `HBox (
+                        `Table (`id (`hosts), `header (
+                        // table header
+                        _("Host")
+                        ), [])
+                ),
+                `HBox (
+                    `PushButton (`id (`add), `opt (`key_F3), Label::AddButton ()),
+                    `PushButton (`id (`edit), `opt (`key_F4), Label::EditButton ()),
+                    `PushButton (`id (`delete), `opt (`key_F5), Label::DeleteButton ()),
+                    `HStretch ()
+                )
+            ),
+	    "widget" : `custom,
+            "init" : ``(DhcpServer::hostsRead ()),
+            "store" : ``(DhcpServer::hostsSave ()),
+            "handle" : ``(DhcpServer::hostsHandle ()),
+            "help" : getHostsHelp (),
+            "exits" : [`add, `edit],
+        ];
+    }
+
+    /**
+      * Read the settings, initialize the widget
+      */
+    global define void hostsRead (any key) ``{
+        list items = maplist (`k, `v, current_list, ``(
+            `item (`id (k), v["host"]:"")
+        ));
+        UI::ChangeWidget (`id (`hosts), `Items, items);
+    }
+
+    /**
+      * Save the settings of the widget
+      * @param event map event that started the save process
+      * @return any modified event if needed
+      */
+    global define any hostsSave (any key, map event) ``{
+        settings["hosts"] = eval (current_list);
+    }
+
+    /**
+      * Handle events that occured on the widget
+      * @param event map event that occured
+      * @return any modified event if needed
+      */
+    global define any hostsHandle (any key, map event) ``{
+        string current = UI::QueryWidget (`id (`hosts), `CurrentItem);
+        if (event["ID"]:nil == `add || event["ID"]:nil == `edit)
+        {
+            if (event["ID"]:nil == `add)
+            {
+                current_section = createNewSection (`host);
+                current_identifier = "";
+            }
+            else
+            {
+                current_section = eval (current_list[current]:$[]);
+                current_identifier = current;
+            }
+            return `edit;
+        }
+        else if (event["ID"]:nil == `delete)
+        {
+            current_list = filter (`k, `v, current_list, ``(k != current));
+            hostsRead ();
+            return nil;
+        }
+    }
+
+
+
+
+
+// generic routines
+
+    /**
+      * Fallback function to initialize the settings in the popup
+      * @param opt_id any option id
+      * @param key any option key
+      */
+    global define void commonPopupInit (any opt_id, any key) ``{
+	UI::ChangeWidget (`id (key), `Value,
+	    sformat ("%1", current_section[key]:""));
+	UI::SetFocus (`id (key));
+    }
+
+    /**
+      * Fallback function to save settings from the popup
+      * @param opt_id any option id
+      * @param key any option key
+      * @param op any operation that started save process
+      * @return any modified operation if needed
+      */
+    global define any commonPopupSave (any opt_id, any key) ``{
+	current_section[key] = UI::QueryWidget (`id (key), `Value);
+    }
+
+    /**
+      * Fallback function to display summary text in the table
+      * @param opt_id any option id
+      * @param key any option key
+      * @return string summary to be written to the table
+      */
+    global define string commonTableEntrySummary (any opt_id, any key) ``{
+	return sformat ("%1", current_section[opt_id]:"");
+    }
+
+    /**
+      * Function for deleting entry from section
+      * Used for all (global, host, subnet) section due to the same location
+      *  of data
+      * @param opt_id any option id
+      * @param key any option key
+      * @return boolean true if was really deleted
+      */
+    global define boolean commonTableEntryDelete (any opt_id, any key) ``{
+	current_section = filter (`k, `v, current_section, ``(k != key));
+	return true;
+    }
+
+    /**
+      * Transform table entry id to option id
+      * @param id any entry id
+      * @return any option key
+      */
+    global define any id2key (map table, any id) ``{
+	return id;
+    }
+
+    /**
+      * Get the popup widget description map
+      * @param opt_key any option key
+      * @return map popup description map
+      */
+    global define map key2descr (any opt_key) ``{
+	map ret = popups[opt_key]:nil;
+	if (ret != nil)
+	    return ret;
+	return $[
+                "init" : ``(DhcpServer::commonPopupInit ()),
+                "store" : ``(DhcpServer::commonPopupSave ()),
+	];
+    }
+
+    /**
+      * Create list of identifiers of etries that should be present in the table
+      * @param descr map description of the table
+      * @return list of identifiers of entries of the table
+      */
+    global define list getTableContents (map descr) ``{
+	// list(string|symbol|integer)
+	list ret = [];
+	list prefer = [];
+	symbol what = descr["what"]:nil;
+	if (what == `global)
+	    prefer =  ["__enable_service", "__subnets", "__hosts"];
+	else if (what == `host)
+	    prefer = ["host"];
+	else if (what == `subnet)
+	    prefer = ["subnet", "netmask"];
+	prefer = add (prefer, "____sep");
+
+	ret = maplist (`k, `v, current_section, ``(k));
+	ret = filter (`o, ret, ``(! contains (prefer, o)));
+	return merge (prefer, ret);
+    }
+
+    /**
+      * Check whether settings were changed and if yes, ask for exit
+      * without saving
+      * @return event that should be handled, nil if user canceled the exit
+      */
+    global define symbol confirmAbort () ``{
+        return Popup::YesNo (
+// Yes-No popup
+_("Really leave the DHCP server configuration without saving?
+All changes will be lost."));
+    }
+
+
+}

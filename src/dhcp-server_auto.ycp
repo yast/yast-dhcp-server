@@ -1,0 +1,112 @@
+/**
+ * File:	clients/dhcp-server_auto.ycp
+ * Package:	Configuration of dhcp-server
+ * Summary:	Client for autoinstallation
+ * Authors:	Jiri Srain <jsrain@suse.cz>
+ *
+ * $Id$
+ *
+ * This is a client for autoinstallation. It takes its arguments,
+ * goes through the configuration and return the setting.
+ * Does not do any changes to the configuration.
+ */
+
+/**
+ * @param function to execute
+ * @param map/list of dhcp-server settings
+ * @return map edited settings, Summary or boolean on success depending on called function
+ * @example map mm = $[ "FAIL_DELAY" : "77" ];
+ * @example map ret = WFM::CallFunction ("dhcp-server_auto", [ "Summary", mm ]);
+ */
+
+{
+
+    textdomain "dhcp-server";
+
+    y2milestone("----------------------------------------");
+    y2milestone("Dhcp-server auto started");
+
+    // global variables
+    map settings = $[];
+
+    Mode::config = true;
+    /**
+     * Test for abort.
+     * @return true if abort was pressed
+     */
+    define boolean testAbort () ``{
+        if (`abort == UI::PollInput ())
+        {
+            UI::CloseDialog ();
+            return true;
+        }
+        return false;
+    }
+    // ===== arguments ================================================
+
+    boolean test_mode = false;
+
+    {
+        integer i = 0;
+        while (i < size (Args()))
+        {
+            if (is (Args (i), map) && nil != Args (i))  settings = Args (i);
+            if (.test == Args (i))             test_mode = true;
+            i = i + 1;
+        }
+    }
+    /**
+      * Set contents of main dialog for printer autoinstallation
+      */
+    define void set_contents() ``{
+        term contents =
+            `VBox(
+                  `VSpacing(1),
+                  `RichText( `id(`summary), DhcpServer::Summary([])),
+                  `VSpacing(),
+                  `HBox(
+                        // pushbutton
+                        `PushButton(`id(`configure), _("&Configure DHCP server")),
+                        `HStretch(),
+                        // pushbutton
+                        `PushButton(`id(`reset), _("&Reset Configuration"))
+                        )
+                  );
+        // dialog caption
+        Wizard::SetContents(_("DHCP server Configuration"),
+                            contents, "", true, true);
+    }
+
+    // Create Summary and buttons for launching
+    // in auto mode
+
+    set_contents();
+    any result = nil;
+    any ret = nil;
+    repeat {
+        ret = UI::UserInput();
+        if (ret == `configure)
+        {
+                Wizard::CreateDialog ();
+                result = runWizard (true);
+                UI::CloseDialog ();
+                if (result == `next || result == `finish)
+                {
+                     settings = DhcpServer::Export ();
+                }
+                DhcpServer::Import(settings);
+                set_contents();
+        }
+        else if ( ret == `reset)
+        {
+            settings= $[];
+            DhcpServer::Import(settings);
+            set_contents();
+        }
+    } until (ret == `back || ret == `next || ret ==`key || ret ==`abort);
+
+    return [ret, settings];
+
+}
+
+

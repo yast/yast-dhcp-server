@@ -1,0 +1,30 @@
+@HEADER-COMMENT@
+# neededforbuild yast2-devel-packages
+
+@HEADER@
+Requires:	yast2
+
+BuildArchitectures:	noarch
+
+Summary:	Configuration of dhcp-server
+
+%description
+-
+
+@PREP@
+
+@BUILD@
+
+@INSTALL@
+
+@CLEAN@
+
+%files
+%defattr(-,root,root)
+%dir @yncludedir@/dhcp-server
+@yncludedir@/dhcp-server/*
+@clientdir@/dhcp-server.ycp
+@clientdir@/dhcp-server_*.ycp
+@moduledir@/DhcpServer.ycp
+@configdir@/dhcp-server.y2cc
+%doc @docdir@
