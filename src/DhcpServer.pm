@@ -937,10 +937,22 @@ sub Import {
     my $settings_ref = shift;
     my %settings = %{$settings_ref};
 
+    my $default_settings = [
+	{
+	    "type" => "",
+	    "id" => "",
+	    "directives" => [],
+	    "options" => [],
+	    "parent_id" => "",
+	    "parent_type" => "",
+	    "children" => [],
+	},
+    ];
+
     $start_service = $settings{"start_service"} || 0;
     $chroot = $settings{"chroot"} || 1;
     @allowed_interfaces = @{$settings{"allowed_interfaces"} || []};
-    @settings = @{$settings{"settings"} || []};
+    @settings = @{$settings{"settings"} || $default_settings};
 
     $modified = 1;
     $adapt_firewall = 0;

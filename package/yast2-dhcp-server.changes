@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Mar 30 08:39:29 CEST 2004 - jsrain@suse.de
+
+- fixed import of empty data when preparing autoinstallation (#37179)
+- 2.9.12
+
+-------------------------------------------------------------------
 Mon Mar 29 13:40:08 CEST 2004 - jsrain@suse.de
 
 - add also includes added not using YaST to sysconfig to be copied
