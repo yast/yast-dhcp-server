@@ -12,7 +12,8 @@ client_DATA =			\
 
 ynclude_DATA =			\
 	helps.ycp		\
-	ui.ycp			\
+	dialogs.ycp		\
+	wizards.ycp		\
 	routines.ycp		\
 	widgets.ycp		\
 	options.ycp

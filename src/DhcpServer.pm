@@ -35,6 +35,11 @@ my $adapt_firewall = 0;
 
 my $write_only = 0;
 
+my %current_entry = ();
+
+my $current_entry_index = 0;
+
+
 
 # FIXME remove this func
 
@@ -220,7 +225,7 @@ sub CreateEntry {
     my $parent_index = FindEntry ($parent_type, $parent_id);
     if ($parent_index == -1)
     {
-	y2error ("Specified non-existint parent entry");
+	y2error ("CreateEntry: Specified non-existing parent entry");
 	return 0;
     }
 
@@ -256,29 +261,42 @@ sub DeleteEntry {
 
     if ($type eq "" || $id eq "")
     {
-	y2error ("Cannot delete root entry");
+	y2error ("DeleteEntry: Cannot delete root entry");
 	return 0;
     }
     my $index = FindEntry ($type, $id);
     if ($index == -1)
     {
-	y2error ("Specified non-existint entry");
+	y2error ("DeleteEntry: Specified non-existint entry");
 	return 0;
     }
     my $parent_type = $settings[$index]->{"parent_type"};
     my $parent_id = $settings[$index]->{"parent_id"};
+    my @children = @{$settings[$index]->{"children"}};
+    foreach my $child_ref (@children) {
+	my $c_type = $child_ref->{"type"};
+	my $c_id = $child_ref->{"id"};
+	DeleteEntry ($c_type, $c_id);
+    }
     my $parent_index = FindEntry ($parent_type, $parent_id);
     if ($parent_index == -1)
     {
-	y2error ("Parent doesn't exist - internal structure error");
-	return 0;
+	y2error ("DeleteEntry: Parent doesn't exist - internal structure error");
     }
+    else
+    {
+	#remove from the list of parent's children
+	my @par_children = @{$settings[$parent_index]->{"children"}};
+	@par_children = grep {
+	    $_->{"type"} ne $type || $_->{"id"} ne $id;
+	} @par_children;
+	$settings[$parent_index]->{"children"} = \@par_children;
+    }
+
+    # delete the record itself
     @settings = grep {
-	$_->{"type"} != $type || $_->{"id"} != $id;
+	$_->{"type"} ne $type || $_->{"id"} ne $id;
     } @settings;
-    %{$settings[$parent_index]->{"children"}} = grep {
-	$_->{"type"} != $type || $_->{"id"} != $id;
-    } %{$settings[$parent_index]->{"children"}}
 }
 
 BEGIN{$TYPEINFO{GetEntryParent} = [ "function", ["map", "string", "string"], "string", "string"];}
@@ -288,13 +306,13 @@ sub GetEntryParent {
 
     if ($type eq "" || $id eq "")
     {
-	y2error ("Cannot get parent of root entry");
+	y2error ("GetEntryParent: Cannot get parent of root entry");
 	return undef;
     }
     my $index = FindEntry ($type, $id);
     if ($index == -1)
     {
-	y2error ("Specified non-existint entry");
+	y2error ("GetEntryParent: Specified non-existint entry");
 	return undef;
     }
     my %parent = (
@@ -313,19 +331,19 @@ sub SetEntryParent {
 
     if ($type eq "" || $id eq "")
     {
-	y2error ("Cannot set parent of root entry");
+	y2error ("SetEntryParent: Cannot set parent of root entry");
 	return 0;
     }
     my $index = FindEntry ($type, $id);
     if ($index == -1)
     {
-	y2error ("Specified non-existint entry");
+	y2error ("SetEntryParent: Specified non-existint entry");
 	return 0;
     }
     my $new_parent_index = FindEntry ($new_parent_type, $new_parent_id);
     if ($new_parent_index == -1)
     {
-	y2error ("Specified non-existint new parent entry");
+	y2error ("SetEntryParent: Specified non-existint new parent entry");
 	return 0;
     }
     my $old_parent_type = $settings[$index]->{"parent_type"};
@@ -333,7 +351,7 @@ sub SetEntryParent {
     my $old_parent_index = FindEntry ($old_parent_type, $old_parent_id);
     if ($old_parent_index == -1)
     {
-	y2error ("Current parent entry not found - internal error.");
+	y2error ("SetEntryParent: Current parent entry not found.");
 	return 0;
     }
 
@@ -362,13 +380,13 @@ sub GetChildrenOfEntry {
     my $index = FindEntry ($type, $id);
     if ($index == -1)
     {
-	y2error ("Specified non-existint entry");
-	return 0;
+	y2error ("GetChildrenOfEntry: Specified non-existint entry");
+	return ();
     }
     @{$settings[$index]->{"children"}};
 }
 
-BEGIN{$TYPEINFO{GetEntryOptinos} = ["function", ["list", "any"], "string", "string"];}
+BEGIN{$TYPEINFO{GetEntryOptions} = ["function", ["list", "any"], "string", "string"];}
 sub GetEntryOptions {
     my $type = $_[0];
     my $id = $_[1];
@@ -376,22 +394,22 @@ sub GetEntryOptions {
     my $index = FindEntry ($type, $id);
     if ($index == -1)
     {
-	y2error ("Specified non-existint entry");
+	y2error ("GetEntryoptions: Specified non-existint entry");
 	return undef;
     }
-    $settings[$index]->{"options"};
+    @{$settings[$index]->{"options"}};
 }
 
 BEGIN{$TYPEINFO{SetEntryOptions} = ["function", "boolean", "string", "string", ["list", "any"]];}
 sub SetEntryOptions {
     my $type = $_[0];
     my $id = $_[1];
-    my @records = @{$_[0]};
+    my @records = @{$_[2]};
 
     my $index = FindEntry ($type, $id);
     if ($index == -1)
     {
-	y2error ("Specified non-existint entry");
+	y2error ("SetEntryOptions: Specified non-existint entry");
 	return 0;
     }
     $settings[$index]->{"options"} = \@records;
@@ -406,22 +424,22 @@ sub GetEntryDirectives {
     my $index = FindEntry ($type, $id);
     if ($index == -1)
     {
-	y2error ("Specified non-existint entry");
+	y2error ("GetEntryDirectives: Specified non-existint entry");
 	return undef;
     }
-    $settings[$index]->{"directives"};
+    @{$settings[$index]->{"directives"}};
 }
 
 BEGIN{$TYPEINFO{SetEntryDirectives} = ["function", "boolean", "string", "string", ["list", "any"]];}
 sub SetEntryDirectives {
     my $type = $_[0];
     my $id = $_[1];
-    my @records = @{$_[0]};
+    my @records = @{$_[2]};
 
     my $index = FindEntry ($type, $id);
     if ($index == -1)
     {
-	y2error ("Specified non-existint entry");
+	y2error ("SetEntryDirectives: Specified non-existint entry");
 	return 0;
     }
     $settings[$index]->{"directives"} = \@records;
@@ -437,11 +455,48 @@ sub ExistsEntry {
     $index != -1;
 }
 
-BEGIN{$TYPEINFO{SelectEntry} = ["function", "boolean", "string", "string"];}
-sub SelectEntry {
+BEGIN{$TYPEINFO{ChangeEntry} = ["function", "boolean", "string", "string", "string", "string"];}
+sub ChangeEntry {
+    my $old_type = $_[0];
+    my $old_id = $_[1];
+    my $new_type = $_[2];
+    my $new_id = $_[3];
 
+    my $index = FindEntry ($old_type, $old_id);
+    if ($index == -1)
+    {
+	y2error ("ChangeEntry: Specified non-existint entry");
+	return 0;
+    }
 
+    $settings[$index]->{"type"} = $new_type;
+    $settings[$index]->{"id"} = $new_id;
+
+    @settings = map {
+	my %entry = %{$_};
+	if ($entry{"parent_type"} eq $old_type
+	    && $entry{"parent_id"} eq $old_id)
+	{
+	    $entry{"parent_type"} = $new_type;
+	    $entry{"parent_id"} = $new_id;
+	}
+	my @children = @{$entry{"children"}};
+	@children = map {
+	    my %child = %{$_};
+	    if ($child{"type"} eq $old_type && $child{"id"} eq $old_id)
+	    {
+		$child{"type"} = $new_type;
+		$child{"id"} = $new_id;
+	    }
+	    \%child;
+	} @children;
+	$entry{"children"} = \@children;
+	\%entry;
+    } @settings;
+    1;
 }
+
+
 
 ##------------------------------------
 # Wrappers for accessing local data

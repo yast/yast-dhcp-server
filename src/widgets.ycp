@@ -25,12 +25,22 @@
       * @param opt_id any option id
       * @param key any option key
       */
-    global define void commonPopupInit (any opt_id, any key) ``{
-/*	UI::ChangeWidget (`id (key), `Value,
-	return nil;
-	    sformat ("%1", current_section[key]:""));
-	UI::SetFocus (`id (key));*/
-	return nil;
+    global define void commonPopupInit (any opt_id, string key) ``{
+	if (! is (opt_id, string))
+	    return ;
+	integer index = tointeger (
+	    regexpsub ((string)opt_id, "^[a-z]+ ([0-9]+)$", "\\1"));
+	if (substring (key, 0, 7) == "option ")
+	{
+	    UI::ChangeWidget (`id (key), `Value,
+		current_entry_options[index, "value"]:"");
+	}
+	else
+	{
+	    UI::ChangeWidget (`id (key), `Value,
+		current_entry_directives[index, "value"]:"");
+	}
+	UI::SetFocus (`id (key));
     }
 
     /**
@@ -39,9 +49,35 @@
       * @param key any option key
       * @return any modified operation if needed
       */
-    global define any commonPopupSave (any opt_id, any key) ``{
-//	current_section[key] = UI::QueryWidget (`id (key), `Value);
-	return nil;
+    global define void commonPopupSave (any opt_id, string key) ``{
+	any value = UI::QueryWidget (`id (key), `Value);
+	if (opt_id == nil)
+	{
+	    if (substring (key, 0, 7) == "option ")
+	    {
+		current_entry_options = add (current_entry_options, $[
+		    "key" : substring (key, 7),
+		    "value" : value,
+		]);
+	    }
+	    else
+	    {
+		 current_entry_directives = add (current_entry_directives, $[
+		    "key" : key,
+		    "value" : value,
+		]);
+	    }
+	    return;
+	}
+	if (! is (opt_id, string))
+	    return ;
+	integer index = tointeger (
+	    regexpsub ((string)opt_id, "^[a-z]+ ([0-9]+)$", "\\1"));
+	if (substring (key, 0, 7) == "option ")
+	    current_entry_options[index, "value"] = value;
+	else
+	    current_entry_directives[index, "value"] = value;
+	return;
     }
 
     /**
@@ -50,9 +86,15 @@
       * @param key any option key
       * @return string summary to be written to the table
       */
-    global define string commonTableEntrySummary (any opt_id, any key) ``{
-//	return sformat ("%1", current_section[opt_id]:"");
-	return "";
+    global define string commonTableEntrySummary (any opt_id, string key) ``{
+	if (! is (opt_id, string))
+	    return "";
+	integer index = tointeger (
+	    regexpsub ((string)opt_id, "^[a-z]+ ([0-9]+)$", "\\1"));
+	if (substring (key, 0, 7) == "option ")
+	    return sformat ("%1", current_entry_options[index, "value"]:"");
+	else
+	    return sformat ("%1", current_entry_directives[index, "value"]:"");
     }
 
     /**
@@ -63,8 +105,23 @@
       * @param key any option key
       * @return boolean true if was really deleted
       */
-    global define boolean commonTableEntryDelete (any opt_id, any key) ``{
-//	current_section = filter (`k, `v, current_section, ``(k != key));
+    global define boolean commonTableEntryDelete (any opt_id, string key) ``{
+	if (! is (opt_id, string))
+	    return false;
+	integer index = tointeger (
+	    regexpsub ((string)opt_id, "^[a-z]+ ([0-9]+)$", "\\1"));
+	if (substring (key, 0, 7) == "option ")
+	{
+	    current_entry_options[index] = nil;
+	    current_entry_options = filter (any o, current_entry_options,
+	    ``( o != nil));
+	}
+	else
+	{
+	    current_entry_directives[index] = nil;
+	    current_entry_directives = filter (any d, current_entry_directives,
+	    ``( d != nil));
+	}
 	return true;
     }
 
@@ -74,22 +131,18 @@
       * @return list of identifiers of entries of the table
       */
     global define list getTableContents (map descr) ``{
-	// list(string|symbol|integer)
-	list ret = [];
-	list prefer = [];
-	symbol what = (symbol)(descr["what"]:nil);
-	if (what == `global)
-	    prefer =  ["__enable_service", "__firewall", "__subnets", "__hosts",
-		"__interfaces"];
-	else if (what == `host)
-	    prefer = ["host"];
-	else if (what == `subnet)
-	    prefer = ["subnet", "netmask"];
-	prefer = add (prefer, "____sep");
+	integer index = -1;
+	list<string> opts = maplist (map m, current_entry_options, ``{
+	    index = index + 1;
+	    return sformat ("option %1", index);
+	});
 
-//	ret = maplist (`k, `v, current_section, ``(k));
-	ret = filter (`o, ret, ``(! contains (prefer, o)));
-	return merge (prefer, ret);
+	index = -1;
+	list<string> dirs = maplist (map m, current_entry_directives, ``{
+	    index = index + 1;
+	    return sformat ("directive %1", index);
+	});
+	return merge (dirs, opts);
     }
 
     /**
@@ -98,8 +151,22 @@
       * @param id any entry id
       * @return any option key
       */
-    global define any id2key (map table, any id) ``{
-	return id;
+    global define string id2key (map table, any id) ``{
+	if (! is (id, string))
+	    return "";
+	string strid = (string)id;
+	if (substring (strid, 0, 7) == "option ")
+	{
+	    integer index = tointeger (substring (strid, 7));
+	    return sformat ("option %1",
+		current_entry_options[index, "key"]:"");
+	}
+	else if (substring (strid, 0, 10) == "directive ")
+	{
+	    integer index = tointeger (substring (strid, 10));
+	    return current_entry_directives[index, "key"]:"";
+	}
+	return strid;
     }
 
     /**
@@ -116,8 +183,6 @@
                 "store" : commonPopupSave,
 	];
     }
-
-
 
     /**
       * Handle function of the log button
@@ -148,56 +213,26 @@
     }
 
     /**
-      * Initialize the widget
-      * @param key any widget key
-      */
-    global define void globalsInit (string key) ``{
-//	current_section = eval (settings["globals"]:nil);
-//	TablePopup::TableInit (widgets["global_table"]:$[], key);
-	return;
-    }
-
-    /**
-      * Save the settings of the widget
-      * @param key any widget key
-      * @param event map event that started the save process
-      * @return any modified event if needed
-      */
-    global define any globalsSave (any key, map event) ``{
-/*	settings["globals"] = eval (current_section);
-
-	if (event["ID"]:nil == `subnets)
-	    current_list = eval (settings["subnets"]:$[]);
-	else if (event["ID"]:nil == `hosts)
-	    current_list = eval (settings["hosts"]:$[]);*/
-	return nil;
-    }
-
-    /**
       * Get map of widget
       * @param add_values list of values to be offered via the add button
       * @return map of widget
       */
-    global define map getGlobalTableWidget (list add_values) ``{
+    global define map getOptionsTableWidget (list add_values) ``{
 	map ret = TablePopup::CreateTableDescr (
 	    $["add_delete" : true, "up_down" : false],
 	    $[
-		"init": globalsInit,
-		"store": globalsSave,
-//		"handle": ``(TablePopup::TableHandle (
-//		    DhcpServer::widgets["global_table"]:$[])),
-//		"options": DhcpServer::popups,
+		"init": TablePopup::TableInitWrapper,
+		"handle": TablePopup::TableHandleWrapper,
+		"options": popups,
 		"id2key": id2key,
 		"ids": getTableContents,
-		"help": getGlobalHelp (),
-		"save_exits": [`subnets, `hosts],
+		"help": getOptionsHelp (),
 		"fallback" : $[
 		    "init": commonPopupInit,
 		    "store": commonPopupSave,
 		    "summary": commonTableEntrySummary,
 		],
 		"option_delete": commonTableEntryDelete,
-		"what": `global,
 		"add_items":  add_values,
 	    ]
 	);
@@ -205,265 +240,15 @@
     }
 
     /**
-      * Get map of widget
-      * @param add_values list of values to be offered via the add button
-      * @return map of widget
-      */
-    global define map getHostTableWidget (list add_values) ``{
-/*	map ret = getGlobalTableWidget ([]);
-        ret["init"] = ``(TablePopup::TableInit (
-            DhcpServer::widgets["host_table"]:$[]));
-	ret["store"] = ``(DhcpServer::hostSave ());
-        ret["handle"] = ``(TablePopup::TableHandle (
-            DhcpServer::widgets["host_table"]:$[]));
-	ret["help"] = getSectionHelp ();
-	ret["save_exits"] = [];
-	ret["what"] = `host;
-	ret["add_items"] = add_values;
-	return ret;*/
-	return $[];
-    }
-
-    /**
-      * Save the settings of the widget
-      * @param key any widget key
-      * @param event map event that started the save process
-      * @return any modified event if needed
-      */
-    global define any hostSave (any key, map event) ``{
-/*        string host = current_section["host"]:"";
-        string key = sformat ("host%1", host);
-        current_list = filter (`k, `v, current_list,
-            ``(k != current_identifier));
-	current_list[key] = eval (current_section);*/
-	return nil;
-    }
-
-    /**
-      * Get map of widget
-      * @param add_values list of values to be offered via the add button
-      * @return map of widget
-      */
-    global define map getSubnetTableWidget (list add_values) ``{
-/*        map ret = getGlobalTableWidget ([]);
-        ret["init"] = ``(TablePopup::TableInit (
-            DhcpServer::widgets["subnet_table"]:$[]));
-        ret["store"] = ``(DhcpServer::subnetSave ());
-        ret["handle"] = ``(TablePopup::TableHandle (
-            DhcpServer::widgets["subnet_table"]:$[]));
-        ret["help"] = getSectionHelp ();
-        ret["save_exits"] = [];
-	ret["what"] = `subnet;
-	ret["add_items"] = add_values;
-        return ret;*/
-	return nil;
-    }
-
-    /**
-      * Save the settings of the widget
-      * @param key any widget key
-      * @param event map event that started the save process
-      * @return any modified event if needed
-      */
-    global define any subnetSave (any key, map event) ``{
-/*	string subnet = current_section["subnet"]:"";
-	string netmask = current_section["netmask"]:"";
-	string key = sformat ("subnet%1netmask%2", subnet, netmask);
-        current_list = filter (`k, `v, current_list,
-            ``(k != current_identifier));
-	current_list[key] = eval (current_section);*/
-	return nil;
-    }
-
-
-    /**
-      * Get map of widget
-      * @return map of widget
-      */
-    global define map getSubnetsWidget () ``{
-/*        return $[
-            "custom_widget" : `VBox (
-                `HBox (
-                        `Table (`id (`subnets), `header (
-                        // table header
-                        _("Subnet"),
-                        // table header
-                        _("Netmask")
-                        ), [])
-                ),
-                `HBox (
-                    `PushButton (`id (`add), `opt (`key_F3), Label::AddButton ()),
-                    `PushButton (`id (`edit), `opt (`key_F4), Label::EditButton ()),
-                    `PushButton (`id (`delete), `opt (`key_F5), Label::DeleteButton ()),
-                    `HStretch ()
-                )
-            ),
-	    "widget" : `custom,
-            "init" : ``(DhcpServer::subnetsRead ()),
-	    "store" : ``(DhcpServer::subnetsSave ()),
-            "handle" : ``(DhcpServer::subnetsHandle ()),
-            "help" : getSubnetsHelp (),
-            "exits" : [`add, `edit],
-        ];*/
-	return $[];
-    }
-
-    /**
-      * Read the settings, initialize the widget
-      * @param key any widget key
-      */
-    global define void subnetsRead (any key) ``{
-/*	list items = maplist (`k, `v, current_list, ``(
-	    `item (`id (k), v["subnet"]:"", v["netmask"]:"")
-	));
-	UI::ChangeWidget (`id (`subnets), `Items, items);*/
-	return nil;
-    }
-
-    /**
-      * Save the settings of the widget
-      * @param key any widget key
-      * @param event map event that started the save process
-      * @return any modified event if needed
-      */
-    global define any subnetsSave (any key, map event) ``{
-//	settings["subnets"] = eval (current_list);
-	return nil;
-    }
-
-    /**
-      * Handle events that occured on the widget
-      * @param key any widget key
-      * @param event map event that occured
-      * @return any modified event if needed
-      */
-    global define any subnetsHandle (any key, map event) ``{
-/*	string current = UI::QueryWidget (`id (`subnets), `CurrentItem);
-	if (event["ID"]:nil == `add || event["ID"]:nil == `edit)
-	{
-	    if (event["ID"]:nil == `add)
-	    {
-		current_section = createNewSection (`subnet);
-		current_identifier = "";
-	    }
-	    else
-	    {
-		current_section = eval (current_list[current]:$[]);
-		current_identifier = current;
-	    }
-	    return `edit;
-	}
-	else if (event["ID"]:nil == `delete)
-	{
-	    current_list = filter (`k, `v, current_list, ``(k != current));
-	    subnetsRead (key);
-	    return nil;
-	}*/
-	return nil;
-    }
-
-
-
-    /**
-      * Get map of widget
-      * @return map of widget
-      */
-    global define map getHostsWidget () ``{
-/*        return $[
-            "custom_widget" : `VBox (
-                `HBox (
-                        `Table (`id (`hosts), `header (
-                        // table header
-                        _("Host")
-                        ), [])
-                ),
-                `HBox (
-                    `PushButton (`id (`add), `opt (`key_F3), Label::AddButton ()),
-                    `PushButton (`id (`edit), `opt (`key_F4), Label::EditButton ()),
-                    `PushButton (`id (`delete), `opt (`key_F5), Label::DeleteButton ()),
-                    `HStretch ()
-                )
-            ),
-	    "widget" : `custom,
-            "init" : ``(DhcpServer::hostsRead ()),
-            "store" : ``(DhcpServer::hostsSave ()),
-            "handle" : ``(DhcpServer::hostsHandle ()),
-            "help" : getHostsHelp (),
-            "exits" : [`add, `edit],
-        ];*/
-	return $[];
-    }
-
-    /**
-      * Read the settings, initialize the widget
-      * @param key any widget key
-      */
-    global define void hostsRead (any key) ``{
-/*        list items = maplist (`k, `v, current_list, ``(
-            `item (`id (k), v["host"]:"")
-        ));
-        UI::ChangeWidget (`id (`hosts), `Items, items);*/
-	return nil;
-    }
-
-    /**
-      * Save the settings of the widget
-      * @param key any widget key
-      * @param event map event that started the save process
-      * @return any modified event if needed
-      */
-    global define any hostsSave (any key, map event) ``{
-//        settings["hosts"] = eval (current_list);
-	return nil;
-    }
-
-    /**
-      * Handle events that occured on the widget
-      * @param key any widget key
-      * @param event map event that occured
-      * @return any modified event if needed
-      */
-    global define any hostsHandle (any key, map event) ``{
-/*        string current = UI::QueryWidget (`id (`hosts), `CurrentItem);
-        if (event["ID"]:nil == `add || event["ID"]:nil == `edit)
-        {
-            if (event["ID"]:nil == `add)
-            {
-                current_section = createNewSection (`host);
-                current_identifier = "";
-            }
-            else
-            {
-                current_section = eval (current_list[current]:$[]);
-                current_identifier = current;
-            }
-            return `edit;
-        }
-        else if (event["ID"]:nil == `delete)
-        {
-            current_list = filter (`k, `v, current_list, ``(k != current));
-            hostsRead ();
-            return nil;
-        }*/
-	return nil;
-    }
-
-
-
-
-
-
-    /**
       * Check whether settings were changed and if yes, ask for exit
       * without saving
       * @return event that should be handled, nil if user canceled the exit
       */
-    global define symbol confirmAbort () ``{
-/*        return Popup::YesNo (
+    global define boolean confirmAbort () ``{
+        return Popup::YesNo (
 // Yes-No popup
 _("Really leave the DHCP server configuration without saving?
-All changes will be lost."));*/
-	return nil;
+All changes will be lost."));
     }
 
 
@@ -482,8 +267,8 @@ global define symbol dhcpEnabledOrDisabled (string id, map event) ``{
  * @param id any widget id
  */
 global define void startInit (string id) ``{
-    DhcpServer::GetStartService();
-    UI::ChangeWidget (`id ("start"), `Value, DhcpServer::GetStartService ());
+    boolean ss = DhcpServer::GetStartService();
+    UI::ChangeWidget (`id ("start"), `Value, ss);
 }
 
 /**
@@ -528,41 +313,105 @@ global define void rangeStore (string id, map event) ``{
     return;
 }
 
-global define void configTreeInit (string id) ``{
-    list items = getItems ("", "");
-    UI::ReplaceWidget (`configtree_rp, `Tree (
-	`id ("configtree"),
-	_("Configuration"),
-        items
-    ));
-    return;
-}
+global define void configTreeInit (string id);
 
 global define symbol configTreeHandle (string id, map event) ``{
+    string current_item = (string)
+	UI::QueryWidget (`id ("configtree"), `CurrentItem);
+    if (current_item == " ")
+    {
+	UI::ChangeWidget (`id (`delete), `Enabled, false);
+	UI::ChangeWidget (`id (`move), `Enabled, false);
+    }
+    else
+    {
+	UI::ChangeWidget (`id (`delete), `Enabled, true);
+	UI::ChangeWidget (`id (`move), `Enabled, true);
+    }
+    if (event["ID"]:nil == "configtree"
+	&& event["EventReason"]:nil == "Activated")
+    {
+	event["ID"] = `edit;
+    }
+
+    map selected = key2typeid (current_item);
+    if (selected == nil)
+    {
+	y2error ("Unexistent entry selected");
+	return nil;
+    }
+    if (event["ID"]:nil == `add)
+    {
+	parent_type = selected["type"]:"";
+	parent_id = selected["id"]:"";
+	current_entry_options = [];
+	current_entry_directives = [];
+	current_entry_type = "";
+	current_entry_id = "";
+	return `add;
+    }
+    else if (event["ID"]:nil == `edit)
+    {
+	current_entry_type = selected["type"]:"";
+	current_entry_id = selected["id"]:"";
+	current_entry_options = DhcpServer::GetEntryOptions (
+	    current_entry_type,
+	    current_entry_id);
+	current_entry_directives = DhcpServer::GetEntryDirectives (
+	    current_entry_type,
+	    current_entry_id);
+
+	original_entry_type = current_entry_type;
+	original_entry_id = current_entry_id;
+	parent_type = "";
+	parent_id = "";
+
+	return `edit;
+    }
+    else if (event["ID"]:nil == `delete)
+    {
+	DhcpServer::DeleteEntry (selected["type"]:"", selected["id"]:"");
+	configTreeInit (id);
+    }
+    else if (event["ID"]:nil == `move)
+    {
+
+// TODO
+    }
     return nil;
 }
 
-global define void configTreeStore (string id, map event) ``{
-    return;
-}
-
-global define void optlistInit (string id) ``{
-/*    list items = getItems ("", "");
+global define void configTreeInit (string id) ``{
+    list items = getItems ("", "");
+    items = [
+	`item (`id (" "), _("Global options"), true, items)
+    ];
     UI::ReplaceWidget (`configtree_rp, `Tree (
 	`id ("configtree"),
-	_("Configuration"),
+	`opt (`notify),
+	_("&Configuration"),
         items
-    ));*/
+    ));
+    UI::ChangeWidget (`id ("configtree"), `CurrentItem, " ");
+    configTreeHandle (id, $[]);
     return;
 }
 
-global define symbol optlistHandle (string id, map event) ``{
-    return nil;
+global define void subnetInit (string id) ``{
+    list<string> l = regexptokenize (current_entry_id,
+	"^[ \t]*([^ \t]+)[ \t]*netmask[ \t]*([^ \t]+)[ \t]*$");
+    UI::ChangeWidget (`id (`subnet), `Value, l[0]:"");
+    UI::ChangeWidget (`id (`netmask), `Value, l[1]:"");
 }
 
-global define void optlistStore (string id, map event) ``{
-    return;
+global define void subnetStore (string id, map event) ``{
+    string id = sformat ("%1 netmask %2",
+	(string)UI::QueryWidget (`id (`subnet), `Value),
+	(string)UI::QueryWidget (`id (`netmask), `Value));
+    current_entry_id = id;
 }
+
+
 
     /**
       * Initialize popups
@@ -633,11 +482,12 @@ global define void optlistStore (string id, map event) ``{
 	host_commands = toset (merge (host_commands, common_commands));
 
 	map w = $[
-	    "global_table" : getGlobalTableWidget (global_commands),
-	    "host_table" : getHostTableWidget (subnet_commands),
-	    "subnet_table" : getSubnetTableWidget (host_commands),
-	    "subnets" : getSubnetsWidget (),
-	    "hosts" : getHostsWidget (),
+	    "global_table" : getOptionsTableWidget (global_commands),
+	    "host_table" : getOptionsTableWidget (subnet_commands),
+	    "subnet_table" : getOptionsTableWidget (host_commands),
+	    "shared-network_table" : getOptionsTableWidget (common_commands),
+	    "pool_table" : getOptionsTableWidget (common_commands),
+	    "group_table" : getOptionsTableWidget (common_commands),
 	    "log_button" : $[
 		"widget" : `push_button,
 		// push button
@@ -664,27 +514,35 @@ global define void optlistStore (string id, map event) ``{
 	    ],
 	    "configtree" : $[
 		"widget" : `custom,
-		"custom_widget" : `ReplacePoint (`id (`configtree_rp), `Tree (
-		    `id ("configtree"),
-		    _("Configuration"),
-		    []
-		)),
+		"custom_widget" : `VBox (
+		    `ReplacePoint (`id (`configtree_rp), `Tree (
+			`id ("configtree"),
+			_("&Configuration"),
+			[]
+		    )),
+		    `HBox (
+			`PushButton (`id (`add), Label::AddButton ()),
+			`PushButton (`id (`edit), Label::EditButton ()),
+			`PushButton (`id (`delete), Label::DeleteButton ()),
+			`PushButton (`id (`move), _("&Move")),
+			`HStretch (),
+			`MenuButton (`id (`adv), _("Ad&vanced"), [])
+		    )),
 		"help" : HELPS["configtree"]:"TODO",
 		"init" : configTreeInit,
-		"store" : configTreeStore,
 		"handle" : configTreeHandle,
 	    ],
-	    "optlist" : $[
+	    "subnet" : $[
 		"widget" : `custom,
-		"custom_widget" : `ReplacePoint (`id (`optlist_rp), `SelectionBox (
-		    `id ("optlist"),
-		    _("Configured options"),
-		    []
-		)),
-		"help" : HELPS["optlist"]:"TODO",
-		"init" : optlistInit,
-		"handle" : optlistHandle,
-		"store" : optlistStore,
+		"custom_widget" : `HBox (
+		    `HSpacing (2),
+		    `TextEntry (`id (`subnet), _("Subnet")),
+		    `TextEntry (`id (`netmask), _("Network mask")),
+		    `HSpacing (2)
+		),
+		"help" : HELPS["subnet"]:"TODO",
+		"init" : subnetInit,
+		"store" : subnetStore,
 	    ],
 	];
 	DhcpServerUI::widgets = w;
