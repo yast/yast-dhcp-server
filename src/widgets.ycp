@@ -866,8 +866,8 @@ global define void InitWidgets () ``{
 
     map w = $[
 	"global_table" : getOptionsTableWidget (global_commands),
-	"host_table" : getOptionsTableWidget (subnet_commands),
-	"subnet_table" : getOptionsTableWidget (host_commands),
+	"host_table" : getOptionsTableWidget (host_commands),
+	"subnet_table" : getOptionsTableWidget (subnet_commands),
 	"shared-network_table" : getOptionsTableWidget (common_commands),
 	"pool_table" : getOptionsTableWidget (common_commands),
 	"group_table" : getOptionsTableWidget (common_commands),
