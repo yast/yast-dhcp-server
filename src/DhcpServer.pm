@@ -874,5 +874,189 @@ sub Summary {
     return @ret;
 }
 
+##------------------------------------
+## More high level functions
+
+BEGIN{$TYPEINFO{AddSubnet} = ["function","boolean","string","string"];}
+sub AddSubnet {
+    my $subnet = shift;
+    my $netmask = shift;
+
+    $modified = 1;
+    return CreateEntry ("subnet", "$subnet netmask $netmask", "", "");
+}
+
+BEGIN{$TYPEINFO{DeleteSubnet} = ["function","boolean","string","string"];}
+sub DeleteSubnet {
+    my $subnet = shift;
+    my $netmask = shift;
+
+    $modified = 1;
+    return DeleteEntry ("subnet", "$subnet netmask $netmask");
+}
+
+BEGIN{$TYPEINFO{AddHost} = ["function","boolean","string","string","string"];}
+sub AddHost {
+    my $fix_addr = shift;
+    my $hw_type = shift;
+    my $hw_addr = shift;
+
+    my $ret = CreateEntry ("host", "$fix_addr", "", "");
+
+    my @directives = (
+	{
+	    "key" => "fixed-address",
+	    "value" => "$fix_addr",
+	},
+	{
+	    "key" => "hardware",
+	    "value" => "$hw_type $hw_addr",
+	}
+    );
+    $ret = $ret && SetEntryDirectives ("host", "$fix_addr", \@directives);
+
+    $modified = 1;
+    return Boolean ($ret);
+}
+
+BEGIN{$TYPEINFO{DeleteHost} = ["function","boolean","string"];}
+sub DeleteHost {
+    my $id = shift;
+
+    $modified = 1;
+    return DeleteEntry ("host", "$id");
+}
+
+BEGIN{$TYPEINFO{SetOption} = ["function", ["list",["map","string","string"]],["list",["map","string","string"]],"string","string"];}
+sub SetOption {
+    my $options_ref = shift;
+    my $key = shift;
+    my $value = shift;
+
+    my @options = @{$options_ref};
+
+    if (substr ($key, 0, 7) eq "option ")
+    {
+	$key = substr ($key, 7);
+    }
+    if (defined ($value))
+    {
+	my $found = 0;
+	@options = map {
+	    my %o = %{$_};
+	    if ($o{"key"} eq $key)
+	    {
+		$o{"value"} = $value;
+		$found = 1;
+	    }
+	   \%o;
+	} @options;
+	if (! $found)
+	{
+	    push @options, {
+		"key" => $key,
+		"value" => $value,
+	    };
+	}
+    }
+    else
+    {
+	@options = grep {
+	    my %o = %{$_};
+	    $o{"key"} ne $key;
+	} @options;
+   }
+   return @options;
+}
+
+BEGIN{$TYPEINFO{SetGlobalOption} = ["function","boolean","string","string"];}
+sub SetGlobalOption {
+    my $option = shift;
+    my $value = shift;
+
+    my @options = ();
+    my $ret = 0;
+
+    if (substr ($option, 0, 7) eq "option ")
+    {
+	@options = GetEntryOptions ("", "");
+    }
+    else
+    {
+	@options = GetEntryDirectives ("", "");
+    }
+    @options = SetOption (\@options, $option, $value);
+    if (substr ($option, 0, 7) eq "option ")
+    {
+	$ret = SetEntryOptions ("", "", \@options);
+    }
+    else
+    {
+	$ret = SetEntryDirectives ("", "", \@options);
+    }
+    $modified = 1;
+    return Boolean ($ret);
+}
+
+BEGIN{$TYPEINFO{SetSubnetOption} = ["function","boolean","string","string","string","string"];}
+sub SetSubnetOption {
+    my $subnet = shift;
+    my $netmask = shift;
+    my $option = shift;
+    my $value = shift;
+
+    my @options = ();
+    my $ret = 0;
+
+    if (substr ($option, 0, 7) eq "option ")
+    {
+	@options = GetEntryOptions ("subnet", "");
+    }
+    else
+    {
+	@options = GetEntryDirectives ("subnet", "");
+    }
+    @options = SetOption (\@options, $option, $value);
+    if (substr ($option, 0, 7) eq "option ")
+    {
+	$ret = SetEntryOptions ("subnet", "", \@options);
+    }
+    else
+    {
+	$ret = SetEntryDirectives ("subnet", "", \@options);
+    }
+    $modified = 1;
+    return Boolean ($ret);
+}
+
+BEGIN{$TYPEINFO{SetHostOption} = ["function","boolean","string","string","string"];}
+sub SetHostOption {
+    my $id = shift;
+    my $option = shift;
+    my $value = shift;
+
+    my @options = ();
+    my $ret = 0;
+
+    if (substr ($option, 0, 7) eq "option ")
+    {
+	@options = GetEntryOptions ("host", "$id");
+    }
+    else
+    {
+	@options = GetEntryDirectives ("host", "$id");
+    }
+    @options = SetOption (\@options, $option, $value);
+    if (substr ($option, 0, 7) eq "option ")
+    {
+	$ret = SetEntryOptions ("host", "$id", \@options);
+    }
+    else
+    {
+	$ret = SetEntryDirectives ("host", "$id", \@options);
+    }
+    $modified = 1;
+    return Boolean ($ret);
+}
 
 # EOF
