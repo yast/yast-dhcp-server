@@ -17,6 +17,9 @@
 
 {
     include "testsuite.ycp";
+
+// testedfiles: DhcpServer.ycp
+
     TESTSUITE_INIT ([], nil);
     import "Progress";
     import "DhcpServer";
@@ -73,6 +76,15 @@
 		"DHCPD_INTERFACE" : "eth0 eth2",
 		"DHCPD_RUN_CHROOTED" : "no",
 	    ],
+	],
+	"product" : $[
+	    "features" : $[
+		"USE_DESKTOP_SCHEDULER" : "0",
+		"ENABLE_AUTOLOGIN" : "0",
+		"EVMS_CONFIG" : "0",
+		"IO_SCHEDULER" : "cfg",
+		"UI_MODE" : "expert",
+	    ]
 	],
     ];
     map WRITE = $[];
