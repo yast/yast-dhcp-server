@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Mon Jul 19 12:27:53 CEST 2004 - jsrain@suse.cz
+
+- use common function for checking installed packages (#30872)
+
+-------------------------------------------------------------------
 Wed Jul 14 12:21:56 CEST 2004 - jsrain@suse.cz
 
 - fixed and cleaned-up the initial sequence
