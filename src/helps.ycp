@@ -134,11 +134,11 @@ Here, make several DHCP settings.</p>
 ") +
 
 	// Wizard Installation - Step 2 2/9
-_("<p><b>LDAP Support</b><br>To store the DHCP configuration in LDAP,
+/*_("<p><b>LDAP Support</b><br>To store the DHCP configuration in LDAP,
 enable this check box.</p>
-") +
+") +*/
 
-	// Wizard Installation - Step 2 3/9
+	// Wizard Installation - Step 2 3/9 (2 is removed)
 _("<p><b>Domain Name</b> sets for which domain the DHCP server
 is leasing IPs to clients.</p>
 ") +

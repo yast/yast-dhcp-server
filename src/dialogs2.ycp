@@ -171,11 +171,11 @@ string xxx = _("Primary Name Server");
 // Textentry with secondary name server
 xxx = _("Secondary Name Server");
     term dialog = `VBox(
-            `VBox(
+/*            `VBox(
 		// configuration will be saved in ldap?
                 `Left(`CheckBox(`id("ldap"), `opt( `notify), _("LDAP Support"), true)),
                 `VSpacing(2)
-            ),
+            ),*/
             `HBox(
                 `HWeight(43, `VBox(
 				// Textentry with name of the domain
@@ -303,30 +303,22 @@ void GlobalSettingsInit (string key)
 	}
     });
     
-    UI::ChangeWidget ( `id ("ldap"), `Value, DhcpServer::GetUseLdap () );
+//    UI::ChangeWidget ( `id ("ldap"), `Value, DhcpServer::GetUseLdap () );
 
     GlobalSettingsValidChars ();
 }
 
 void GlobalSettingsHandle (string key, map event)
 {
-    if (event ["ID"]:nil == "ldap" && event ["EventReason"]:nil == "ValueChanged")
+/*    if (event ["ID"]:nil == "ldap" && event ["EventReason"]:nil == "ValueChanged")
     {
 	boolean ldap = (boolean) UI::QueryWidget ( `id ("ldap"), `Value );
-	// warning popup
-//	if (Popup::ContinueCancel (
- string warning = _("You have modified usage of LDAP.
-All your previous settings will be lost.");// ))
-//	{
-	    // LDAP switch
-	    DhcpServer::SetUseLdap (ldap, false);
-	    DhcpServer::InitYapiConfigOptions ($["use_ldap" : ldap]);
-	    DhcpServer::LdapInit ([], true);
-	    DhcpServer::CleanYapiConfigOptions ();
-//	}
+	// LDAP switch
+	SetUseLdap (ldap);
 	ldap = DhcpServer::GetUseLdap ();
 	UI::ChangeWidget (`id ("ldap"), `Value, ldap);
-    }
+    }*/
+    return;
 }
 
 void GlobalSettingsStore (string key, map event)
@@ -1162,6 +1154,9 @@ map<string,map<string,any> > new_widgets = $[
 	// push button
 	"start_manual_button" : _("Start DHCP Server &Manually"),
 
+	"get_use_ldap" : DhcpServer::GetUseLdap,
+	"set_use_ldap" : SetUseLdap,
+
 	"service_id" : "dhcpd",
 	// label - service status
 	"service_running_label" : _("DHCP Server is running"),
@@ -1237,63 +1232,20 @@ symbol CommonConfigDialog () {
 
 
 any FirstRunDialog (string current_tab, integer step_number) {
-// error report
-string qwerty = _("The input value is invalid.");
-// error report
-qwerty = _("At least one name server must be defined.");
+    map<string,any> tab_descr = tabs[current_tab]:$[];
 
     // dialog caption, %1 is step number
     string caption = sformat (_("DHCP Server Wizard (%1/3)"), step_number) 
-	+ " : " + tabs[current_tab, "caption"]: "";
-    string help = HELPS[current_tab]:"";
-    term dialog = tabs[current_tab, "contents" ]: `VSpacing (1);
-    
-    Wizard::SetContents( caption, dialog, help, true, true);
+	+ " : " + tab_descr["caption"]:"";
 
-    // initialize contents
-    void () func = (void ())tabs [current_tab, "init"]:nil;
-    func ();
-    
-    if (quit) return `abort;
-
-    any ret = nil;
-    while(true) {
-
-	map event = UI::WaitForEvent ();
-	
-	ret = event["ID"]:nil;
-
-	if (ret == `abort || ret == `cancel) {
-	    if(confirmAbort()) break;
-	    else continue;
-	}
-	else if (ret == `back) {
-	    break;
-	}
-	else if (ret == `next) {
-	    // store the settings first
-	    func = (void ())tabs [current_tab, "store"]:nil;
-	    func ();
-	    break;
-	}
-	
-	else{
-	    void (map) handler = (void (map))tabs[current_tab, "handle"]: nil;
-	    if ( handler != nil )
-	    {
-		handler (event);
-	    }
-	    else
-	    {
-		y2error("unexpected retcode: %1", ret);
-		continue;
-	    }
-	}
-    }
-
-    return ret;
-
-
+    return CWM::ShowAndRun (
+	tab_descr["widget_names"]:[],
+	new_widgets,
+	tab_descr["contents"]:`VBox (),
+	caption,
+	Label::BackButton (),
+	Label::NextButton (),
+	$[]);
 }
 
 /* EOF */
