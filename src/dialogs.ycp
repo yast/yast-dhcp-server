@@ -45,7 +45,6 @@ global define symbol ReadDialog() ``{
   */
 global define symbol WriteDialog() ``{
     y2milestone ("Running write dialog");
-    Wizard::RestoreHelp (HELPS["read"]:"");
     Wizard::RestoreHelp (HELPS["write"]:"");
     boolean ret = DhcpServer::Write();
     // yes-no popup

@@ -1183,7 +1183,10 @@ void SetStartService (boolean start) {
 }
 
 void SaveAndRestart () {
+    Wizard::CreateDialog ();
+    Wizard::RestoreHelp (HELPS["write"]:"");
     DhcpServer::Write ();
+    UI::CloseDialog ();
 }
 
 map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
