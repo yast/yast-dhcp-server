@@ -11,10 +11,521 @@
 
     textdomain "dhcp-server";
 
+    import "Address";
     import "DhcpServer";
-
-    import "Popup";
     import "Label";
+
+
+// generic routines
+
+    /**
+      * Fetch value from structures
+      * @param opt_id any option id
+      * @param key string option key
+      * @return any the value
+      */
+    global define any fetchValue (any opt_id, string key) ``{
+	if (opt_id == nil)
+	{
+	    return nil;
+	}
+	integer index = tointeger (
+	    regexpsub ((string)opt_id, "^[a-z]+ ([0-9]+)$", "\\1"));
+	any value = "";
+	if (substring (key, 0, 7) == "option ")
+	{
+	    value = current_entry_options[index, "value"]:(any)"";
+	}
+	else
+	{
+	    value = current_entry_directives[index, "value"]:(any)"";
+	}
+	return value;
+    }
+
+    /**
+      * Store value to structures
+      * @param opt_id any option id
+      * @param key string option key
+      * @param value any value to store
+      */
+    global define void storeValue (any opt_id, string key, any value) ``{
+	if (opt_id == nil)
+	{
+	    if (substring (key, 0, 7) == "option ")
+	    {
+		current_entry_options = add (current_entry_options, $[
+		    "key" : substring (key, 7),
+		    "value" : value,
+		]);
+	    }
+	    else
+	    {
+		 current_entry_directives = add (current_entry_directives, $[
+		    "key" : key,
+		    "value" : value,
+		]);
+	    }
+	    return;
+	}
+	if (! is (opt_id, string))
+	    return ;
+	integer index = tointeger (
+	    regexpsub ((string)opt_id, "^[a-z]+ ([0-9]+)$", "\\1"));
+	if (substring (key, 0, 7) == "option ")
+	{
+	    current_entry_options[index, "value"] = value;
+	}
+	else
+	{
+	    current_entry_directives[index, "value"] = value;
+	}
+
+    }
+
+    /**
+      * Fallback function to initialize the settings in the popup
+      * @param opt_id any option id
+      * @param key string option key
+      */
+    global define void commonPopupInit (any opt_id, string key) ``{
+	any value = fetchValue (opt_id, key);
+	if (value != nil)
+	    UI::ChangeWidget (`id (key), `Value, value);
+	UI::SetFocus (`id (key));
+    }
+
+    /**
+      * Fallback function to save settings from the popup
+      * @param opt_id any option id
+      * @param key string option key
+      */
+    global define void commonPopupSave (any opt_id, string key) ``{
+	any value = UI::QueryWidget (`id (key), `Value);
+	storeValue (opt_id, key, value);
+    }
+
+    /**
+      * Fallback function to display summary text in the table
+      * @param opt_id any option id
+      * @param key string option key
+      * @return string summary to be written to the table
+      */
+    global define string commonTableEntrySummary (any opt_id, string key) ``{
+	if (! is (opt_id, string))
+	    return "";
+	integer index = tointeger (
+	    regexpsub ((string)opt_id, "^[a-z]+ ([0-9]+)$", "\\1"));
+	if (substring (key, 0, 7) == "option ")
+	    return sformat ("%1", current_entry_options[index, "value"]:(any)"");
+	else
+	    return sformat ("%1", current_entry_directives[index, "value"]:(any)"");
+    }
+
+    /**
+      * Initialize the settings in the popup
+      * @param opt_id any option id
+      * @param key string option key
+      */
+    global define void textWidgetInit (any opt_id, string key) ``{
+	string value = (string)fetchValue (opt_id, key);
+	if (value != nil)
+	{
+	    while (value != "" && substring (value, 0, 1) == "\"")
+		value = substring (value, 1);
+	    while (value != "" && substring (value, size(value) - 1) == "\"")
+		value = substring (value, 0, size(value) - 1);
+	    UI::ChangeWidget (`id (key), `Value, value);
+	}
+	UI::SetFocus (`id (key));
+    }
+
+    global define void textWidgetStore (any opt_id, string key) ``{
+	any value = UI::QueryWidget (`id (key), `Value);
+	value = sformat ("\"%1\"", value);
+	storeValue (opt_id, key, value);
+    }
+
+    global define boolean ip_address_validate (any opt_id, string key) ``{
+	string value = (string)UI::QueryWidget (`id (key), `Value);
+	if (! Address::Check4 (value))
+	{
+	    Report::Error ("Enter valid address");
+	    UI::SetFocus (`id (key));
+	    return false;
+	}
+	return true;
+    }
+
+    global define void redraw_list (any opt_id, string key, map event, string label) ``{
+	if (event["ID"]:nil == `delete)
+	{
+	    string del_addr
+		= (string)UI::QueryWidget (`id (`addresses), `CurrentItem);
+	    entry_list = filter (string a, entry_list, ``(a != del_addr));
+	}
+	UI::ReplaceWidget (`addresses_rp, `SelectionBox (
+	    `id (`addresses), label, entry_list
+	));
+	UI::ChangeWidget (`id (`delete), `Enabled, size (entry_list) > 0);
+	if (size (entry_list) > 0)
+	{
+	    UI::ChangeWidget (`id (`addresses), `CurrentItem,
+		entry_list[0]:"");
+	}
+
+    }
+
+    global define void init_list (any opt_id, string key, string label) ``{
+	string value = (string)fetchValue (opt_id, key);
+	if (value == nil)
+	    value = "";
+	list<string> values = splitstring (value, ",");
+	values = maplist (string v, values, ``{
+	    while (v != "" && substring (v, 0, 1) == " ")
+		v = substring (v, 1);
+	    while (v != "" && substring (v, size (v) - 1, 1) == " ")
+		v = substring (v, 0, size (v) - 1);
+	    return v;
+	});
+	entry_list = filter (string v, values, ``(v != ""));
+	redraw_list (opt_id, key, $[], label);
+    }
+
+    /**
+      * Initialize the settings in the popup
+      * @param opt_id any option id
+      * @param key string option key
+      */
+    global define void ip_array_init (any opt_id, string key) ``{
+	// selection box
+	init_list (opt_id, key, _("A&ddresses"));
+    }
+
+    global define symbol ip_array_handle (any opt_id, string key, map event) ``{
+	if (event["ID"]:nil == `add)
+	{
+	    string new_addr = (string)UI::QueryWidget (`id (`new_addr), `Value);
+	    if (! Address::Check (new_addr))
+	    {
+		Report::Error ("Entered address is not valid");
+		return nil;
+	    }
+	    entry_list = add (entry_list, new_addr);
+	}
+	redraw_list (opt_id, key, event, _("A&ddresses"));
+	return nil;
+    }
+
+    global define void entry_array_store (any opt_id, string key, map event) ``{
+	storeValue (opt_id, key, mergestring ((list<string>)entry_list,", "));
+    }
+
+    /**
+      * Initialize the settings in the popup
+      * @param opt_id any option id
+      * @param key string option key
+      */
+    global define void uint16_array_init (any opt_id, string key) ``{
+	// selection box
+	init_list (opt_id, key, _("&Values"));
+    }
+
+    global define symbol uint16_array_handle (any opt_id, string key, map event) ``{
+	if (event["ID"]:nil == `add)
+	{
+	    integer val = (integer)UI::QueryWidget (`id (`new_addr), `Value);
+	    entry_list = add (entry_list, tostring (val));
+	}
+	redraw_list (opt_id, key, event, _("&Values"));
+	return nil;
+    }
+
+/*    global define void ip_pair_array_init (any opt_id, string key) ``{
+	string s = (string)fetchValue (opt_id, key);
+	list<string> l = splitstring (s, ",");
+	l = maplist (string e, l, ``{
+	    while (e != "" && substring (e, 0, 1) == " ")
+		e = substring (e, 1);
+	    while (e != "" && substring (e, size (e) - 1) == " ")
+	    {
+		e = substring (e, 0, size (e) - 1);
+	    }
+	    return e;
+	});
+	entry_list = filter (string v, l, ``(v != ""));
+        redraw_list (opt_id, key, $[], _("A&ddresses"));
+    }
+*/
+    global define symbol ip_pair_array_handle (any opt_id, string key, map event) ``{
+	if (event["ID"]:nil == `add)
+	{
+	    string new_addr = (string)UI::QueryWidget (`id (`new_addr), `Value);
+	    list<string> l = splitstring (new_addr, " ");
+	    l = filter (string s, l, ``(s != ""));
+	    if (! (size (l) == 2 && Address::Check (l[0]:"")
+		&& Address::Check (l[1]:"")))
+	    {
+		Report::Error ("Entered addresses are not valid");
+		return nil;
+	    }
+	    entry_list = add (entry_list, new_addr);
+	}
+	redraw_list (opt_id, key, event, _("A&ddresses"));
+	return nil;
+    }
+
+    map option_types = $[
+"option all-subnets-local" :  "flag",
+"option arp-cache-timeout" :  "uint32",
+"option bootfile-name" :  "text",
+"option boot-size" :  "uint16",
+"option broadcast-address" :  "ip-address",
+"option cookie-servers" :  "array_ip-address",
+"option default-ip-ttl" :  "uint8",
+"option default-tcp-ttl" :  "uint8",
+"option dhcp-client-identifier" :  "string",
+"option dhcp-max-message-size" :  "uint16",
+"option domain-name" :  "text",
+"option domain-name-servers" :  "array_ip-address",
+"option extensions-path" :  "text",
+"option finger-server" :  "array_ip-address",
+"option font-servers" :  "array_ip-address",
+"option host-name" :  "string",
+"option ieee802-3-encapsulation" :  "flag",
+"option ien116-name-servers" :  "array_ip-address",
+"option impress-servers" :  "array_ip-address",
+"option interface-mtu" :  "uint16",
+"option ip-forwarding" :  "flag",
+"option irc-server" :  "array_ip-address",
+"option log-servers" :  "array_ip-address",
+"option lpr-servers" :  "array_ip-address",
+"option mask-supplier" :  "flag",
+"option max-dgram-reassembly" :  "uint16",
+"option merit-dump" :  "text",
+"option mobile-ip-home-agent" :  "array_ip-address",
+"option nds-context" :  "string",
+"option nds-servers" :  "array_ip-address",
+"option nds-tree-name" :  "string",
+"option netbios-dd-server" :  "array_ip-address",
+"option netbios-name-servers" :  "array_ip-address",
+"option netbios-node-type" :  "uint8",
+"option netbios-scope" :  "string",
+"option nis-domain" :  "text",
+"option nis-servers" :  "array_ip-address",
+"option nisplus-domain" :  "text",
+"option nisplus-servers" :  "array_ip-address",
+"option nntp-server" :  "array_ip-address",
+"option non-local-source-routing" :  "flag",
+"option ntp-servers" :  "array_ip-address",
+"option nwip-domain" :  "string",
+"option nwip-suboptions" :  "string",
+"option path-mtu-aging-timeout" :  "uint32",
+"option path-mtu-plateau-table" :  "array_uint16",
+"option perform-mask-discovery" :  "flag",
+"option policy-filter" :  "array_ip-address_pair",
+"option pop-server" :  "array_ip-address",
+"option resource-location-servers" :  "array_ip-address",
+"option root-path" :  "text",
+"option router-discovery" :  "flag",
+"option router-solicitation-address" :  "ip-address",
+"option routers" :  "array_ip-address",
+"option slp-directory-agent" :   "slp-discovery-agent",
+"option slp-service-scope" :  "slp-service-scope",
+"option smtp-server" :  "array_ip-address",
+"option static-routes" :  "array_ip-address_pair",
+"option streettalk-directory-assistance-server" :  "array_ip-address",
+"option streettalk-server" :  "array_ip-address",
+"option subnet-mask" :  "ip-address",
+"option swap-server" :  "ip-address",
+"option tcp-keepalive-garbage" :  "flag",
+"option tcp-keepalive-interval" :  "uint32",
+"option tftp-server-name" :  "text",
+"option time-offset" :  "int32",
+"option time-servers" :  "array_ip-address",
+"option trailer-encapsulation" :  "flag",
+"option uap-servers" :  "text",
+"option www-server" :  "array_ip-address",
+"option x-display-manager" :   "array_ip-address",
+"option nwip.nsq-broadcast" :  "flag",
+"option nwip.preferred-dss" :  "array_ip-address",
+"option nwip.nearest-nwip-server" :  "array_ip-address",
+"option nwip.autoretries" :  "uint8",
+"option nwip.autoretry-secs" :  "uint8",
+"option nwip.nwip-1-1" :  "uint8",
+"option nwip.primary-dss" :  "ip-address",
+
+    ];
+
+    map directive_types = $[
+
+
+
+    ];
+
+    global define map uint8_widget () ``{
+	return $[
+	    "widget" : `intfield,
+	    "minimum" : 0,
+	    "maximum" : 255, // 2^8-1
+	];
+    }
+
+    global define map uint16_widget () ``{
+	return $[
+	    "widget" : `intfield,
+	    "minimum" : 0,
+	    "maximum" : 65535, // 2^16-1
+	];
+    }
+
+    global define map uint32_widget () ``{
+	return $[
+	    "widget" : `intfield,
+	    "minimum" : 0,
+	    "maximum" : 4294967295, // 2^32-1
+	];
+    }
+
+    global define map int32_widget () ``{
+	return $[
+	    "widget" : `intfield,
+	    "minimum" : -2147483648, // -2^31
+	    "maximum" : 2147483647, // 2^31-1
+	];
+    }
+
+    global define map text_widget () ``{
+	return $[
+	    "widget" : `textentry,
+	    "init" : textWidgetInit,
+	    "store" : textWidgetStore,
+	];
+    }
+
+    global define map ip_address_widget () ``{
+	return $[
+	    "validate_type" : `function,
+	    "validate_function" : ip_address_validate,
+	];
+    }
+
+    global define map array_ip_address_widget () ``{
+	return $[
+	    "widget" : `custom,
+	    "custom_widget" : `VBox (
+		`ReplacePoint (`id (`addresses_rp),
+		    `SelectionBox (`id (`addresses), _("A&ddresses"), [])
+		),
+		`HBox (
+		    `HStretch (),
+		    `PushButton (`id (`delete), Label::DeleteButton ())
+		),
+		`HBox (
+		    `TextEntry (`id (`new_addr), _("&Add address")),
+		    `VBox (
+			`Label (""),
+			`PushButton (`id (`add), Label::AddButton ())
+		    )
+		)
+	    ),
+	    "init" : ip_array_init,
+	    "store" : entry_array_store,
+	    "handle" : ip_array_handle,
+	];
+    }
+
+    global define map array_uint16_widget () ``{
+	return $[
+	    "widget" : `custom,
+	    "custom_widget" : `VBox (
+		`ReplacePoint (`id (`addresses_rp),
+		    `SelectionBox (`id (`addresses), _("&Values"), [])
+		),
+		`HBox (
+		    `HStretch (),
+		    `PushButton (`id (`delete), Label::DeleteButton ())
+		),
+		`HBox (
+		    `IntField (`id (`new_entry), _("&Add value"), 0, 65535, 0),
+		    `VBox (
+			`Label (""),
+			`PushButton (`id (`add), Label::AddButton ())
+		    )
+		)
+	    ),
+	    "init" : uint16_array_init,
+	    "store" : entry_array_store,
+	    "handle" : uint16_array_handle,
+	];
+    }
+
+    global define map array_ip_address_pair_widget () ``{
+	return $[
+	    "widget" : `custom,
+	    "custom_widget" : `VBox (
+		`ReplacePoint (`id (`addresses_rp),
+		    `SelectionBox (`id (`addresses), _("A&ddresses"), [])
+		),
+		`HBox (
+		    `HStretch (),
+		    `PushButton (`id (`delete), Label::DeleteButton ())
+		),
+		// label (in role of help text)
+		`Left (`Label (_("Split addresses by space"))),
+		`HBox (
+		    `TextEntry (`id (`new_addr), _("&Add address pair")),
+		    `VBox (
+			`Label (""),
+			`PushButton (`id (`add), Label::AddButton ())
+		    )
+		)
+	    ),
+	    "init" : ip_array_init,
+	    "store" : entry_array_store,
+	    "handle" : ip_pair_array_handle,
+	];
+    }
+
+    map widget_types = $[
+	"uint8" : uint8_widget (),
+	"uint16" : uint16_widget (),
+	"uint32" : uint32_widget (),
+	"int32" : int32_widget (),
+	"text" : text_widget (),
+	"string" : $[],
+	"ip-address" : ip_address_widget (),
+	"array_ip-address" : array_ip_address_widget (),
+	"array_uint16" : array_uint16_widget (),
+	"array_ip-address_pair" : array_ip_address_pair_widget (),
+    ];
+
+    /**
+      * Initialization function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void hardwareInit (any opt_id, any opt_key) ``{
+	integer index = tointeger(substring (tostring (opt_id), 10));
+	list<string> l = splitstring (
+	    current_entry_directives[index, "value"]:"",
+	    " ");
+	l = filter (string i, l, ``(i != ""));
+	UI::ChangeWidget (`id (`hw), `Value, l[0]:"ethernet");
+	UI::ChangeWidget (`id (`addr), `Value, l[1]:"");
+    }
+
+    /**
+      * Summary function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void hardwareStore (any opt_id, any opt_key) ``{
+	integer index = tointeger(substring (tostring (opt_id), 10));
+	current_entry_directives[index, "value"] = sformat ("%1 %2",
+	    (string)UI::QueryWidget (`id (`hw), `Value),
+	    (string)UI::QueryWidget (`id (`addr), `Value));
+    }
 
     /**
       * Initialize popups
@@ -23,89 +534,6 @@
       */
     global define void InitPopups () ``{
 	map p = $[
-	    "__interfaces" : $[
-		"table" : $[
-		   // table cell, label
-		    "label" : _("Network Interfaces"),
-		    "summary" : ``(DhcpServer::networkInterfaceSummary ()),
-		    "optional" : false,
-		],
-		"popup" : $[
-		    "widget" : `textentry,
-		    "init" : ``(DhcpServer::networkInterfaceInit ()),
-		    "store" : ``(DhcpServer::networkInterfaceSave ()),
-		    // label -- help text
-		    "help" : _("If multiple interfaces are needed, separate them with spaces."),
-		],
-	    ],
-	    "__firewall" : $[
-		"table" : $[
-		    // table cell, label
-		    "label" : _("Adapt Firewall"),
-		    "optional" : false,
-		    "summary" : ``(DhcpServer::FirewallSummary ()),
-		],
-		"popup" : $[
-		    "widget" : `checkbox,
-		    "init" : ``(DhcpServer::FirewallInit ()),
-		    "store" : ``(DhcpServer::FirewallStore ()),
-		],
-	    ],
-	    "__enable_service" : $[
-		"table" : $[
-		   // table cell, label
-		    "label" : _("Enable DHCP Server at Boot Time"),
-		    "summary" : ``(DhcpServer::enableServiceSummary ()),
-		    "optional" : false,
-		],
-		"popup" : $[
-		    "widget" : `checkbox,
-		    "init" : ``(DhcpServer::enableServiceInit ()),
-		    "store" : ``(DhcpServer::enableServiceSave ()),
-		],
-	    ],
-	    "__subnets" : $[
-		"table" : $[
-		    // table cell, label
-		    "label" : _("Subnets"),
-		    "handle" : `subnets,
-		    "optional" : false,
-		],
-	    ],
-	    "__hosts" : $[
-		"table" : $[
-		    // table cell, label
-		    "label" : _("Hosts"),
-		    "handle" : `hosts,
-		    "optional" : false,
-		],
-	    ],
-	    "____sep" : $[
-		"table" : $[
-		    "label" : "-------------------------------",
-		],
-	    ],
-	    "host" : $[
-		"table" : $[
-		    "optional" : false,
-		],
-	    ],
-	    "subnet" : $[
-		"table" : $[
-		    "optional" : false,
-		],
-	    ],
-	    "netmask" : $[
-		"table" : $[
-		    "optional" : false,
-		],
-	    ],
-	    "range" : $[
-		"popup" : $[
-		    // label -- help text
-		    "help" : _("If multiple ranges are needed, separate them with commas."),
-		],
-	    ],
 	    "log-facility" : $[
 		"popup" : $[
 		    // label -- help text
@@ -125,147 +553,23 @@
 			// test entry, MAC better not to be translated,
 			// translation would decrease the understandability
 			`TextEntry (`id (`addr), _("&MAC Address"))),
-		    "init" : ``(DhcpServer::hardwareInit ()),
-		    "store" : ``(DhcpServer::hardwareSave ()),
+		    "init" : hardwareInit,
+		    "store" : hardwareStore,
 		],
 	    ],
-
 	];
-	DhcpServer::popups = p;
-    }
 
-    /**
-      * Initialization function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      */
-    global define void hardwareInit (any opt_id, any opt_key) ``{
-	list(string) l = splitstring (current_section[opt_key]:"", " ");
-	l = filter (`i, l, ``(i != ""));
-	UI::ChangeWidget (`id (`hw), `Value, l[0]:"ethernet");
-	UI::ChangeWidget (`id (`addr), `Value, l[1]:"");
-    }
+	map options = mapmap (string k, string v, option_types, ``{
+	    map widget = widget_types[v]:$[];
+	    map entry = $[
+		"popup" : widget,
+	    ];
+	    return $[ k : entry ];
+	});
 
-    /**
-      * Summary function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      */
-    global define void hardwareSave (any opt_id, any opt_key) ``{
-	current_section[opt_key] = sformat ("%1 %2",
-	    UI::QueryWidget (`id (`hw), `Value),
-	    UI::QueryWidget (`id (`addr), `Value));
-    }
+	p = union (options, p);
 
-    /**
-      * Summary function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      * @return string table entry summary
-      */
-    global define string networkInterfaceSummary (any opt_id, any opt_key) ``{
-	return settings["__dhcpd_interface"]:false;
+	DhcpServerUI::popups = p;
     }
-
-    /**
-      * Initialization function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      */
-    global define void networkInterfaceInit (any opt_id, any opt_key) ``{
-	UI::ChangeWidget (`id (opt_key), `Value,
-	    settings["__dhcpd_interface"]:false);
-    }
-
-    /**
-      * Summary function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      */
-    global define void networkInterfaceSave (any opt_id, any opt_key)``{
-	settings["__dhcpd_interface"] = UI::QueryWidget (`id (opt_key), `Value);
-    }
-
-    /**
-      * Summary function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      * @return string table entry summary
-      */
-    global define string FirewallSummary (any opt_id, any opt_key) ``{
-	if (! Runlevel::ServiceEnabled("SuSEfirewall2_init"))
-	{
-	    // table cell
-	    return _("SuSEFirewall is not enabled");
-	}
-	else if (adapt_firewall)
-	{
-	    // table cell
-	    return _("Yes");
-	}
-	else
-	{
-	    // table cell
-	    return _("No");
-	}
-    }
-
-    /**
-      * Initialization function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      */
-    global define void FirewallInit (any opt_id, any opt_key) ``{
-	UI::ChangeWidget (`id (opt_key), `Value,
-	    adapt_firewall);
-    }
-
-    /**
-      * Summary function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      */
-    global define void FirewallSave (any opt_id, any opt_key)``{
-	adapt_firewall = UI::QueryWidget (`id (opt_key), `Value);
-    }
-
-    /**
-      * Summary function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      * @return string table entry summary
-      */
-    global define string enableServiceSummary (any opt_id, any opt_key) ``{
-	if (settings["__run_dhcp_server"]:false)
-	{
-	    // table cell
-	    return _("Yes");
-	}
-	else
-	{
-	    // table cell
-	    return _("No");
-	}
-    }
-
-    /**
-      * Initialization function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      */
-    global define void enableServiceInit (any opt_id, any opt_key) ``{
-	UI::ChangeWidget (`id (opt_key), `Value,
-	    settings["__run_dhcp_server"]:false);
-    }
-
-    /**
-      * Summary function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      */
-    global define void enableServiceSave (any opt_id, any opt_key)``{
-	settings["__run_dhcp_server"] = UI::QueryWidget (`id (opt_key), `Value);
-    }
-
 
 }

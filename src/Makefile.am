@@ -18,10 +18,6 @@ ynclude_DATA =			\
 	widgets.ycp		\
 	options.ycp
 
-
-config_DATA =			\
-	dhcp-server.y2cc
-
 desktop_DATA =                  \
 	dhcp-server.desktop
 
@@ -29,7 +25,7 @@ module_DATA =			\
 	DhcpServerUI.ycp	\
 	DhcpServer.pm
 
-EXTRA_DIST = $(client_DATA) $(ynclude_DATA) $(config_DATA) $(module_DATA) $(desktop_DATA)
+EXTRA_DIST = $(client_DATA) $(ynclude_DATA) $(module_DATA) $(desktop_DATA)
 
 dhcp-server:
 	test -l dhcp-server || ln -s . dhcp-server

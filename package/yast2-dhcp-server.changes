@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Fri Feb  6 16:07:23 CET 2004 - jsrain@suse.de
+
+- dropped .y2cc file
+- module rewritten to Perl
+- testsuite updates
+- UI improvements
+- 2.9.1
+
+-------------------------------------------------------------------
 Thu Jan 29 15:15:41 CET 2004 - jsrain@suse.de
 
 - created agent for reading/writing /etc/dhcpd.conf file
