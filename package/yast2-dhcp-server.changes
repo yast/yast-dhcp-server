@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Apr  5 17:21:56 CEST 2004 - jsrain@suse.de
+
+- fixed names of directives in the list of possible directioves
+  to add (#38168)
+- 2.9.16
+
+-------------------------------------------------------------------
 Fri Apr  2 16:05:40 CEST 2004 - jsrain@suse.de
 
 - changed license to GPL
