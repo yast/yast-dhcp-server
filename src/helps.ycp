@@ -42,7 +42,7 @@ To run the DHCP server every time your computer is started, set
 	"chroot" : _("<p><b><big>Chroot Jail</big></b><br>
 To run the DHCP server in chroot jail, set
 <b>Run DHCP Server in Chroot Jail</b>. Starting any daemon in a chroot jail
-is more secure and strongly recommended."),
+is more secure and strongly recommended.</p>"),
 
 	// help text 3/5
 	"ldap_support" : _("<p><b><big>LDAP Support</big></b><br>
@@ -177,7 +177,8 @@ Here, set the default <b>Lease Time</b> for the current IP address range,
 which sets the optimal IP refreshing time for clients.<br></p>") +
 
 	// Wizard Installation - Step 3 3/3
-	_("<b>Max. Lease Time</b> (optional value) sets the maximum time period
+	_("<p><b>Max. Lease Time</b>
+(optional value) sets the maximum time period
 for which this IP is blocked for the client on the DHCP server.</p>"),
 
 	// Help text

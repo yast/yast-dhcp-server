@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Wed Feb 23 12:49:11 CET 2005 - jsrain@suse.cz
+
+- fixed check_ycp errors
+
+-------------------------------------------------------------------
 Tue Feb  8 11:18:42 CET 2005 - jsrain@suse.cz
 
 - allow to specify host name instead of IP address in the dialog
