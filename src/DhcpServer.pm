@@ -1317,20 +1317,12 @@ sub GetUseLdap {
 
     return Boolean($use_ldap);
 }
-BEGIN{$TYPEINFO{SetUseLdap} = ["function", "void", "boolean", "boolean"];}
+BEGIN{$TYPEINFO{SetUseLdap} = ["function", "void", "boolean"];}
 sub SetUseLdap {
     my $self = shift;
     $use_ldap = shift;
-    my $process_change = shift;
 
-    if ($process_change)
-    {
-        $self->LdapStore ();
-        Progress->off ();
-        $self->Read ();
-        Progress->on ();
-        $self->SetModified ();
-    }
+    $self->SetModified ();
 }
 
 ##------------------------------------

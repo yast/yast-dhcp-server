@@ -273,13 +273,17 @@ global define void ldapInit (string id) ``{
 }
 
 /**
- * Store settings of the widget
- * @param id string widget id
- * @param event map event that caused storing process
+ * Set the LDAP usage, reinitalize LDAP support
+ * @param use_ldap boolean true if LDAP is to be used
  */
-global define void ldapStore (string id, map event) ``{
-    boolean ul = (boolean)UI::QueryWidget (`id (id), `Value);
-    DhcpServer::SetUseLdap (ul, false);
+global define void SetUseLdap (boolean use_ldap) {
+    DhcpServer::SetUseLdap (use_ldap);
+    if (! Mode::config)
+    {
+	DhcpServer::InitYapiConfigOptions ($["use_ldap" : use_ldap]);
+	DhcpServer::LdapInit ([], true);
+	DhcpServer::CleanYapiConfigOptions ();
+    }
 }
 
 /**
@@ -298,13 +302,7 @@ global define symbol ldapHandle (string id, map event) ``{
     boolean ldap = (boolean)UI::QueryWidget (`id (id), `Value);
     if (ldap != DhcpServer::GetUseLdap ())
     {
-	DhcpServer::SetUseLdap (ldap, false);
-	if (! Mode::config)
-	{
-	    DhcpServer::InitYapiConfigOptions ($["use_ldap" : ldap]);
-	    DhcpServer::LdapInit ([], true);
-	    DhcpServer::CleanYapiConfigOptions ();
-	}
+	SetUseLdap (ldap);
 	ldap = DhcpServer::GetUseLdap ();
 	UI::ChangeWidget (`id (id), `Value, ldap);
     }
@@ -930,7 +928,6 @@ global define void InitWidgets () ``{
 	    "help" : HELPS["ldap_support"]:"",
 	    "init" : ldapInit,
 	    "handle" : ldapHandle,
-	    "store" : ldapStore,
 	    "opt" : [ `notify ],
 	],
 	"configtree" : $[
