@@ -1,3 +1,19 @@
+Read	.target.size "/etc/install.inf" nil
+Read	.etc.install_inf.Sourcemounted nil
+Read	.etc.install_inf.AutoYaST nil
+Read	.etc.install_inf.Repair nil
+Read	.etc.install_inf.Demo nil
+Read	.etc.install_inf.Textmode nil
+Read	.etc.install_inf.Manual nil
+Read	.target.string "/proc/cmdline" nil
+Read	.etc.install_inf.Console nil
+Read	.etc.install_inf.Braille nil
+Read	.etc.install_inf.VNC nil
+Read	.etc.install_inf.UseSSH nil
+Read	.etc.install_inf.InstMode nil
+Read	.target.tmpdir nil
+Log	Failed to set temporary directory: nil
+Read	.sysconfig.personal-firewall.REJECT_ALL_INCOMING_CONNECTIONS nil
 Execute	.target.bash "rpm -q dhcp-server" 0
 Execute	.target.bash_output "/usr/bin/grep '^# Creation time:' /etc/dhcpd.conf |head -n 1 |sed 's/# Creation time: \\([^$]*\\)/\\1/'" $[]
 Execute	.target.bash_output "date --date='' +\"%s\"" $[]
@@ -5,5 +21,7 @@ Read	.target.stat "/etc/dhcpd.conf" $[]
 Read	.target.size "/var/lib/YaST2/dhcp_server.ycp" 5
 Read	.target.ycp "/var/lib/YaST2/dhcp_server.ycp" $["__run_dhcp_server":true, "globals":$["authoritative":"", "ddns-update-style":"none", "ddns-updates":"off", "default-lease-time":600, "log-facility":"local7", "max-lease-time":7200], "hosts":$["host":$["fixed-address":"10.20.1.50", "hardware":"ethernet 11:22:33:44:55:66", "host":"zealot"]], "subnets":$["subnet10.20.0.0netmask255.255.240.0":$["netmask":"255.255.240.0", "range":"10.20.5.1 10.20.5.10", "subnet":"10.20.0.0"]]]
 Read	.sysconfig.dhcpd.DHCPD_INTERFACE 0
+Read	.init.scripts.exists "SuSEfirewall2_init" true
+Read	.init.scripts.runlevel "SuSEfirewall2_init" $["dhcpd":$["start":[], "stop":[]]]
 Return	true
 Return	$["__dhcpd_interface":0, "__run_dhcp_server":true, "globals":$["authoritative":"", "ddns-update-style":"none", "ddns-updates":"off", "default-lease-time":600, "log-facility":"local7", "max-lease-time":7200], "hosts":$["host":$["fixed-address":"10.20.1.50", "hardware":"ethernet 11:22:33:44:55:66", "host":"zealot"]], "subnets":$["subnet10.20.0.0netmask255.255.240.0":$["netmask":"255.255.240.0", "range":"10.20.5.1 10.20.5.10", "subnet":"10.20.0.0"]]]

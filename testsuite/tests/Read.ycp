@@ -17,8 +17,13 @@
 
 {
     include "testsuite.ycp";
+    TESTSUITE_INIT ([], nil);
     import "Progress";
     import "DhcpServer";
+    import "Mode";
+    TESTSUITE_CLEAN ();
+
+    Mode::test = true;
 
     Progress::off ();
 

@@ -23,6 +23,7 @@
     import "Popup";
     import "Require";
     import "Mode";
+    import "SuSEFirewall";
 
     include "dhcp-server/routines.ycp";
     include "dhcp-server/helps.ycp";
@@ -83,11 +84,15 @@
 
 	Progress::New( caption, " ", 1, [
 	    // progress stage
-	    _("Read the settings"),
+	    _("Read DHCP server settings"),
+	    // progress stage
+	    _("Read firewall settings"),
 	],
 	[
 	    // progress step
-	    _("Reading the settings..."),
+	    _("Reading DHCP server settings..."),
+	    // progress step
+	    _("Reading firewall settings..."),
 	    // progress step
 	    _("Finished")
 	],
@@ -169,6 +174,19 @@ Continue?
 	    settings["__dhcpd_interface"] = "eth0";
 	}
 
+	// read firewall
+	if(UI::PollInput() == `abort) return false;
+	Progress::NextStage();
+
+	if (! Mode::test)
+	{
+	    Progress::off ();
+	    SuSEFirewall::Read ();
+	    Progress::on ();
+	}
+	if (! Runlevel::ServiceEnabled("SuSEfirewall2_init"))
+	    adapt_firewall = false;
+
 	if(UI::PollInput() == `abort) return false;
 	modified = false;
 	return true;
@@ -186,12 +204,16 @@ Continue?
 	// We do not set help text here, because it was set outside
 	Progress::New(caption, " ", 2, [
 	    // progress stage
-	    _("Write the settings"),
+	    _("Write DHCP server settings"),
+	    // progress stage
+	    _("Write firewall settings"),
 	    // progress stage
 	    _("Restart DHCP server"),
 	], [
 	    // progress step
-	    _("Writing the settings..."),
+	    _("Writing DHCP server settings..."),
+	    // progress step
+	    _("Writing firewall settings..."),
 	    // progress step
 	    _("Restarting DHCP server..."),
 	    // progress step
@@ -207,13 +229,19 @@ Continue?
 	createDhcpdConf ();
 	SCR::Write (.target.ycp, "/var/lib/YaST2/dhcp_server.ycp", settings);
 
-	if(UI::PollInput() == `abort) return false;
-	Progress::NextStage();
-
 	// write DHCPD_INTERFACE variable
 	SCR::Write (.sysconfig.dhcpd.DHCPD_INTERFACE,
 	    settings["__dhcpd_interface"]:"");
 	SCR::Write (.sysconfig.dhcpd, nil);
+
+	// write firewall settings
+	if(UI::PollInput() == `abort) return false;
+	Progress::NextStage();
+
+	adaptFirewall ();
+
+	if(UI::PollInput() == `abort) return false;
+	Progress::NextStage();
 
 	if (settings["__run_dhcp_server"]:false)
 	{
@@ -240,7 +268,6 @@ Display the log and continue with configuration?
 	    SCR::Execute (.target.bash, "/etc/init.d/dhcpd stop");
 	    Runlevel::ServiceAdjust ("dhcpd", "disable");
 	}
-	adaptFirewall ();
 
 	if(UI::PollInput() == `abort) return false;
 	return true;
@@ -250,40 +277,35 @@ Display the log and continue with configuration?
       * Adjust the firewall settings if wanted
       */
     global define void adaptFirewall () ``{
+	list(string) interfaces_list = splitstring (settings["__dhcpd_interface"]:"", " ");
+	interfaces_list = filter (string i, interfaces_list, ``(i != ""));
 	if (adapt_firewall)
 	{
+	    foreach (string i, ["INT", "EXT", "DMZ"], ``{
+		y2milestone ("Removing dhcpd iface %1", i);
+		SuSEFirewall::RemoveService ("67", "UDP", i);
+	    });
 	    if (settings["__run_dhcp_server"]:false)
 	    {
-		if (SCR::Read (.sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD)=="no")
-		    SCR::Write (.sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD,
-			"yes");
-		SCR::Write (.sysconfig.SuSEfirewall2.FW_PROTECT_FROM_INTERNAL,
-		    "no");
+		foreach (string i, interfaces_list, ``{
+		    y2milestone ("Adding dhcpd iface %1", i);
+		    SuSEFirewall::AddService ("67", "UDP", i);
+		});
+	    }
+	    if (! Mode::test)
+	    {
+		Progress::off ();
+		SuSEFirewall::Write ();
+		Progress::on ();
+	    }
+	    if (settings["__run_dhcp_server"]:false)
+	    {
+		SCR::Write (.sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD,
+		    SuSEFirewall::MostInsecureInterface (interfaces_list));
 	    }
 	    else
 	    {
 		SCR::Write (.sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD, "no");
-		if ("no" != SCR::Read (
-			.sysconfig.SuSEfirewall2.FW_SERVICE_DNS)
-		    ||"no" != SCR::Read (
-			.sysconfig.SuSEfirewall2.FW_SERVICE_DHCLIENT)
-		    ||"no" != SCR::Read (
-			.sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD)
-		    ||"no" != SCR::Read (
-			.sysconfig.SuSEfirewall2.FW_SERVICE_SQUID)
-		    ||"no" != SCR::Read (
-			.sysconfig.SuSEfirewall2.FW_SERVICE_SAMBA))
-		{
-		    SCR::Write (
-			.sysconfig.SuSEfirewall2.FW_PROTECT_FROM_INTERNAL,
-			"no");
-		}
-		else
-		{
-		    SCR::Write (
-			.sysconfig.SuSEfirewall2.FW_PROTECT_FROM_INTERNAL,
-			"yes");
-		}
 	    }
 
 	    SCR::Write (.sysconfig.SuSEfirewall2, nil);

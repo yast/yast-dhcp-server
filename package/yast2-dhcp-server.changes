@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Wed Oct  1 13:07:02 CEST 2003 - jsrain@suse.de
+
+- smarter configuring of firewall (#30783)
+
+-------------------------------------------------------------------
 Thu Sep 18 10:22:42 CEST 2003 - jsrain@suse.de
 
 - closing dialog properly if read aborted (#31249)

@@ -17,7 +17,9 @@
 
 {
     include "testsuite.ycp";
+    TESTSUITE_INIT ([], nil);
     import "DhcpServer";
+    TESTSUITE_CLEAN ();
 
     DhcpServer::settings["__run_dhcp_server"] = false;
     TEST (``(DhcpServer::Summary ()), [], 0);

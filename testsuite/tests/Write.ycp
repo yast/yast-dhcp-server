@@ -17,8 +17,13 @@
 
 {
     include "testsuite.ycp";
+    TESTSUITE_INIT ([], nil);
     import "Progress";
     import "DhcpServer";
+    import "Mode";
+    TESTSUITE_CLEAN ();
+
+    Mode::test = true;
 
     Progress::off ();
 
@@ -64,6 +69,7 @@
     ];
 
     TEST (``(DhcpServer::Write ()), [READ, WRITE, EXEC], 0);
+    DUMP ("===============================");
     TEST (``(DhcpServer::Import ($[
   "__run_dhcp_server" : true,
   "globals" : $[

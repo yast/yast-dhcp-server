@@ -193,7 +193,12 @@
       * @return string table entry summary
       */
     global define string FirewallSummary (any opt_id, any opt_key) ``{
-	if (adapt_firewall)
+	if (! Runlevel::ServiceEnabled("SuSEfirewall2_init"))
+	{
+	    // table cell
+	    return _("SuSEFirewall is not enabled");
+	}
+	else if (adapt_firewall)
 	{
 	    // table cell
 	    return _("Yes");
