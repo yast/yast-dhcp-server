@@ -87,7 +87,7 @@ YaST::YCP::Import ("Ldap");
 YaST::YCP::Import ("Mode");
 YaST::YCP::Import ("NetworkDevices");
 YaST::YCP::Import ("Netmask");
-YaST::YCP::Import ("Package");
+YaST::YCP::Import ("PackageSystem");
 YaST::YCP::Import ("Service");
 YaST::YCP::Import ("Popup");
 YaST::YCP::Import ("Progress");
@@ -95,7 +95,6 @@ YaST::YCP::Import ("Report");
 YaST::YCP::Import ("SuSEFirewall");
 
 use lib "/usr/share/YaST2/modules";
-use YaPI::LdapServer;
 
 ##-------------------------------------------------------------------------
 ##----------------- TSIG Key Management routines --------------------------
@@ -1366,15 +1365,11 @@ sub Read {
 
     Progress->NextStage ();
 
-    if (! (Mode->config () || Package->Installed ("dhcp-server")))
+    if (! Mode->test ()
+	&& ! PackageSystem->CheckAndInstallPackagesInteractive (["dhcp-server"])
+    )
     {
-	my $installed = Package->Install ("dhcp-server");
-	if (! ($installed || Mode->test ()))
-	{
-	    # error popup
-	    Report->Error (__("Installing required packages failed."));
-	    return Boolean (0);
-	}
+	return Boolean (0);
     }
 
     # initialize the host name of the LDAP server
@@ -2348,18 +2343,27 @@ sub LdapPrepareToWrite {
 	|| 0 != scalar (@{NetworkDevices->Locate ("IPADDR", $ldap_server)}))
     {
 	y2milestone ("LDAP server is local, checking included schemas");
-        my @schemas = @{YaPI::LdapServer->ReadSchemaIncludeList ()};
-        my @dns_schema = grep /dhcp.schema/, @schemas;
-        if (0 == scalar (@dns_schema))
-        {
-            y2milestone ("Including the DHCP schema");
-            push @schemas, "/etc/openldap/schema/dhcp.schema";
-            YaPI::LdapServer->WriteSchemaIncludeList (\@schemas);
-            YaPI::LdapServer->SwitchService(1);
-        }
-	else
+	require YaPI::LdapServer;
+	my @new_schemas = ("/etc/openldap/schema/dhcp.schema");
+	my $schema_added = 0;
+	my @schemas = @{YaPI::LdapServer->ReadSchemaIncludeList ()};
+	foreach my $schema (@new_schemas) {
+	    my @current_schema = grep /$schema/, @schemas;
+	    if (0 == scalar (@current_schema))
+	    {
+		y2milestone ("Including schema $schema");
+		push @schemas, $schema;
+		$schema_added = 1;
+	    }
+	    else
+	    {
+		y2milestone ("Schema $schema is already included");
+	    }
+	}
+	if ($schema_added)
 	{
-	    y2milestone ("DHCP schema is already included");
+	    YaPI::LdapServer->WriteSchemaIncludeList (\@schemas);
+	    YaPI::LdapServer->SwitchService(1);
 	}
     }
     else
