@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Fri Sep  3 14:20:15 CEST 2004 - jsrain@suse.cz
+
+- added SetMofified function to _auto client
+
+-------------------------------------------------------------------
 Mon Aug 30 05:22:31 CEST 2004 - nashif@suse.de
 
 - Added GetModified function to _auto client

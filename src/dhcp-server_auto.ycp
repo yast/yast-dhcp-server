@@ -93,8 +93,14 @@ else if (func == "Reset") {
     DhcpServer::Import($[]);
     ret = $[];
 }
+/* Were the settings modified? */
 else if (func == "GetModified") {
     ret = DhcpServer::GetModified ();
+}
+/* Mark settings as modified */
+else if (func == "GetModified") {
+    DhcpServer::SetModified ();
+    ret = true;
 }
 /* Change configuration (run AutoSequence) */
 else if (func == "Change") {
