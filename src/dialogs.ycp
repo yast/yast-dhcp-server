@@ -42,7 +42,8 @@ global define symbol WriteDialog() ``{
     Wizard::RestoreHelp (HELPS["read"]:"");
     Wizard::RestoreHelp (HELPS["write"]:"");
     boolean ret = DhcpServer::Write();
-    if (! ret && Popup::YesNo (_("Saving the configuration failed. Chamnge the settings?")))
+    // yes-no popup
+    if (! ret && Popup::YesNo (_("Saving the configuration failed. Change the settings?")))
 	return `back;
     return ret ? `next : `abort;
 }
@@ -100,7 +101,8 @@ global define symbol GlobalsDialog () ``{
   */
 global define symbol SubnetDialog () ``{
     y2milestone ("Running subnet dialog");
-    list<map> w = CWM::CreateWidgets (["subnet", "subnet_table"], widgets);
+    list<map> w = CWM::CreateWidgets (["subnet", "subnet_table",
+	"dyn_dns_button"], widgets);
     term contents = `HBox (`HSpacing (2), `VBox (
 	`VSpacing (1),
 	w[0, "widget"]:`VSpacing (0),
@@ -262,7 +264,6 @@ global define symbol SectionTypeChoose () ``{
 	par_type = p["type"]:"";
 	par_id = p["id"]:"";
     }
-    parents = toset (parents);
     list<string> possible = [ "subnet", "host", "shared-network",
 	"group", "pool", "class" ];
     if (contains (parents, "class") || contains (parents, "host")
@@ -285,11 +286,17 @@ global define symbol SectionTypeChoose () ``{
 	return `back;
 
     map labels = $[
+	// radio button
 	"subnet" : _("&Subnet"),
+	// radio button
 	"host" : _("&Host"),
+	// radio button
 	"shared-network" : _("Shared &Network"),
+	// radio button
         "group" : _("&Group"),
+	// radio button
 	"pool" : _("&Pool of addresses"),
+	// radio button
 	"class" : _("&Class"),
     ];
 
@@ -301,15 +308,15 @@ global define symbol SectionTypeChoose () ``{
     contents = add (contents, `VSpacing (1));
     contents = `HBox (`HSpacing (5), contents, `HSpacing (5));
     contents = `RadioButtonGroup (`id (`entry_type), contents);
-	// FIXME frame
-    contents = `Frame (_("FIXME label"), contents);
+    // frame
+    contents = `Frame (_("Declaration types"), contents);
     contents = `HBox (`HStretch (), `VBox (`VStretch (),
 	contents,
     `VStretch ()), `HStretch ());
 
-    // dialog caption  FIXME
-    string caption = _("Select");
-    string help = ""; // FIXME
+    // dialog caption
+    string caption = _("Select Declaration Type");
+    string help = getSelectDeclarationTypeHelp (possible);
 
     Wizard::SetContentsButtons (caption, contents, help,
 	Label::BackButton (), Label::OKButton ());
@@ -345,14 +352,49 @@ global define symbol IfacesDialog () ``{
 	`VStretch ()
     ), `HStretch ());
     // dialog caption
-    string caption = _("Interfaces"); // FIXME
+    string caption = _("Interfaces Configuration");
     string help = CWM::MergeHelps (w);
 
     Wizard::SetContentsButtons (caption, contents, help,
 	Label::BackButton (), Label::OKButton ());
 
     return CWM::Run (w, functions);
-    return `back;
+}
+
+global define symbol DynDnsDialog () ``{
+    list<map> w = CWM::CreateWidgets (["ddns_enable", "zone", "zone_ip",
+	"reverse_zone", "reverse_ip", "key_filename", "create_key_file",
+	"update_global_ddns_settings", "key_file_browse_button"],
+	widgets);
+    term contents = `HBox (`HStretch (), `VBox (
+	`VStretch (),
+	`Left (w[0, "widget"]:`VSpacing (0)),
+	`VSpacing (2),
+	`HBox (
+	    w[1, "widget"]:`VSpacing (0),
+	    w[2, "widget"]:`VSpacing (0)
+	),
+	`HBox (
+	    w[3, "widget"]:`VSpacing (0),
+	    w[4, "widget"]:`VSpacing (0)
+	),
+	`VSpacing (2),
+	`Left (w[7, "widget"]:`VSpacing (0)),
+	`HBox (
+	    w[6, "widget"]:`VSpacing (0),
+	    w[8, "widget"]:`VSpacing (0)
+	),
+	w[5, "widget"]:`VSpacing (0),
+	`VStretch ()
+    ), `HStretch ());
+    // dialog caption
+    string caption = _("Interfaces Configuration");
+    string help = CWM::MergeHelps (w);
+
+    Wizard::SetContentsButtons (caption, contents, help,
+	Label::BackButton (), Label::OKButton ());
+
+    return CWM::Run (w, functions);
 }
 
 // fake dialogs - switchers
@@ -388,6 +430,7 @@ global define symbol SectionStore () ``{
 	DhcpServer::CreateEntry (current_entry_type, current_entry_id,
 	    parent_type, parent_id);
     }
+
     DhcpServer::SetEntryDirectives (current_entry_type, current_entry_id,
 	current_entry_directives);
     DhcpServer::SetEntryOptions (current_entry_type, current_entry_id,

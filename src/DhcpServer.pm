@@ -9,7 +9,7 @@ use strict;
 
 use ycp;
 use YaST::YCP qw(Boolean);
-use Data::Dumper;
+#use Data::Dumper;
 use Time::localtime;
 
 use Locale::gettext;
@@ -47,10 +47,9 @@ my $current_entry_index = 0;
 
 
 
-# FIXME remove this func
-
+# FIXME this should be defined only once for all modules
 sub _ {
-    return $_[0];
+    return gettext ($_[0]);
 }
 
 
@@ -169,7 +168,7 @@ sub PrepareToSave {
 
     my $record_index = FindEntry ($type, $id);
 
-    # FIXME
+    # FIXME return value
     return if ($record_index == -1);
     my %record = %{$settings[$record_index]};
 
@@ -533,7 +532,6 @@ sub GetAllowedInterfaces {
 
 BEGIN{$TYPEINFO{SetAllowedInterfaces} = ["function", "void", ["list", "string"]];}
 sub SetAllowedInterfaces {
-print Dumper ($_);
     @allowed_interfaces = @{$_[0]};
 }
 
@@ -549,8 +547,6 @@ sub SetAdaptFirewall {
 ##------------------------------------
 BEGIN { $TYPEINFO{Read} = ["function", "boolean"]; }
 sub Read {
-
-y2error ("Read the settings");
 
     # Dhcp-server read dialog caption
     my $caption = _("Initializing DHCP Server Configuration");
@@ -572,7 +568,7 @@ y2error ("Read the settings");
     sleep ($sl);
 
 # Check packages
-# TODO
+# TODO check installed packages
 
 # Information about the daemon
 

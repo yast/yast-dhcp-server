@@ -31,6 +31,7 @@ global define symbol MainSequence () ``{
 	"class"			: ``(ClassDialog ()),
 	"section_type_choose"	: ``(SectionTypeChoose ()),
 	"interfaces"		: ``(IfacesDialog ()),
+	"dyn_dns"		: ``(DynDnsDialog ()),
 	"section_type_select"	:[``(SelectEditationDialog ()), true ],
 	"store"			:[``(SectionStore ()), true ],
     ];
@@ -65,6 +66,7 @@ global define symbol MainSequence () ``{
 	"subnet" : $[
 	    `next		: "store",
 	    `abort		: `abort,
+	    `dyn_dns		: "dyn_dns",
 	],
 	"host" : $[
 	    `next		: "store",
@@ -93,6 +95,10 @@ global define symbol MainSequence () ``{
 	"interfaces" : $[
 	    `abort		: `abort,
 	    `next		: "main",
+	],
+	"dyn_dns" : $[
+	    `abort		: `abort,
+	    `next		: "subnet",
 	],
     ];
 

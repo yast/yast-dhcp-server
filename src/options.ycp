@@ -140,12 +140,23 @@
 	UI::SetFocus (`id (key));
     }
 
+    /**
+      * Summary function of a table entry / popup
+      * @param opt_id any option id
+      * @param key any option key
+      */
     global define void textWidgetStore (any opt_id, string key) ``{
 	any value = UI::QueryWidget (`id (key), `Value);
 	value = sformat ("\"%1\"", value);
 	storeValue (opt_id, key, value);
     }
 
+    /**
+      * Validate function of a popup
+      * @param opt_id any option id
+      * @param key any option key
+      * @return boolean true if widget settings ok
+      */
     global define boolean ip_address_validate (any opt_id, string key) ``{
 	string value = (string)UI::QueryWidget (`id (key), `Value);
 	if (! Address::Check4 (value))
@@ -157,6 +168,13 @@
 	return true;
     }
 
+    /**
+      * Redraw selection box widget
+      * @param opt_id any option id
+      * @param key any option key
+      * @param event map event that caused the operation
+      * @param label string label of the selection box
+      */
     global define void redraw_list (any opt_id, string key, map event, string label) ``{
 	if (event["ID"]:nil == `delete)
 	{
@@ -176,6 +194,12 @@
 
     }
 
+    /**
+      * Initialize a selection box
+      * @param opt_id any option id
+      * @param key string option key
+      * @param string label of the selection box
+      */
     global define void init_list (any opt_id, string key, string label) ``{
 	string value = (string)fetchValue (opt_id, key);
 	if (value == nil)
@@ -217,6 +241,11 @@
 	return nil;
     }
 
+    /**
+      * Store function of a table entry / popup
+      * @param opt_id any option id
+      * @param key any option key
+      */
     global define void entry_array_store (any opt_id, string key, map event) ``{
 	storeValue (opt_id, key, mergestring ((list<string>)entry_list,", "));
     }
@@ -241,22 +270,6 @@
 	return nil;
     }
 
-/*    global define void ip_pair_array_init (any opt_id, string key) ``{
-	string s = (string)fetchValue (opt_id, key);
-	list<string> l = splitstring (s, ",");
-	l = maplist (string e, l, ``{
-	    while (e != "" && substring (e, 0, 1) == " ")
-		e = substring (e, 1);
-	    while (e != "" && substring (e, size (e) - 1) == " ")
-	    {
-		e = substring (e, 0, size (e) - 1);
-	    }
-	    return e;
-	});
-	entry_list = filter (string v, l, ``(v != ""));
-        redraw_list (opt_id, key, $[], _("A&ddresses"));
-    }
-*/
     global define symbol ip_pair_array_handle (any opt_id, string key, map event) ``{
 	if (event["ID"]:nil == `add)
 	{
@@ -273,6 +286,43 @@
 	}
 	redraw_list (opt_id, key, event, _("A&ddresses"));
 	return nil;
+    }
+
+    /**
+      * Initialize the settings in the popup
+      * @param opt_id any option id
+      * @param key string option key
+      */
+    global define void flagInit (any opt_id, string key) ``{
+	any value = fetchValue (opt_id, key);
+	UI::ChangeWidget ( `id (key), `Value, value != "off");
+    }
+
+    /**
+      * Store function of a table entry / popup
+      * @param opt_id any option id
+      * @param key any option key
+      */
+    global define void flagStore (any opt_id, string key, map event) ``{
+	boolean value = (boolean)UI::QueryWidget ( `id (key), `Value);
+	storeValue (opt_id, key, value ? "on" : "off");
+    }
+
+    /**
+      * Summary function of a table entry / popup
+      * @param opt_id any option id
+      * @param key any option key
+      * @return string value to be displayed in the table
+      */
+    global define string flagSummary (any opt_id, string key) ``{
+	any value = fetchValue (opt_id, key);
+	if (value != "off")
+	{
+	    // table item, means switched on
+	    return _("On");
+	}
+	// table item, means switched off
+	return _("Off");
     }
 
     map option_types = $[
@@ -355,14 +405,77 @@
 "option nwip.nwip-1-1" :  "uint8",
 "option nwip.primary-dss" :  "ip-address",
 
+"allow" : "adi",
+"deny" : "adi",
+"ignore" : "adi",
+
+/*Possible values in the scope:
+unknown-clients
+known-clients
+bootp
+booting
+duplicates
+declines
+client-updates
+known-clients
+unknown-clients
+members of &quot;class&quot;
+dynamic bootp clients
+authenticated clients
+unauthenticated clients
+all clients
+
+authenticated clients
+unauthenticated clients
+all clients*/
+
+"always-broadcast" : "flag",
+"always-reply-rfc1048" : "flag",
+"authoritative" : "flag",
+"not authoritative" : "flag",
+"boot-unknown-clients" : "flag",
+"ddns-hostname" : "name",
+"ddns-domainname" : "name",
+"ddns-rev-domainname"  : "name",
+"ddns-update-style" : "style",
+"ddns-updates" : "flag",
+"default-lease-time" : "time",
+"do-forward-updates" : "flag",
+"dynamic-bootp-lease-cutoff" : "date",
+"dynamic-bootp-lease-length" : "length",
+"filename" : "filename",
+"fixed-address" : "array_ip-address",
+"get-lease-hostnames" : "flag",
+"hardware" : "hardware",
+"lease-file-name" : "name",
+"local-port" : "port",
+"log-facility" : "facility",
+"max-lease-time" : "time",
+"min-lease-time" : "time",
+"min-secs" : "seconds",
+"next-server" : "server-name",
+"omapi-port" : "port",
+"one-lease-per-client" : "flag",
+"pid-file-name" : "name",
+"ping-check" : "flag",
+"ping-timeout" : "seconds",
+"ping-timeout" : "seconds",
+"server-identifier" : "hostname",
+"server-name" : "name",
+"site-option-space" : "name",
+"stash-agent-options" : "flag",
+"update-optimization" : "flag",
+"update-static-leases" : "flag",
+"use-host-decl-names" : "flag",
+"use-lease-addr-for-default-route" : "flag",
+"vendor-option-space" : "string",
+
     ];
 
-    map directive_types = $[
-
-
-
-    ];
-
+    /**
+      * Get popup description map for an option type
+      * @return popup description map
+      */
     global define map uint8_widget () ``{
 	return $[
 	    "widget" : `intfield,
@@ -371,6 +484,10 @@
 	];
     }
 
+    /**
+      * Get popup description map for an option type
+      * @return popup description map
+      */
     global define map uint16_widget () ``{
 	return $[
 	    "widget" : `intfield,
@@ -379,6 +496,10 @@
 	];
     }
 
+    /**
+      * Get popup description map for an option type
+      * @return popup description map
+      */
     global define map uint32_widget () ``{
 	return $[
 	    "widget" : `intfield,
@@ -387,6 +508,10 @@
 	];
     }
 
+    /**
+      * Get popup description map for an option type
+      * @return popup description map
+      */
     global define map int32_widget () ``{
 	return $[
 	    "widget" : `intfield,
@@ -395,6 +520,10 @@
 	];
     }
 
+    /**
+      * Get popup description map for an option type
+      * @return popup description map
+      */
     global define map text_widget () ``{
 	return $[
 	    "widget" : `textentry,
@@ -403,6 +532,10 @@
 	];
     }
 
+    /**
+      * Get popup description map for an option type
+      * @return popup description map
+      */
     global define map ip_address_widget () ``{
 	return $[
 	    "validate_type" : `function,
@@ -410,11 +543,16 @@
 	];
     }
 
+    /**
+      * Get popup description map for an option type
+      * @return popup description map
+      */
     global define map array_ip_address_widget () ``{
 	return $[
 	    "widget" : `custom,
 	    "custom_widget" : `VBox (
 		`ReplacePoint (`id (`addresses_rp),
+		    // selection box
 		    `SelectionBox (`id (`addresses), _("A&ddresses"), [])
 		),
 		`HBox (
@@ -422,7 +560,8 @@
 		    `PushButton (`id (`delete), Label::DeleteButton ())
 		),
 		`HBox (
-		    `TextEntry (`id (`new_addr), _("&Add address")),
+		    // text entry
+		    `TextEntry (`id (`new_addr), _("&New address")),
 		    `VBox (
 			`Label (""),
 			`PushButton (`id (`add), Label::AddButton ())
@@ -435,11 +574,16 @@
 	];
     }
 
+    /**
+      * Get popup description map for an option type
+      * @return popup description map
+      */
     global define map array_uint16_widget () ``{
 	return $[
 	    "widget" : `custom,
 	    "custom_widget" : `VBox (
 		`ReplacePoint (`id (`addresses_rp),
+		    // selection box
 		    `SelectionBox (`id (`addresses), _("&Values"), [])
 		),
 		`HBox (
@@ -447,7 +591,8 @@
 		    `PushButton (`id (`delete), Label::DeleteButton ())
 		),
 		`HBox (
-		    `IntField (`id (`new_entry), _("&Add value"), 0, 65535, 0),
+		    // int field
+		    `IntField (`id (`new_entry), _("&New value"), 0, 65535, 0),
 		    `VBox (
 			`Label (""),
 			`PushButton (`id (`add), Label::AddButton ())
@@ -460,11 +605,16 @@
 	];
     }
 
+    /**
+      * Get popup description map for an option type
+      * @return popup description map
+      */
     global define map array_ip_address_pair_widget () ``{
 	return $[
 	    "widget" : `custom,
 	    "custom_widget" : `VBox (
 		`ReplacePoint (`id (`addresses_rp),
+		    // selection box
 		    `SelectionBox (`id (`addresses), _("A&ddresses"), [])
 		),
 		`HBox (
@@ -474,6 +624,7 @@
 		// label (in role of help text)
 		`Left (`Label (_("Split addresses by space"))),
 		`HBox (
+		    // push button
 		    `TextEntry (`id (`new_addr), _("&Add address pair")),
 		    `VBox (
 			`Label (""),
@@ -516,7 +667,7 @@
     }
 
     /**
-      * Summary function of a table entry / popup
+      * Store function of a table entry / popup
       * @param opt_id any option id
       * @param opt_key any option key
       */
@@ -557,14 +708,30 @@
 		    "store" : hardwareStore,
 		],
 	    ],
+	    "flag" : $[
+		"table" : $[
+		    "summary" : flagSummary,
+		],
+		"popup" : $[
+		    "widget" : `checkbox,
+		    "init" : flagInit,
+		    "store" : flagStore,
+		],
+	    ],
 	];
 
 	map options = mapmap (string k, string v, option_types, ``{
 	    map widget = widget_types[v]:$[];
-	    map entry = $[
-		"popup" : widget,
-	    ];
-	    return $[ k : entry ];
+	    if (widget != $[])
+	    {
+		map entry = $[
+		    "popup" : widget,
+		];
+		return $[ k : entry ];
+	    }
+	    if (haskey (p, v))
+		return $[ k : p[v]:$[] ];
+	    return $[ k : $[] ];
 	});
 
 	p = union (options, p);

@@ -149,8 +149,12 @@ _("Really leave the DHCP server configuration without saving?
 All changes will be lost."));
     }
 
-
-global define symbol dhcpEnabledOrDisabled (string id, map event) ``{
+/**
+ * Enable or disable a widget according the current status of the service
+ * @param id string widget id
+ * @param event map event that caused storing process
+ */
+global define void dhcpEnabledOrDisabled (string id, map event) ``{
     any ev_id = event["ID"]:nil;
     if (ev_id == "boot" || ev_id == "never")
     {
@@ -181,20 +185,24 @@ global define void startStore (string id, map event) ``{
 
 /**
  * Handle function of the widget
- * @param id any widget id
+ * @param id string widget id
  * @param event map event that caused storing process
- * @return any always nil
+ * @return symbol always nil
  */
-global define any startHandle (string id, map event) ``{
+global define symbol startHandle (string id, map event) ``{
     boolean start = (boolean)UI::QueryWidget (`id ("start"), `Value);
     if (start != DhcpServer::GetStartService ())
 	DhcpServer::SetModified ();
     return nil;
 }
 
-global define void interfaceInit (string id) ``{
-    list<string> ifaces = DhcpServer::GetAllowedInterfaces ();
-    UI::ChangeWidget (`id (id), `Value, ifaces[0]:"");
+/**
+ * Initialize the widget
+ * @param id any widget id
+ */
+global define void FirewallInit (string id) ``{
+    boolean adapt = DhcpServer::GetAdaptFirewall ();
+    UI::ChangeWidget (`id (id), `Value, adapt);
 }
 
 /**
@@ -202,18 +210,6 @@ global define void interfaceInit (string id) ``{
  * @param id string widget id
  * @param event map event that caused storing process
  */
-global define void interfaceStore (string id, map event) ``{
-    string iface = (string)UI::QueryWidget (`id (id), `Value);
-    list<string> l = [ iface ];
-    DhcpServer::SetAllowedInterfaces (l);
-    DhcpServer::SetModified ();
-}
-
-global define void FirewallInit (string id) ``{
-    boolean adapt = DhcpServer::GetAdaptFirewall ();
-    UI::ChangeWidget (`id (id), `Value, adapt);
-}
-
 global define void FirewallStore (string id, map event) ``{
     boolean adapt = (boolean)UI::QueryWidget (`id (id), `Value);
     DhcpServer::SetAdaptFirewall (adapt);
@@ -221,6 +217,12 @@ global define void FirewallStore (string id, map event) ``{
 }
 
 
+/**
+ * Handle function of the widget
+ * @param id string widget id
+ * @param event map event that caused storing process
+ * @return symbol always nil
+ */
 global define symbol configTreeHandle (string id, map event) ``{
     if (event["ID"]:nil == `log)
     {
@@ -315,12 +317,15 @@ global define symbol configTreeHandle (string id, map event) ``{
     }
     else if (event["ID"]:nil == `move)
     {
-
-// TODO
+// TODO move button
     }
     return nil;
 }
 
+/**
+ * Initialize the widget
+ * @param id any widget id
+ */
 global define void configTreeInit (string id) ``{
     list items = getItems ("", "");
     items = [
@@ -329,7 +334,8 @@ global define void configTreeInit (string id) ``{
     UI::ReplaceWidget (`configtree_rp, `Tree (
 	`id ("configtree"),
 	`opt (`notify),
-	_("&Configuration"),
+	// tree widget
+	_("&Configured Declarations"),
         items
     ));
     UI::ChangeWidget (`id ("configtree"), `CurrentItem, " ");
@@ -337,6 +343,10 @@ global define void configTreeInit (string id) ``{
     return;
 }
 
+/**
+ * Initialize the widget
+ * @param id any widget id
+ */
 global define void subnetInit (string id) ``{
     list<string> l = regexptokenize (current_entry_id,
 	"^[ \t]*([^ \t]+)[ \t]*netmask[ \t]*([^ \t]+)[ \t]*$");
@@ -356,6 +366,10 @@ global define void subnetStore (string id, map event) ``{
     current_entry_id = id;
 }
 
+/**
+ * Initialize the widget
+ * @param id any widget id
+ */
 global define void idInit (string id) ``{
     UI::ChangeWidget (`id (id), `Value, current_entry_id);
 }
@@ -370,17 +384,126 @@ global define void idStore (string id, map event) ``{
 	UI::QueryWidget (`id (id), `Value);
 }
 
+/**
+ * Initialize the widget
+ * @param id any widget id
+ */
 global define void interfacesInit (string id) ``{
     list ifaces = DhcpServer::GetAllowedInterfaces ();
     UI::ChangeWidget (`id (id), `SelectedItems, ifaces);
 }
 
+/**
+ * Store settings of the widget
+ * @param id string widget id
+ * @param event map event that caused storing process
+ */
 global define void interfacesStore (string id, map event) ``{
     list ifaces = (list)UI::QueryWidget (`id (id), `SelectedItems);
     DhcpServer::SetAllowedInterfaces ((list<string>)ifaces);
     DhcpServer::SetModified ();
 }
 
+/**
+ * Initialize the widget
+ * @param id any widget id
+ */
+global define void DynDnsButtonInit (string id) ``{
+    UI::ReplaceWidget (`_tp_table_repl, `PushButton (`id ("dyn_dns_button"),
+	// push button
+	_("Dynamic DNS")));
+}
+
+/**
+ * Handle events of the widget
+ * @param id string widget id
+ * @param event map event that is handled
+ * @return symbol for WS
+ */
+global define symbol DynDnsButtonHandle (string id, map event) ``{
+    return `dyn_dns;
+}
+
+global define void DDNSZonesHandle (any id) ``{
+    boolean enabled = (boolean)UI::QueryWidget (`id ("ddns_enable"), `Value);
+    UI::ChangeWidget (`id ("zone"), `Enabled, enabled);
+    UI::ChangeWidget (`id ("zone_ip"), `Enabled, enabled);
+    UI::ChangeWidget (`id ("reverse_zone"), `Enabled, enabled);
+    UI::ChangeWidget (`id ("reverse_zone"), `Enabled, enabled);
+}
+
+global define void DDNSZonesInit (any id) ``{
+    string zone = "";
+    string ip = "";
+    string rev_zone = "";
+    string rev_ip = "";
+    boolean found_ddns = false;
+    foreach (map d, current_entry_directives, ``{
+	if (d["key"]:"" == "zone")
+	{
+	    string value = (string)(d["value"]:"");
+	    list<string> l = regexptokenize (value, "^[ \t]*([^ \t]+)[ \t]*\\{[ \t]*primary[ \t]+([^ \t]+)[ \t]*;[ \t]*key[ \t]+DHCP_UPDATER[ \t]*;[ \t]*\}[ \t]*$");
+	    y2error ("L: %1", l);
+	    if (size (l) == 2)
+	    {
+		string z = l[0]:"";
+		string a = l[1]:"";
+		if (issubstring (z, "in-addr.arpa"))
+		{
+		    rev_zone = z;
+		    rev_ip = a;
+		}
+		else
+		{
+		    zone = z;
+		    ip = a;
+		}
+		found_ddns = true;
+	    }
+	}
+    });
+    if (found_ddns)
+    {
+	UI::ChangeWidget (`id ("zone"), `Value, zone);
+	UI::ChangeWidget (`id ("zone_ip"), `Value, ip);
+	UI::ChangeWidget (`id ("reverse_zone"), `Value, rev_zone);
+	UI::ChangeWidget (`id ("reverse_ip"), `Value, rev_ip);
+    }
+    UI::ChangeWidget (`id ("ddns_enable"), `Value, found_ddns);
+}
+
+global define void DDNSZonesStore (any id, map event) ``{
+    current_entry_directives = filter (map m, current_entry_directives, ``(
+	m["key"]:"" != "zone"
+    ));
+    if ((boolean)UI::QueryWidget (`id ("ddns_enable"), `Value))
+    {
+	string zone = (string)UI::QueryWidget (`id ("zone"), `Value);
+	string ip = (string)UI::QueryWidget (`id ("ip"), `Value);
+	string rev_zone = (string)UI::QueryWidget (`id ("reverse_zone"),`Value);
+	string rev_ip = (string)UI::QueryWidget (`id ("reverse_ip"), `Value);
+	if (ip == "")
+	    ip = "127.0.0.1";
+	if (rev_ip == "")
+	    rev_ip = "127.0.0.1";
+	if (zone != "")
+	{
+	    current_entry_directives = add (current_entry_directives, $[
+		"key" : "zone",
+		"value" : sformat ("%1 { primary %2; key DHCP_UPDATER; }",
+		    zone, ip),
+	    ]);
+	}
+	if (rev_zone != "")
+	{
+	    current_entry_directives = add (current_entry_directives, $[
+		"key" : "zone",
+		"value" : sformat ("%1 { primary %2; key DHCP_UPDATER; }",
+		    rev_zone, rev_ip),
+	    ]);
+	}
+    }
+}
 
 /**
   * Initialize widgets
@@ -462,8 +585,14 @@ global define void InitWidgets () ``{
 	"pool_table" : getOptionsTableWidget (common_commands),
 	"group_table" : getOptionsTableWidget (common_commands),
 	"class_table" : getOptionsTableWidget (class_commands),
+	"dyn_dns_button" : $[
+	    "init" : DynDnsButtonInit,
+	    "handle" : DynDnsButtonHandle,
+	    "handle_events" : [ "dyn_dns_button" ],
+	],
 	"start" : $[
 		"widget" : `checkbox,
+		// check box
 		"label" : _("&Start DHCP server"),
 		"help" : HELPS["start"]:"",
 		"init" : startInit,
@@ -471,19 +600,13 @@ global define void InitWidgets () ``{
 		"store" : startStore,
 		"opt" : [`notify],
 	],
-	"interface" : $[
-		"widget" : `textentry,
-		"label" : _("Network &interface"),
-		"help" : HELPS["interface"]:"FIXME",
-		"init" : interfaceInit,
-		"store" : interfaceStore,
-	],
 	"configtree" : $[
 		"widget" : `custom,
 		"custom_widget" : `VBox (
 		    `ReplacePoint (`id (`configtree_rp), `Tree (
 			`id ("configtree"),
-			_("&Configuration"),
+			// tree widget
+			_("&Configured declarations"),
 			[]
 		    )),
 		    `HBox (
@@ -492,9 +615,12 @@ global define void InitWidgets () ``{
 			`PushButton (`id (`delete), Label::DeleteButton ()),
 //			`PushButton (`id (`move), _("&Move")),
 			`HStretch (),
+			// menu button
 			`MenuButton (`id (`adv), _("Ad&vanced"), [
+			    // item of a menu button
 			    `item (`id (`log), _("Display &log")),
-			    `item (`id (`interfaces), _("Configure &interfaces")), // FIXME
+			    // item of a menu button
+			    `item (`id (`interfaces), _("&Interfaces configuration")),
 			])
 		    )),
 		"help" : HELPS["configtree"]:"",
@@ -505,7 +631,9 @@ global define void InitWidgets () ``{
 		"widget" : `custom,
 		"custom_widget" : `HBox (
 		    `HSpacing (2),
+		    // text entry
 		    `TextEntry (`id (`subnet), _("&Network Address")),
+		    // text entry
 		    `TextEntry (`id (`netmask), _("Network &Mask")),
 		    `HSpacing (2)
 		),
@@ -515,6 +643,7 @@ global define void InitWidgets () ``{
 	    ],
 	    "host" : $[
 		"widget" : `textentry,
+		// text entry
 		"label" : _("Host &name"),
 		"help" : HELPS["host"]:"",
 		"init" : idInit,
@@ -522,13 +651,15 @@ global define void InitWidgets () ``{
 	],
 	"group" : $[
 		"widget" : `textentry,
+		// text entry
 		"label" : _("Group &Name"),
-		"help" : HELPS["group"]:"TODO",
+		"help" : HELPS["group"]:"",
 		"init" : idInit,
 		"store" : idStore,
 	],
 	"pool" : $[
 		"widget" : `textentry,
+		// text entry
 		"label" : _("Pool &Name"),
 		"help" : HELPS["pool"]:"",
 		"init" : idInit,
@@ -536,15 +667,17 @@ global define void InitWidgets () ``{
 	],
 	"shared-network" : $[
 		"widget" : `textentry,
+		// text entry
 		"label" : _("Shared network &name"),
-		"help" : HELPS["shared-network"]:"TODO",
+		"help" : HELPS["shared-network"]:"",
 		"init" : idInit,
 		"store" : idStore,
 	],
 	"class" : $[
 		"widget" : `textentry,
+		// text entry
 		"label" : _("Class &name"),
-		"help" : HELPS["class"]:"TODO",
+		"help" : HELPS["class"]:"",
 		"init" : idInit,
 		"store" : idStore,
 	],
@@ -552,6 +685,7 @@ global define void InitWidgets () ``{
 	    "widget" : `custom,
 	    "custom_widget" : `MultiSelectionBox (
 		`id ("interfaces"),
+		// multi selection box
 		_("Available interfaces"),
 		filter (string s, (list<string>)SCR::Dir (.network.section), ``(
 		    s != "lo"
@@ -569,6 +703,51 @@ global define void InitWidgets () ``{
 	    "store" : FirewallStore,
 	    "help" : HELPS["adapt_firewall"]:"",
 	],
+	"ddns_enable" : $[
+	    "widget" : `checkbox,
+	    // check box
+	    "label" : _("&Enable Dynamic DNS for this subnet"),
+	    "opt" : [ `notify ],
+	    "help" : HELPS["enable_ddns"]:"",
+	],
+	"zone" : $[
+	    "widget" : `textentry,
+	    "label" : _("Zone"),
+	    "init" : DDNSZonesInit,
+	    "store" : DDNSZonesStore,
+	],
+	"zone_ip" : $[
+	    "widget" : `textentry,
+	    "label" : _("Primary DNS server"),
+	],
+        "reverse_zone": $[
+	    "widget" : `textentry,
+	    "label" : _("Reverse Zone"),
+	],
+	"reverse_ip" : $[
+	    "widget" : `textentry,
+	    "label" : _("Primary DNS server of Reverse Zone"),
+	],
+	"key_filename" : $[
+	    "widget" : `textentry,
+	    "label" : _("Primary DNS server of Reverse Zone"),
+	],
+	"key_file_browse_button" : $[
+//	    "widget" : `pushbutton,
+//	    "label" : Label::BrowseButton (),
+	],
+	"create_key_file" : $[
+	    "widget" : `checkbox,
+	    "label" : _("Create updater key file"),
+	],
+        "update_global_ddns_settings" : $[
+	    "widget": `checkbox,
+	    "label": _("Update global DHCP server settings"),
+	    "opt" : [ `notify ],
+	    "help" : HELPS["update_global_ddns"]:"",
+	],
+
+
     ];
     DhcpServerUI::widgets = w;
 }
