@@ -19,5 +19,5 @@ X-SuSE-YaST-AutoInstResource=dhcp-server
 Icon=dhcp-server
 Exec=/sbin/yast2 dhcp-server 
 
-Name=DHCP server
+Name=DHCP Server
 GenericName=Configure DHCP Server
