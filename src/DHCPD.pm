@@ -201,11 +201,11 @@ sub AddDeclaration {
 
     DhcpServer->InitYapiConfigOptions ($config_options);
     
-    Progress::off ();
+    Progress->off ();
     my $ret = DhcpServer->Read ();
     $ret = $ret && DhcpServer->CreateEntry ($type, $id, $parent_type, $parent_id);
     $ret = $ret && DhcpServer->Write ();
-    Progress::on ();
+    Progress->on ();
 
     DhcpServer->CleanYapiConfigOptions ();
 
@@ -238,11 +238,11 @@ sub DeleteDeclaration {
 
     DhcpServer->InitYapiConfigOptions ($config_options);
 
-    Progress::off ();
+    Progress->off ();
     my $ret = DhcpServer->Read ();
     $ret = $ret && DhcpServer->DeleteEntry ($type, $id);
     $ret = $ret && DhcpServer->Write ();
-    Progress::on ();
+    Progress->on ();
 
     DhcpServer->CleanYapiConfigOptions ();
 
@@ -286,14 +286,14 @@ sub GetDeclarationParent {
 
     DhcpServer->InitYapiConfigOptions ($config_options);
 
-    Progress::off ();
+    Progress->off ();
     my $ret = DhcpServer->Read ();
     my $parent = undef;
     if ($ret)
     {
 	$parent = DhcpServer->GetEntryParent ($type, $id);
     }
-    Progress::on ();
+    Progress->on ();
 
     DhcpServer->CleanYapiConfigOptions ();
 
@@ -328,11 +328,11 @@ sub SetDeclarationParent {
 
     DhcpServer->InitYapiConfigOptions ($config_options);
 
-    Progress::off ();
+    Progress->off ();
     my $ret = DhcpServer->Read ();
     $ret = $ret && DhcpServer->SetEntryParent ($type, $id, $new_par_type, $new_par_id);
     $ret = $ret && DhcpServer->Write ();
-    Progress::on ();
+    Progress->on ();
 
     DhcpServer->CleanYapiConfigOptions ();
 
@@ -374,14 +374,14 @@ sub GetChildrenOfDeclaration {
 
     DhcpServer->InitYapiConfigOptions ($config_options);
 
-    Progress::off ();
+    Progress->off ();
     my $ret = DhcpServer->Read ();
     my $children = undef;
     if ($ret)
     {
 	$children = DhcpServer->GetChildrenOfEntry ($type, $id);
     }
-    Progress::on ();
+    Progress->on ();
 
     DhcpServer->CleanYapiConfigOptions ();
 
@@ -425,14 +425,14 @@ sub GetDeclarationOptions {
 
     DhcpServer->InitYapiConfigOptions ($config_options);
 
-    Progress::off ();
+    Progress->off ();
     my $ret = DhcpServer->Read ();
     my $options = undef;
     if ($ret)
     {
 	$options = DhcpServer->GetEntryOptions ($type, $id);
     }
-    Progress::on ();
+    Progress->on ();
 
     DhcpServer->CleanYapiConfigOptions ();
 
@@ -475,11 +475,11 @@ sub SetDeclarationOptions {
 
     DhcpServer->InitYapiConfigOptions ($config_options);
 
-    Progress::off ();
+    Progress->off ();
     my $ret = DhcpServer->Read ();
     $ret = $ret && DhcpServer->SetEntryOptions ($type, $id, $options);
     $ret = $ret && DhcpServer->Write ();
-    Progress::on ();
+    Progress->on ();
 
     DhcpServer->CleanYapiConfigOptions ();
 
@@ -523,14 +523,14 @@ sub GetDeclarationDirectives {
 
     DhcpServer->InitYapiConfigOptions ($config_options);
 
-    Progress::off ();
+    Progress->off ();
     my $ret = DhcpServer->Read ();
     my $directives = undef;
     if ($ret)
     {
 	$directives = DhcpServer->GetEntryDirectives ($type, $id);
     }
-    Progress::on ();
+    Progress->on ();
 
     DhcpServer->CleanYapiConfigOptions ();
 
@@ -573,11 +573,11 @@ sub SetDeclarationDirectives {
 
     DhcpServer->InitYapiConfigOptions ($config_options);
 
-    Progress::off ();
+    Progress->off ();
     my $ret = DhcpServer->Read ();
     $ret = $ret && DhcpServer->SetEntryDirectives ($type, $id, $directives);
     $ret = $ret && DhcpServer->Write ();
-    Progress::on ();
+    Progress->on ();
 
     DhcpServer->CleanYapiConfigOptions ();
 
@@ -620,10 +620,10 @@ sub ExistsDeclaration {
 
     DhcpServer->InitYapiConfigOptions ($config_options);
 
-    Progress::off ();
+    Progress->off ();
     my $ret = DhcpServer->Read ();
     $ret = $ret && DhcpServer->ExistsEntry ($type, $id);
-    Progress::on ();
+    Progress->on ();
 
     DhcpServer->CleanYapiConfigOptions ();
 

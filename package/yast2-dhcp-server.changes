@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Tue Jun 22 13:03:46 CEST 2004 - jsrain@suse.cz
+
+- fixed syntax in YaPI file (#42012)
+
+-------------------------------------------------------------------
 Thu Jun 17 13:10:50 CEST 2004 - jsrain@suse.cz
 
 - using common implementation of the navigation tree
