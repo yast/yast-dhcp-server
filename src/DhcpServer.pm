@@ -511,7 +511,7 @@ sub GetChildrenOfEntry {
     @{$settings[$index]->{"children"}};
 }
 
-BEGIN{$TYPEINFO{GetEntryOptions} = ["function", ["list", "any"], "string", "string"];}
+BEGIN{$TYPEINFO{GetEntryOptions} = ["function", ["list", ["map", "string", "string"]], "string", "string"];}
 sub GetEntryOptions {
     my $type = $_[0];
     my $id = $_[1];
@@ -525,7 +525,7 @@ sub GetEntryOptions {
     @{$settings[$index]->{"options"}};
 }
 
-BEGIN{$TYPEINFO{SetEntryOptions} = ["function", "boolean", "string", "string", ["list", "any"]];}
+BEGIN{$TYPEINFO{SetEntryOptions} = ["function", "boolean", "string", "string", ["list", ["map", "string", "string"]]];}
 sub SetEntryOptions {
     my $type = $_[0];
     my $id = $_[1];
@@ -541,7 +541,7 @@ sub SetEntryOptions {
     return 1;
 }
 
-BEGIN{$TYPEINFO{GetEntryDirectives} = ["function", ["list", "any"], "string", "string"];}
+BEGIN{$TYPEINFO{GetEntryDirectives} = ["function", ["list", ["map", "string", "string"]], "string", "string"];}
 sub GetEntryDirectives {
     my $type = $_[0];
     my $id = $_[1];
@@ -555,7 +555,7 @@ sub GetEntryDirectives {
     @{$settings[$index]->{"directives"}};
 }
 
-BEGIN{$TYPEINFO{SetEntryDirectives} = ["function", "boolean", "string", "string", ["list", "any"]];}
+BEGIN{$TYPEINFO{SetEntryDirectives} = ["function", "boolean", "string", "string", ["list", ["map", "string", "string"]]];}
 sub SetEntryDirectives {
     my $type = $_[0];
     my $id = $_[1];

@@ -44,14 +44,16 @@ global define void configTreeInit (string id);
 	if (substring (key, 0, 7) == "option ")
 	{
 	    current_entry_options[index] = nil;
-	    current_entry_options = filter (any o, current_entry_options,
-	    ``( o != nil));
+	    current_entry_options = filter (map<string,string> o,
+		current_entry_options,
+		``( o != nil));
 	}
 	else
 	{
 	    current_entry_directives[index] = nil;
-	    current_entry_directives = filter (any d, current_entry_directives,
-	    ``( d != nil));
+	    current_entry_directives = filter (map<string,string> d,
+		current_entry_directives,
+		``( d != nil));
 	}
 	return true;
     }
@@ -75,7 +77,8 @@ global define void configTreeInit (string id);
 		return sformat ("directive %1", index);
 	    return nil;
 	});
-	return filter (string id, merge (dirs, opts), ``(id != nil));
+	return filter (string id, (list<string>)merge (dirs, opts),
+	    ``(id != nil));
     }
 
     /**
@@ -529,7 +532,8 @@ global define void DDNSZonesInit (string id) ``{
  * @param event map event that caused storing process
  */
 global define void DDNSZonesStore (string id, map event) ``{
-    current_entry_directives = filter (map m, current_entry_directives, ``(
+    current_entry_directives = filter (map<string,string> m,
+	current_entry_directives, ``(
 	m["key"]:"" != "zone"
     ));
     if ((boolean)UI::QueryWidget (`id ("ddns_enable"), `Value))
@@ -665,7 +669,7 @@ Old keys will be removed. Continue?
         }
         new_tsig_keys = add (new_tsig_keys, filename);
         foreach (string k, keys, ``{
-            current_tsig_keys = filter (map key, current_tsig_keys, ``(
+            current_tsig_keys = filter (map<string,string> key, current_tsig_keys, ``(
                 key["key"]:nil != k
             ));
             current_tsig_keys = add (current_tsig_keys, $[
