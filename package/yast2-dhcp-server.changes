@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Fri Oct  3 14:24:05 CEST 2003 - jsrain@suse.de
+
+- adapted to Table/Popup stuff split off from CWM.ycp
+
+-------------------------------------------------------------------
 Wed Oct  1 13:07:02 CEST 2003 - jsrain@suse.de
 
 - smarter configuring of firewall (#30783)

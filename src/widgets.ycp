@@ -13,6 +13,7 @@
 
     import "DhcpServer";
     import "CWM";
+    import "TablePopup";
 
     import "Popup";
     import "Label";
@@ -138,12 +139,12 @@
       * @return map of widget
       */
     global define map getGlobalTableWidget (list add_values) ``{
-	map ret = CWM::CreateTableDescr (
+	map ret = TablePopup::CreateTableDescr (
 	    $["add_delete" : true, "up_down" : false],
 	    $[
 		"init": ``(DhcpServer::globalsInit ()),
 		"store": ``(DhcpServer::globalsSave ()),
-		"handle": ``(CWM::TableHandle (
+		"handle": ``(TablePopup::TableHandle (
 		    DhcpServer::widgets["global_table"]:$[])),
 		"options": DhcpServer::popups,
 		"id2key": ``(DhcpServer::id2key ()),
@@ -169,7 +170,7 @@
       */
     global define void globalsInit (string key) ``{
 	current_section = eval (settings["globals"]:nil);
-	CWM::TableInit (widgets["global_table"]:$[], key);
+	TablePopup::TableInit (widgets["global_table"]:$[], key);
     }
 
     /**
@@ -194,10 +195,10 @@
       */
     global define map getHostTableWidget (list add_values) ``{
 	map ret = getGlobalTableWidget ([]);
-        ret["init"] = ``(CWM::TableInit (
+        ret["init"] = ``(TablePopup::TableInit (
             DhcpServer::widgets["host_table"]:$[]));
 	ret["store"] = ``(DhcpServer::hostSave ());
-        ret["handle"] = ``(CWM::TableHandle (
+        ret["handle"] = ``(TablePopup::TableHandle (
             DhcpServer::widgets["host_table"]:$[]));
 	ret["help"] = getSectionHelp ();
 	ret["save_exits"] = [];
@@ -227,10 +228,10 @@
       */
     global define map getSubnetTableWidget (list add_values) ``{
         map ret = getGlobalTableWidget ([]);
-        ret["init"] = ``(CWM::TableInit (
+        ret["init"] = ``(TablePopup::TableInit (
             DhcpServer::widgets["subnet_table"]:$[]));
         ret["store"] = ``(DhcpServer::subnetSave ());
-        ret["handle"] = ``(CWM::TableHandle (
+        ret["handle"] = ``(TablePopup::TableHandle (
             DhcpServer::widgets["subnet_table"]:$[]));
         ret["help"] = getSectionHelp ();
         ret["save_exits"] = [];
