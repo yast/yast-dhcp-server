@@ -188,12 +188,11 @@ sub AdaptDDNS {
 
     my $includes = SCR->Read (".sysconfig.dhcpd.DHCPD_CONF_INCLUDE_FILES")|| "";
     my @includes = split (/ /, $includes);
-    @includes = grep {
-	my $current_grepped = $_;
-	grep {
-	    $_ ne $current_grepped
-	} @deleted_keys;
-    } @includes;
+    foreach my $dk (@deleted_keys) {
+        @includes = grep {
+	    $_ ne $dk;
+	} @includes;
+    }
     foreach my $new_inc (@new_keys) {
 	push @includes, $new_inc;
 	push @directives, {
@@ -207,8 +206,9 @@ sub AdaptDDNS {
     }
     foreach my $tsig_key (@current_keys) {
 	my $k_fn = $tsig_key->{"filename"};
-	if (exists ($includes{$k_fn}))
+	if (! exists ($includes{$k_fn}))
 	{
+	    y2warning ("Adding file $k_fn to copy to chroot, should already have been there");
 	    $includes{$k_fn} = 1;
 	    push @includes, $k_fn;
 	}
