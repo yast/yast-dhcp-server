@@ -194,7 +194,7 @@ xxx = _("Secondary Name Server");
                 )),
                 `HWeight(43, `VBox(
 			// Textentry with IP address of time server
-                    `Left(`TextEntry(`id("timeserver"), _("Time Server"))),
+                    `Left(`TextEntry(`id("timeserver"), _("NTP Time Server"))),
 
 			// Textentry with IP address of print server
                     `Left(`TextEntry(`id("printserver"), _("Print Server"))),
@@ -264,7 +264,7 @@ void GlobalSettingsInit (string key)
 	    vals = filter (string v, vals, ``(v != ""));
 	    UI::ChangeWidget ( `id ("defaultgw"), `Value, vals[0]:"" );
 	}
-	else if ( opt["key"]:nil == "time-servers" )
+	else if ( opt["key"]:nil == "ntp-servers" )
 	{
 	    list<string> vals = splitstring ( opt["value"]:"", " " );
 	    UI::ChangeWidget ( `id ("timeserver"), `Value, vals[0]:"" );
@@ -336,7 +336,7 @@ void GlobalSettingsStore (string key, map event)
 
     // filter out those we know to change
     list<string> keys = [ "domain-name", "domain-name-servers", 
-	"routers", "time-servers", "lpr-servers", "netbios-name-servers" ];
+	"routers", "ntp-servers", "lpr-servers", "netbios-name-servers" ];
 	
     options = filter ( map<string,string> opt, options, ``( 
 	! contains (keys, opt["key"]:"")
@@ -371,7 +371,7 @@ void GlobalSettingsStore (string key, map event)
     value = (string) UI::QueryWidget ( `id ("timeserver"), `Value );
     if (size(value)>0)
     {
-	options = add (options, $[ "key" : "time-servers", "value": value ] );
+	options = add (options, $[ "key" : "ntp-servers", "value": value ] );
     }
 
     value = (string) UI::QueryWidget ( `id ("printserver"), `Value );
