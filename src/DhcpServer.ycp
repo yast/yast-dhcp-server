@@ -100,8 +100,9 @@
 	{
             boolean install_ok = Require::RequireAndConflictTarget (["dhcp-server"], [],
 		// richtext, %1 is name of package
-		_("For running DHCP sevrer, a DHCP daemon is required.
-YaST2 will install package %1."));
+		_("For running DHCP server, a DHCP daemon is required.
+YaST2 will install package %1.
+"));
 	    if (! install_ok && ! Require::LastOperationCanceled ())
 	    {
 		// error popup
@@ -133,12 +134,13 @@ YaST2 will install package %1."));
 	    // is not able means the feature is missing
 	    if (! Popup::ContinueCancel (_("Warning!
 
-You have not used YaST for configuring DHCP server yet.
+You have not yet used YaST for configuring DHCP server.
 Creating initial settings.  Add at least one subnet
 to make the DHCP server work.
 
 /etc/dhcpd.conf is rewritten when saving the
-configuration.")))
+configuration.
+")))
 		return false;
             settings = createSettings ();
         }
