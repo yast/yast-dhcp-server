@@ -670,6 +670,21 @@ sub SetStartService {
     $start_service = shift;
 }
 
+BEGIN { $TYPEINFO{SetChrootJail} = [ "function", "void", "boolean" ];}
+sub SetChrootJail {
+    my $self = shift;
+    $chroot = shift;
+
+    $self->SetModified ();
+}
+
+BEGIN { $TYPEINFO{GetChrootJail} = [ "function", "boolean" ];}
+sub GetChrootJail {
+    my $self = shift;
+
+    return Boolean($chroot);
+}
+
 BEGIN{$TYPEINFO{SetModified} = ["function", "void"];}
 sub SetModified {
     my $self = shift;

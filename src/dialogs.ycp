@@ -55,12 +55,14 @@ global define symbol WriteDialog() ``{
   */
 global define symbol MainDialog () ``{
     y2milestone ("Running main dialog");
-    list<map<string,any> > w = CWM::CreateWidgets (["start", "configtree"], widgets);
+    list<map<string,any> > w = CWM::CreateWidgets (["start", "chroot", "configtree"], widgets);
     term contents = `HBox (`HSpacing (2), `VBox (
 	`VSpacing (1),
 	`Left (w[0, "widget"]:`VSpacing (0)),
 	`VSpacing (1),
-	w[1, "widget"]:`VSpacing (0),
+	`Left (w[1, "widget"]:`VSpacing (0)),
+	`VSpacing (1),
+	w[2, "widget"]:`VSpacing (0),
 	`VSpacing (1)
     ), `HSpacing (2));
     // dialog caption
@@ -70,6 +72,8 @@ global define symbol MainDialog () ``{
     Wizard::SetContentsButtons (caption, contents, help,
 	Label::BackButton (), Label::FinishButton ());
     Wizard::HideBackButton();
+
+UI::DumpWidgetTree ();
 
     return CWM::Run (w, $[`abort : confirmAbortIfChanged]);
 }

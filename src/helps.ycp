@@ -32,19 +32,25 @@ To adapt the firewall settings so the DHCP server can be accessed
 through all network interfaces to which it listens, check
 <b>Adapt Firewall Settings</b>.</p>"),
 
-	// help text 1/3
+	// help text 1/4
 	"start" : _("<p><b><big>Start DHCP Server</big></b><br>
 To run the DHCP server every time your computer is started, set
 <b>Start DHCP Server</b>.</p>"),
 
-	// help text 2/3
+	// help text 2/4
+	"chroot" : _("<p><b><big>Chroot Jail</big></b><br>
+To run the DHCP server in chroot jail, set
+<b>Run DHCP Server in Chroot Jail</b>. Starting any daemon in a chroot jail
+is more secure and strongly recommended."),
+
+	// help text 3/4
 	"configtree" : _("<p><b><big>Configured Declarations</big></b><br>
 To modify an existing declaration, select it and click <b>Edit</b>.
 To add a new declaration, select a declaration that should include
 the new declaration and click <b>Add</b>.
 To delete a declaration, select it and click <b>Delete</b>.</p>")
 
-	// help text 3/3
+	// help text 4/4
 	+ _("<p><b><big>Advanced Functions</big></b><br>
 To display the log of the DHCP server,
 change network interfaces to which the DHCP server listens,
