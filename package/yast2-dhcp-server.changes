@@ -1,7 +1,9 @@
 -------------------------------------------------------------------
 Mon Mar  8 14:05:16 CET 2004 - jsrain@suse.de
 
-- fixed import of empty settings
+- fixed import of empty settings (#35441)
+- setting icon
+- 2.9.6
 
 -------------------------------------------------------------------
 Fri Mar  5 15:04:19 CET 2004 - jsrain@suse.de
