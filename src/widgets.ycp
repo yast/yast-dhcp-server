@@ -13,6 +13,7 @@
 
     import "CWM";
     import "DhcpServer";
+    import "Hostname";
     import "IP";
     import "Label";
     import "LogView";
@@ -23,6 +24,7 @@
 
 global define void configTreeInit (string id);
 global define symbol chrootHandle (string id, map event);
+global define symbol ldapHandle (string id, map event);
 
 
     /**
@@ -256,6 +258,57 @@ global define symbol chrootHandle (string id, map event) ``{
     return nil;
 }
 
+// ldap widget
+
+/**
+ * Initialize the widget
+ * @param id any widget id
+ */
+global define void ldapInit (string id) ``{
+    boolean ul = DhcpServer::GetUseLdap();
+    UI::ChangeWidget (`id (id), `Value, ul);
+    ldapHandle (id, $[ "ID" : "start" ]);
+}
+
+/**
+ * Store settings of the widget
+ * @param id string widget id
+ * @param event map event that caused storing process
+ */
+global define void ldapStore (string id, map event) ``{
+    boolean ul = (boolean)UI::QueryWidget (`id (id), `Value);
+    DhcpServer::SetUseLdap (ul, false);
+}
+
+/**
+ * Handle function of the widget
+ * @param id string widget id
+ * @param event map event that caused storing process
+ * @return symbol always nil
+ */
+global define symbol ldapHandle (string id, map event) ``{
+    if (event["ID"]:nil == "start")
+    {
+	boolean en = (boolean)UI::QueryWidget (`id ("start"), `Value);
+	UI::ChangeWidget (`id (id), `Enabled, en);
+	return nil;
+    }
+    boolean ldap = (boolean)UI::QueryWidget (`id (id), `Value);
+    if (ldap != DhcpServer::GetUseLdap ())
+    {
+	DhcpServer::SetUseLdap (ldap, false);
+	if (! Mode::config)
+	{
+	    DhcpServer::InitYapiConfigOptions ($["use_ldap" : ldap]);
+	    DhcpServer::LdapInit ([], true);
+	    DhcpServer::CleanYapiConfigOptions ();
+	}
+	ldap = DhcpServer::GetUseLdap ();
+	UI::ChangeWidget (`id (id), `Value, ldap);
+    }
+    return nil;
+}
+
 
 /**
  * Initialize the widget
@@ -285,6 +338,16 @@ global define void FirewallStore (string id, map event) ``{
  * @return symbol always nil
  */
 global define symbol configTreeHandle (string id, map event) ``{
+    if (Mode::config && (
+	event["ID"]:nil == `log || event["ID"]:nil == `interfaces
+	|| event["ID"]:nil == `tsig_keys))
+    {
+	// popup message
+	Popup::Message (_("This function is not available during
+preparation for autoinstallation.
+"));
+	return nil;
+    }
     boolean enabled = (boolean)UI::QueryWidget (`id ("start"), `Value);
     if (event["ID"]:nil == "start")
     {
@@ -499,6 +562,14 @@ global define void DynDnsButtonInit (string id) ``{
  * @return symbol for WS
  */
 global define symbol DynDnsButtonHandle (string id, map event) ``{
+    if (Mode::config)
+    {
+	// popup message
+	Popup::Message (_("This function is not available during
+preparation for autoinstallation.
+"));
+	return nil;
+    }
     if (size (DhcpTsigKeys::ListTSIGKeys ()) == 0)
 	return `tsig_keys;
     return `dyn_dns;
@@ -533,6 +604,14 @@ global define void DDNSZonesInit (string id) ``{
     string rev_ip = "";
     string key = "";
     string rev_key = "";
+    UI::ChangeWidget (`id ("zone"), `ValidChars,
+	Hostname::ValidCharsDomain);
+    UI::ChangeWidget (`id ("zone_ip"), `ValidChars,
+	Hostname::ValidCharsDomain);
+    UI::ChangeWidget (`id ("reverse_zone"), `ValidChars,
+	Hostname::ValidCharsDomain);
+    UI::ChangeWidget (`id ("reverse_ip"), `ValidChars,
+	Hostname::ValidCharsDomain);
     boolean found_ddns = false;
     foreach (map d, current_entry_directives, ``{
 	if (d["key"]:"" == "zone")
@@ -589,6 +668,39 @@ global define void DDNSZonesInit (string id) ``{
 }
 
 /**
+ * Validate the widget
+ * @param id string widget id
+ * @param event map event that is handled
+ * @return boolean true if validation succeeded
+ */
+global define boolean DNSZonesValidate (string id, map event) {
+    if (! (boolean)UI::QueryWidget (`id ("ddns_enable"), `Value))
+    {
+	return true;
+    }
+    boolean ret = true;
+    foreach (string w, ["zone", "zone_ip", "reverse_zone", "reverse_ip"], {
+	string value = (string)UI::QueryWidget (`id (w), `Value);
+	if ((w == "zone" || w == "reverse_zone")
+	    && regexpmatch (value, "^.*\\.$"))
+	{
+	    value = regexpsub (value, "^(.*)\\.$", "\\1");
+	}
+	if (! (Hostname::CheckFQ (value)
+	    || (contains (["zone_ip", "reverse_ip"], w)
+		&& IP::Check4 (value))))
+	{
+	    UI::SetFocus (`id (w));
+	    Report::Error (Hostname::ValidFQ());
+	    ret = false;
+	    break;
+	}
+    });
+    return ret;
+}
+
+
+/**
  * Store settings of the widget
  * @param id string widget id
  * @param event map event that caused storing process
@@ -612,6 +724,8 @@ global define void DDNSZonesStore (string id, map event) ``{
 	    rev_ip = "127.0.0.1";
 	if (zone != "")
 	{
+	    if (! regexpmatch (zone, "^.*\\.$"))
+		zone = zone + ".";
 	    current_entry_directives = add (current_entry_directives, $[
 		"key" : "zone",
 		"value" : sformat ("%1 { primary %2; key %3; }",
@@ -620,6 +734,8 @@ global define void DDNSZonesStore (string id, map event) ``{
 	}
 	if (rev_zone != "")
 	{
+	    if (! regexpmatch (rev_zone, "^.*\\.$"))
+		rev_zone = rev_zone + ".";
 	    current_entry_directives = add (current_entry_directives, $[
 		"key" : "zone",
 		"value" : sformat ("%1 { primary %2; key %3; }",
@@ -732,7 +848,7 @@ Old keys will be removed. Continue?
         new_tsig_keys = add (new_tsig_keys, filename);
         foreach (string k, keys, ``{
             current_tsig_keys = filter (map<string,string> key, current_tsig_keys, ``(
-                key["key"]:nil != k
+                key["key"]:nil != k && key["filename"]:nil != filename
             ));
             current_tsig_keys = add (current_tsig_keys, $[
                 "key" : k,
@@ -769,7 +885,8 @@ Old keys will be removed. Continue?
                 `HStretch ()
             )
         ));
-       symbol ret = nil;
+	UI::ChangeWidget (`id (`key_id), `ValidChars, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_");
+	symbol ret = nil;
         while (ret == nil)
         {
             ret = (symbol)UI::UserInput ();
@@ -793,8 +910,11 @@ Old keys will be removed. Continue?
 	// yes-no popup
         if (! Popup::YesNo (_("The key will be created now. Continue?")))
             return nil;
+	SCR::Execute (.target.bash,
+	    "test -d /etc/named.d || mkdir /etc/named.d");
 	SCR::Execute (.target.bash, sformat (
-	    "/usr/bin/genDDNSkey --force  -f %1 -n %2", filename, key));
+	    "/usr/bin/genDDNSkey --force  -f %1 -n %2 -d /etc/named.d",
+	    filename, key));
 	UI::ChangeWidget (`id (`k_new), `Value, filename);
 	return TsigKeysHandle (id, $["ID" : `k_add]);
     }
@@ -913,6 +1033,8 @@ global define void InitWidgets () ``{
 "default-lease-time",
 "filename",
 "next-server",
+"allow",
+"deny",
     ];
 
     list<string> global_commands = [
@@ -996,6 +1118,16 @@ global define void InitWidgets () ``{
 	    "init" : chrootInit,
 	    "handle" : chrootHandle,
 	    "store" : chrootStore,
+	],
+	"ldap_support" : $[
+	    "widget" : `checkbox,
+	    // check box
+	    "label" : _("LDAP Support"),
+	    "help" : HELPS["ldap_support"]:"",
+	    "init" : ldapInit,
+	    "handle" : ldapHandle,
+	    "store" : ldapStore,
+	    "opt" : [ `notify ],
 	],
 	"configtree" : $[
 		"widget" : `custom,
@@ -1137,14 +1269,16 @@ global define void InitWidgets () ``{
 	    "handle" : DDNSZonesHandle,
 	    "handle_events" : [ "ddns_enable" ],
 	    "help" : HELPS["ddns_zones"]:"",
+	    "validate_type" : `function,
+	    "validate_function" : DNSZonesValidate,
 	],
 	"zone_ip" : $[
 	    "widget" : `textentry,
 	    // text entry
 	    "label" : _("&Primary DNS Server"),
 	    "help" : " ",
-	    "validate_type" : `function,
-	    "validate_function" : EmptyOrIpValidate,
+//	    "validate_type" : `function,
+//	    "validate_function" : EmptyOrIpValidate,
 	],
         "reverse_zone": $[
 	    "widget" : `textentry,
@@ -1157,8 +1291,8 @@ global define void InitWidgets () ``{
 	    // text entry
 	    "label" : _("Pr&imary DNS Server"),
 	    "help" : " ",
-	    "validate_type" : `function,
-	    "validate_function" : EmptyOrIpValidate,
+//	    "validate_type" : `function,
+//	    "validate_function" : EmptyOrIpValidate,
 	],
 	"tsig_keys" : getTsigKeysWidget (),
     ];

@@ -54,6 +54,7 @@
     include "dhcp-server/options.ycp";
     include "dhcp-server/widgets.ycp";
     include "dhcp-server/dialogs.ycp";
+    include "dhcp-server/dialogs2.ycp";
     include "dhcp-server/wizards.ycp";
 
     /**

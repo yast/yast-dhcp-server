@@ -13,11 +13,17 @@ Read	.etc.install_inf.UseSSH nil
 Read	.etc.install_inf.InstMode nil
 Read	.target.tmpdir nil
 Log	Failed to set temporary directory: nil
-Execute	.target.bash "rpm -q dhcp-server" 0
+Execute	.target.bash "rpm -q dhcp-server" 1
+Execute	.target.bash "rpm -q dhcp-server" 1
+Execute	.target.bash_output "/bin/hostname --short" $["exit":0, "stderr":"localhost", "stdout":"localhost"]
+Execute	.target.bash_output "/bin/hostname --fqdn" $["exit":0, "stderr":"localhost", "stdout":"localhost"]
 Read	.init.scripts.exists "dhcpd" true
 Read	.init.scripts.runlevel "dhcpd" $["dhcpd":$["start":[], "stop":[]]]
 Read	.sysconfig.dhcpd.DHCPD_RUN_CHROOTED "no"
 Read	.sysconfig.dhcpd.DHCPD_INTERFACE "eth0 eth2"
 Read	.etc.dhcpd_conf [$["comment_after":"", "comment_before":"# dhcpd.conf", "key":"domain-name", "type":"option", "value":"\"example.org\""], $["comment_after":"", "comment_before":"", "key":"domain-name-servers", "type":"option", "value":"ns1.example.org, ns2.example.org"], $["comment_after":"", "comment_before":"", "key":"policy-filter", "type":"option", "value":"{ a1, a2 }, { a1, a2 }, { a3, a4 }"]]
+Read	.target.size "/etc/dhcpd.conf" 5
+Execute	.target.bash "diff -q /etc/dhcpd.conf \\\n             /usr/share/doc/packages/dhcp-server/dhcpd.conf" 1
+Read	.target.stat "/var/lib/YaST2/dhcp_server_done_once" $[]
 Return	true
-Return	$["allowed_interfaces":["eth0", "eth2"], "chroot":"0", "settings":[$["children":[], "comment_after":nil, "comment_before":nil, "directives":[], "id":"", "options":[$["comment_after":"", "comment_before":"# dhcpd.conf", "key":"domain-name", "type":"option", "value":"\"example.org\""], $["comment_after":"", "comment_before":"", "key":"domain-name-servers", "type":"option", "value":"ns1.example.org, ns2.example.org"], $["comment_after":"", "comment_before":"", "key":"policy-filter", "type":"option", "value":"{ a1, a2 }, { a1, a2 }, { a3, a4 }"]], "parent_id":"", "parent_type":"", "type":""]], "start_service":"0"]
+Return	$["allowed_interfaces":["eth0", "eth2"], "chroot":"0", "settings":[$["children":[], "comment_after":nil, "comment_before":nil, "directives":[], "id":"", "options":[$["comment_after":"", "comment_before":"# dhcpd.conf", "key":"domain-name", "type":"option", "value":"\"example.org\""], $["comment_after":"", "comment_before":"", "key":"domain-name-servers", "type":"option", "value":"ns1.example.org, ns2.example.org"], $["comment_after":"", "comment_before":"", "key":"policy-filter", "type":"option", "value":"{ a1, a2 }, { a1, a2 }, { a3, a4 }"]], "parent_id":"", "parent_type":"", "type":""]], "start_service":"0", "use_ldap":"0"]

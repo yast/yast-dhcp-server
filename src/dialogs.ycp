@@ -30,7 +30,13 @@ global define symbol ReadDialog() ``{
     y2milestone ("Running read dialog");
     Wizard::RestoreHelp (HELPS["read"]:"");
     boolean ret = DhcpServer::Read();
-    return ret ? `next : `abort;
+    if (ret)
+    {
+	return DhcpServer::WasConfigured ()
+	    ? `next
+	    : `wizard;
+    }
+    return `abort;
 }
 
 /**
@@ -53,16 +59,18 @@ global define symbol WriteDialog() ``{
   * Run main dialog
   * @return symbol for wizard sequencer
   */
-global define symbol MainDialog () ``{
+global define symbol OldMainDialog () ``{
     y2milestone ("Running main dialog");
-    list<map<string,any> > w = CWM::CreateWidgets (["start", "chroot", "configtree"], widgets);
+    list<map<string,any> > w = CWM::CreateWidgets (["start", "chroot", "ldap_support", "configtree"], widgets);
     term contents = `HBox (`HSpacing (2), `VBox (
 	`VSpacing (1),
 	`Left (w[0, "widget"]:`VSpacing (0)),
 	`VSpacing (1),
 	`Left (w[1, "widget"]:`VSpacing (0)),
 	`VSpacing (1),
-	w[2, "widget"]:`VSpacing (0),
+	`Left (w[2, "widget"]:`VSpacing (0)),
+	`VSpacing (1),
+	w[3, "widget"]:`VSpacing (0),
 	`VSpacing (1)
     ), `HSpacing (2));
     // dialog caption
@@ -428,7 +436,7 @@ global define symbol DynDnsDialog () ``{
   * Run TSIG keys management dialog
   * @return symbol for wizard sequencer
   */
-global define symbol RunTsigKeysDialog () ``{
+global define symbol RunTsigKeysDialog (boolean called_from_subnet) ``{
     y2milestone ("Running TSIG keys management dialog");
 
     list<string> w = ["tsig_keys"];
@@ -442,9 +450,16 @@ global define symbol RunTsigKeysDialog () ``{
     // dialog caption
     string caption = _("TSIG Key Management");
 
-    return CWM::ShowAndRun (w, widgets,
+    symbol ret = CWM::ShowAndRun (w, widgets,
         contents, caption, Label::BackButton (), Label::OKButton (),
         $[`abort : confirmAbort]);
+
+    if (ret == `next && called_from_subnet)
+    {
+	if (size (DhcpTsigKeys::ListTSIGKeys ()) == 0)
+	    return `subnet;
+    }
+    return ret;
 }
 
 // fake dialogs - switchers
@@ -512,6 +527,18 @@ global define symbol CheckConfiguredInterfaces () ``{
     if (size (ifaces) == 0)
 	return `ifaces;
     return `main;
+}
+
+/**
+ * Detect if simple configuration dialogs should be started
+ * @return symbol for wizard sequencer
+ */
+global define symbol ConfigTypeSwitch () {
+    if (Mode::config)
+	return `expert;
+    return DhcpServer::IsConfigurationSimple ()
+	? `simple
+	: `expert;
 }
 
 // EOF

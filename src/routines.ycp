@@ -124,6 +124,5 @@ define void RestartDhcpDaemon () ``{
 	return $[];
     }
 
-
 /* EOF */
 }

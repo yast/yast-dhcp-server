@@ -252,7 +252,7 @@
 	if (size (entry_list) == 0)
 	{
 	    // message popup
-	    Popup::Message (_("At least one address must be specified"));
+	    Popup::Message (_("At least one address must be specified."));
 	    return false;
 	}
 	return true;
@@ -296,7 +296,7 @@
         if (size (entry_list) == 0)
         {
             // message popup
-            Popup::Message (_("At least one address must be specified"));
+            Popup::Message (_("At least one address must be specified."));
             return false;
         }
         return true;
@@ -330,7 +330,7 @@
 	if (size (entry_list) == 0)
 	{
 	    // message popup
-	    Popup::Message (_("At least one address pair must be specified"));
+	    Popup::Message (_("At least one address pair must be specified."));
 	    return false;
 	}
 	return true;
@@ -527,7 +527,7 @@ all clients*/
 	    if (value == "")
 	    {
 		// popup message
-		Popup::Message (_("Value must be specified"));
+		Popup::Message (_("Value must be specified."));
 		return false;
 	    }
 	}

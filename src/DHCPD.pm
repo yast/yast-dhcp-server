@@ -12,32 +12,43 @@ This package is the public YaST2 API to configure the ISC DHCP server
 
   use YaPI::DHCPD
 
-$status = StopDhcpService()
+$status = StopDhcpService($config)
 
-$status = StartDhcpService()
+$status = StartDhcpService($config)
 
-$status = GetDhcpServiceStatus()
+$status = GetDhcpServiceStatus($config)
 
-$ret = AddDeclaration($type,$id,$parent_type,$parent_id)
+$ret = AddDeclaration($config,$type,$id,$parent_type,$parent_id)
 
-$ret = DeleteDeclaration($type,$id)
+$ret = DeleteDeclaration($config,$type,$id)
 
-$parent = GetDeclarationParent($type,$id)
+$parent = GetDeclarationParent($config,$type,$id)
 
-$ret = SetDeclarationParent($type,$id,$new_parent_type,$new_parent_id)
+$ret = SetDeclarationParent($config,$type,$id,$new_parent_type,$new_parent_id)
 
-$children = GetChildrenOfDeclaration($type,$id)
+$children = GetChildrenOfDeclaration($config,$type,$id)
 
-$options = GetDeclarationOptions($type,$id)
+$options = GetDeclarationOptions($config,$type,$id)
 
-$ret = SetDeclarationOptions($type,$id,$options)
+$ret = SetDeclarationOptions($config,$type,$id,$options)
 
-$directives = GetDeclarationDirectives($type,$id)
+$directives = GetDeclarationDirectives($config,$type,$id)
 
-$ret = SetDeclarationDirectives($type,$id,$directives)
+$ret = SetDeclarationDirectives($config,$type,$id,$directives)
 
-$exists = ExistsDeclaration($type,$id)
+$exists = ExistsDeclaration($config,$type,$id)
 
+
+The C<$config> parameter is always a refernece to a hash, that contains various
+configuration options. Currently following keys are supported:
+
+C<"use_ldap">
+ says if settings should be written/read to LDAP or not. Possible values are
+ 1 (use LDAP if configured properly) or 0 (don't use LDAP).
+ If not specified, mode is detected automatically.
+
+C<"ldap_passwd">
+ holds the LDAP password needed for authentication against the LDAP server.
 
 =head1 DESCRIPTION
 
@@ -47,11 +58,9 @@ $exists = ExistsDeclaration($type,$id)
 
 package YaPI::DHCPD;
 use YaST::YCP;
-YaST::YCP::Import ("DHCPServer");
+YaST::YCP::Import ("DhcpServer");
 YaST::YCP::Import ("SCR");
 YaST::YCP::Import ("Service");
-YaST::YCP::Import ("SuSEFirewall");
-YaST::YCP::Import ("NetworkDevices");
 YaST::YCP::Import ("Progress");
 
 #if(not defined do("YaPI.inc")) {
@@ -61,7 +70,8 @@ YaST::YCP::Import ("Progress");
 #######################################################
 # temoprary solution end
 #######################################################
-our $VERSION="0.01";
+our $VERSION='1.0.0';
+our @CAPABILITIES = ('SLES9');
 our %TYPEINFO;
 
 use strict;
@@ -72,14 +82,14 @@ use Errno qw(ENOENT);
 #######################################################
 
 =item *
-C<$status StopDhcpService ();>
+C<$status StopDhcpService ($config);>
 
 Immediatelly stops the DHCP service. Returns nonzero if operation succeeded,
 zero if operation failed.
 
 EXAMPLE:
 
-  my $status = StopDhcpService ();
+  my $status = StopDhcpService ({});
   if ($status == 0)
   {
     print "Stopping DHCP server failed";
@@ -91,21 +101,24 @@ EXAMPLE:
 
 =cut
 
-BEGIN{$TYPEINFO{StopDhcpService} = ["function", "boolean"];}
+BEGIN{$TYPEINFO{StopDhcpService} = ["function", "boolean", ["map", "string", "any"]];}
 sub StopDhcpService {
-    return 0 == SCR::Execute (".target.bash",
+    my $self = shift;
+    my $config_options = shift;
+
+    return 0 == SCR->Execute (".target.bash",
 	"/etc/init.d/dhcpd stop");
 }
 
 =item *
-C<$status StartDhcpService ();>
+C<$status StartDhcpService ($config);>
 
 Immediatelly starts the DHCP service. Returns nonzero if operation succeeded,
 zero if operation failed.
 
 EXAMPLE:
 
-  my $status = StartDhcpService ();
+  my $status = StartDhcpService ({});
   if ($status == 0)
   {
     print "Starting DHCP server failed";
@@ -117,21 +130,24 @@ EXAMPLE:
 
 =cut
 
-BEGIN{$TYPEINFO{StartDhcpService} = ["function", "boolean"];}
+BEGIN{$TYPEINFO{StartDhcpService} = ["function", "boolean", ["map", "string", "any"]];}
 sub StartDhcpService {
-    return 0 == SCR::Execute (".target.bash",
+    my $self = shift;
+    my $config_options = shift;
+
+    return 0 == SCR->Execute (".target.bash",
 	"/etc/init.d/dhcpd restart");
 }
 
 =item *
-C<$status GetDhcpServiceStatus ();>
+C<$status GetDhcpServiceStatus ($config);>
 
 Check if DHCP service is running. Returns nonzero if service is running,
 zero otherwise.
 
 EXAMPLE:
 
-  my $status = GetDhcpServiceStatus ();
+  my $status = GetDhcpServiceStatus ({});
   if ($status == 0)
   {
     print "DHCP server is not running";
@@ -143,14 +159,17 @@ EXAMPLE:
 
 =cut
 
-BEGIN{$TYPEINFO{GetDhcpServiceStatus} = ["function", "boolean"];}
+BEGIN{$TYPEINFO{GetDhcpServiceStatus} = ["function", "boolean", ["map", "string", "any"]];}
 sub GetDhcpServiceStatus {
-    return 0 == SCR::Execute (".target.bash",
-	"/etc/init.d/dhcpd status");
+    my $self = shift;
+    my $config_options = shift;
+
+    return 0 == SCR->Execute (".target.bash",
+	"/etc/init.d/dhcpd status") ? 1 : 0;
 }
 
 =item *
-C<$ret = AddDeclaration ($type, $id, $parent_type, $parent_id);>
+C<$ret = AddDeclaration ($config, $type, $id, $parent_type, $parent_id);>
 
 Add a new empty DHCP declaration. $type is one of subnet, host, group, pool,
 shared-network. $id is identification of the declaration (eg. host name for
@@ -164,31 +183,37 @@ EXAMPLE:
 
   my $type = "host";
   my $id = "client";
-  my $ret = AddDeclaration ($type, $id, "", "");
+  my $ret = AddDeclaration ({}, $type, $id, "", "");
   
 This creates a new host on the top level of the configuration file (not within
 any network or group)
 
 =cut
 
-BEGIN{$TYPEINFO{AddDeclaration} = ["function", "boolean", "string", "string", "string", "string"];}
+BEGIN{$TYPEINFO{AddDeclaration} = ["function", "boolean", ["map", "string", "any"], "string", "string", "string", "string"];}
 sub AddDeclaration {
     my $self = shift;
+    my $config_options = shift;
     my $type = shift;
     my $id = shift;
     my $parent_type = shift;
     my $parent_id = shift;
 
+    DhcpServer->InitYapiConfigOptions ($config_options);
+    
     Progress::off ();
     my $ret = DhcpServer->Read ();
     $ret = $ret && DhcpServer->CreateEntry ($type, $id, $parent_type, $parent_id);
     $ret = $ret && DhcpServer->Write ();
     Progress::on ();
+
+    DhcpServer->CleanYapiConfigOptions ();
+
     return $ret;
 }
 
 =item *
-C<$ret = DeleteDeclaration ($type, $id);>
+C<$ret = DeleteDeclaration ($config, $type, $id);>
 
 Deletes specified declaration including its whole subtree.
 
@@ -198,28 +223,34 @@ EXAMPLE:
 
   my $type = "host";
   my $id = "client";
-  my $ret = DeleteDeclaration ($type, $id, "", "");
+  my $ret = DeleteDeclaration ({}, $type, $id);
 
 This deletes the host created in the example of the AddDeclaration function
 
 =cut
 
-BEGIN{$TYPEINFO{DeleteDeclaration} = ["function", "boolean", "string", "string"];}
+BEGIN{$TYPEINFO{DeleteDeclaration} = ["function", "boolean", ["map", "string", "any"], "string", "string"];}
 sub DeleteDeclaration {
     my $self = shift;
+    my $config_options = shift;
     my $type = shift;
     my $id = shift;
+
+    DhcpServer->InitYapiConfigOptions ($config_options);
 
     Progress::off ();
     my $ret = DhcpServer->Read ();
     $ret = $ret && DhcpServer->DeleteEntry ($type, $id);
     $ret = $ret && DhcpServer->Write ();
     Progress::on ();
+
+    DhcpServer->CleanYapiConfigOptions ();
+
     return $ret;
 }
 
 =item *
-C<$parent = GetDeclarationParent ($type, $id);>
+C<$parent = GetDeclarationParent ($config, $type, $id);>
 
 Returns the parent of specified declaration. It is returned as a hash with keys
 "type" and "id".
@@ -231,7 +262,7 @@ EXAMPLE:
 
   my $type = "host";
   my $id = "client";
-  my $parent = GetDeclarationParent ($type, $id);
+  my $parent = GetDeclarationParent ({}, $type, $id);
   if (! defined ($parent))
   {
     print "Specified declaration not found"
@@ -246,25 +277,31 @@ EXAMPLE:
 
 =cut
 
-BEGIN{$TYPEINFO{GetDeclarationParent} = ["function", ["map", "string", "string"], "string", "string"];}
+BEGIN{$TYPEINFO{GetDeclarationParent} = ["function", ["map", "string", "string"], ["map", "string", "any"], "string", "string"];}
 sub GetDeclarationParent {
     my $self = shift;
+    my $config_options = shift;
     my $type = shift;
     my $id = shift;
+
+    DhcpServer->InitYapiConfigOptions ($config_options);
 
     Progress::off ();
     my $ret = DhcpServer->Read ();
     my $parent = undef;
     if ($ret)
     {
-	$parent DhcpServer->GetEntryParent ($type, $id);
+	$parent = DhcpServer->GetEntryParent ($type, $id);
     }
     Progress::on ();
+
+    DhcpServer->CleanYapiConfigOptions ();
+
     return $parent;
 }
 
 =item *
-C<$ret = SetDeclarationParent ($type, $id, $new_parent_type, $new_parent_id);>
+C<$ret = SetDeclarationParent ($config, $type, $id, $new_parent_type, $new_parent_id);>
 
 Sets specified parent to the specified declaration (moves it in the tree). The declaration is moved with its complete subtree.
 
@@ -274,30 +311,36 @@ EXAMPLE:
 
   my $type = "host";
   my $id = "client";
-  my $ret = SetDeclarationParent ($type, $id, "", "");
+  my $ret = SetDeclarationParent ({}, $type, $id, "", "");
 
 Moves the host declaration from the ssubnet it resides in to the top level.
 
 =cut
 
-BEGIN{$TYPEINFO{SetDeclarationParent} = ["function", "boolean", "string", "string", "string", "string"];}
+BEGIN{$TYPEINFO{SetDeclarationParent} = ["function", "boolean", ["map", "string", "any"], "string", "string", "string", "string"];}
 sub SetDeclarationParent {
     my $self = shift;
+    my $config_options = shift;
     my $type = shift;
     my $id = shift;
     my $new_par_type = shift;
     my $new_par_id = shift;
+
+    DhcpServer->InitYapiConfigOptions ($config_options);
 
     Progress::off ();
     my $ret = DhcpServer->Read ();
     $ret = $ret && DhcpServer->SetEntryParent ($type, $id, $new_par_type, $new_par_id);
     $ret = $ret && DhcpServer->Write ();
     Progress::on ();
+
+    DhcpServer->CleanYapiConfigOptions ();
+
     return $ret;
 }
 
 =item *
-C<$children = GetChildrenOfDeclaration ($type, $id);>
+C<$children = GetChildrenOfDeclaration ($config, $type, $id);>
 
 Get all children of a declaration.
 
@@ -306,7 +349,7 @@ success. On fail, returns undef.
 
 EXAMPLE:
 
-  my $children = GetChildrenOfDeclaration ("subnet", "192.168.0.0 netmask 255.255.255.0");
+  my $children = GetChildrenOfDeclaration ({}, "subnet", "192.168.0.0 netmask 255.255.255.0");
   if (! defined ($children))
   {
     print "Specified declaration not found";
@@ -322,25 +365,31 @@ EXAMPLE:
 
 =cut
 
-BEGIN{$TYPEINFO{GetChildrenOfDeclaration} = ["function", ["list", ["map", "string", "string"]], "string", "string"];}
+BEGIN{$TYPEINFO{GetChildrenOfDeclaration} = ["function", ["list", ["map", "string", "string"]], ["map", "string", "any"], "string", "string"];}
 sub GetChildrenOfDeclaration {
     my $self = shift;
+    my $config_options = shift;
     my $type = shift;
     my $id = shift;
+
+    DhcpServer->InitYapiConfigOptions ($config_options);
 
     Progress::off ();
     my $ret = DhcpServer->Read ();
     my $children = undef;
     if ($ret)
     {
-	$children DhcpServer->GetChildrenOfEntry ($type, $id);
+	$children = DhcpServer->GetChildrenOfEntry ($type, $id);
     }
     Progress::on ();
+
+    DhcpServer->CleanYapiConfigOptions ();
+
     return $children;
 }
 
 =item *
-C<$options = GetDeclarationOptions ($type, $id);>
+C<$options = GetDeclarationOptions ($config, $type, $id);>
 
 Get all options of the specified declaration.
 
@@ -349,7 +398,7 @@ Returns all options of specified declaration as a list of hashes with keys
 
 EXAMPLE:
 
-  my $options = GetDeclarationOptions ("subnet", "192.168.0.0 netmask 255.255.255.0");
+  my $options = GetDeclarationOptions ({}, "subnet", "192.168.0.0 netmask 255.255.255.0");
   if (! defined ($options))
   {
     print "Specified declaration not found";
@@ -367,25 +416,31 @@ Prints all options adjusted to tbe specified declaration.
 
 =cut
 
-BEGIN{$TYPEINFO{GetDeclarationOptions} = ["function", ["list", ["map", "string", "string"]], "string", "string"];}
+BEGIN{$TYPEINFO{GetDeclarationOptions} = ["function", ["list", ["map", "string", "string"]], ["map", "string", "any"], "string", "string"];}
 sub GetDeclarationOptions {
     my $self = shift;
+    my $config_options = shift;
     my $type = shift;
     my $id = shift;
+
+    DhcpServer->InitYapiConfigOptions ($config_options);
 
     Progress::off ();
     my $ret = DhcpServer->Read ();
     my $options = undef;
     if ($ret)
     {
-	$options DhcpServer->GetEntryOptions ($type, $id);
+	$options = DhcpServer->GetEntryOptions ($type, $id);
     }
     Progress::on ();
+
+    DhcpServer->CleanYapiConfigOptions ();
+
     return $options;
 }
 
 =item *
-C<$ret = SetDeclarationOptions ($type, $id, $options);>
+C<$ret = SetDeclarationOptions ({}, $config, $type, $id, $options);>
 
 Sets all options of specified declaration. The options argument has the same
 structure as return value of the GetDeclarationOptions function.
@@ -394,39 +449,45 @@ Returns nonzero on success, zero on fail.
 
 EXAMPLE:
 
-  my $options = {
-    [
+  my $options = [
+    {
       "key" => "domain-name-servers",
       "value" => "ns1.internal.example.org ns2.internal.example.org",
-    ],
-    [
+    },
+    {
       "key" => "domain-name",
       "value" => "\"internal.example.org\"",
-    ],
-  }
+    },
+  ]
   $success = SetDeclarationOptions ("host", "client", $options);
 
 Sets specified options to the specified declaration.
 
 =cut
 
-BEGIN{$TYPEINFO{SetDeclarationOptions} = ["function", "boolean", "string", "string", ["list", ["map", "string", "string"]]];}
+BEGIN{$TYPEINFO{SetDeclarationOptions} = ["function", "boolean", ["map", "string", "any"], "string", "string", ["list", ["map", "string", "string"]]];}
 sub SetDeclarationOptions {
     my $self = shift;
+    my $config_options = shift;
     my $type = shift;
     my $id = shift;
     my $options = shift;
+
+    DhcpServer->InitYapiConfigOptions ($config_options);
 
     Progress::off ();
     my $ret = DhcpServer->Read ();
     $ret = $ret && DhcpServer->SetEntryOptions ($type, $id, $options);
     $ret = $ret && DhcpServer->Write ();
     Progress::on ();
+
+    DhcpServer->CleanYapiConfigOptions ();
+
     return $ret;
 }
 
 =item *
-C<$directives = GetDeclarationDirectives ($type, $id);>
+C<$directives = GetDeclarationDirectives ($config, $type, $id);>
 
 Get all directives of the specified declaration.
 
@@ -435,7 +496,7 @@ Returns all directives of specified declaration as a list of hashes with keys
 
 EXAMPLE:
 
-  my $directives = GetDeclarationDirectives ("subnet", "192.168.0.0 netmask 255.255.255.0");
+  my $directives = GetDeclarationDirectives ({}, "subnet", "192.168.0.0 netmask 255.255.255.0");
   if (! defined ($directives))
   {
     print "Specified declaration not found";
@@ -453,25 +514,31 @@ Prints all directives adjusted to tbe specified declaration.
 
 =cut
 
-BEGIN{$TYPEINFO{GetDeclarationDirectives} = ["function", ["list", ["map", "string", "string"]], "string", "string"];}
+BEGIN{$TYPEINFO{GetDeclarationDirectives} = ["function", ["list", ["map", "string", "string"]], ["map", "string", "any"], "string", "string"];}
 sub GetDeclarationDirectives {
     my $self = shift;
+    my $config_options = shift;
     my $type = shift;
     my $id = shift;
+
+    DhcpServer->InitYapiConfigOptions ($config_options);
 
     Progress::off ();
     my $ret = DhcpServer->Read ();
     my $directives = undef;
     if ($ret)
     {
-	$directives DhcpServer->GetEntryDirectives ($type, $id);
+	$directives = DhcpServer->GetEntryDirectives ($type, $id);
     }
     Progress::on ();
+
+    DhcpServer->CleanYapiConfigOptions ();
+
     return $directives;
 }
 
 =item *
-C<$ret = SetDeclarationDirectives ($type, $id, $directives);>
+C<$ret = SetDeclarationDirectives ($config, $type, $id, $directives);>
 
 Sets all directives of specified declaration. The directives argument has the same
 structure as return value of the GetDeclarationDirectives function.
@@ -480,41 +547,47 @@ Returns nonzero on success, zero on fail.
 
 EXAMPLE:
 
-  my $directives = {
-    [
+  my $directives = [
+    {
       "key" => "default-lease-time",
       "value" => "600",
-    ],
-    [
+    },
+    {
       "key" => "max-lease-time",
       "value" => "7200",
-    ],
-  }
-  $success = SetDeclarationDirectives ("host", "client", $directives);
+    },
+  ]
+  $success = SetDeclarationDirectives ({}, "host", "client", $directives);
 
 Sets specified directives to the specified declaration.
 
 =cut
 
-BEGIN{$TYPEINFO{SetDeclarationDirectives} = ["function", "boolean", "string", "string", ["list", ["map", "string", "string"]]];}
+BEGIN{$TYPEINFO{SetDeclarationDirectives} = ["function", "boolean", ["map", "string", "any"], "string", "string", ["list", ["map", "string", "string"]]];}
 sub SetDeclarationDirectives {
     my $self = shift;
+    my $config_options = shift;
     my $type = shift;
     my $id = shift;
     my $directives = shift;
+
+    DhcpServer->InitYapiConfigOptions ($config_options);
 
     Progress::off ();
     my $ret = DhcpServer->Read ();
     $ret = $ret && DhcpServer->SetEntryDirectives ($type, $id, $directives);
     $ret = $ret && DhcpServer->Write ();
     Progress::on ();
+
+    DhcpServer->CleanYapiConfigOptions ();
+
     return $ret;
 }
 
 
 
 =item *
-C<$exists = ExistsDeclaration ($type, $id);>
+C<$exists = ExistsDeclaration ($config, $type, $id);>
 
 Checks if specified declaration exists.
 
@@ -522,7 +595,7 @@ Returns nonzero if declaration found, zero otherwise.
 
 EXAMPLE:
 
-  my $exists = ExistsDeclaration ("host", "client");
+  my $exists = ExistsDeclaration ({}, "host", "client");
   if ($exists)
   {
     print "Host found";
@@ -538,16 +611,22 @@ Checks if specified host has an entry in the configuration of DHCP server.
 
 
 
-BEGIN{$TYPEINFO{ExistsDeclaration} = ["function", "boolean", "string", "string"];}
+BEGIN{$TYPEINFO{ExistsDeclaration} = ["function", "boolean", ["map", "string", "any"], "string", "string"];}
 sub ExistsDeclaration {
     my $self = shift;
+    my $config_options = shift;
     my $type = shift;
     my $id = shift;
+
+    DhcpServer->InitYapiConfigOptions ($config_options);
 
     Progress::off ();
     my $ret = DhcpServer->Read ();
     $ret = $ret && DhcpServer->ExistsEntry ($type, $id);
     Progress::on ();
+
+    DhcpServer->CleanYapiConfigOptions ();
+
     return $ret;
 }
 

@@ -1,0 +1,1430 @@
+/**
+ * File:	include/dhcp-server/dialogs.ycp
+ * Package:	Configuration of dhcp-server
+ * Summary:	Dialogs definitions
+ * Authors:	Vladimír Bobek <vbobek@suse.cz>
+ *
+ * $Id$
+ */
+
+{
+
+textdomain "dhcp-server";
+
+import "Label";
+import "Wizard";
+import "DhcpServer";
+import "Popup";
+import "Address";
+import "IP";
+import "Hostname";
+import "Progress";
+
+
+include "dhcp-server/helps.ycp";
+
+
+/* Start of common configuration section */
+
+
+define list time_combo_items = [
+    `item(`id("days"), _("Days")),
+    `item(`id("hours"), _("Hours")),
+    `item(`id("minutes"), _("Minutes")),
+    `item(`id("seconds"), _("Seconds"))
+];
+
+define integer time2seconds (integer count, string unit) {
+    if (unit == "days")
+    {
+	return count * 60 * 60 * 24;
+    }
+    else if (unit == "hours")
+    {
+	return count * 60 * 60;
+    }
+    else if (unit == "minutes")
+    {
+	return count * 60;
+    }
+    return count;
+}
+
+define map<string,any> seconds2time (integer seconds) {
+    string unit = "seconds";
+    integer count = seconds;
+    if (seconds % (60 * 60 * 24) == 0)
+    {
+	return $[
+	    "unit" : "days",
+	    "count" : seconds / (60 * 60 * 24),
+	];
+    }
+    if (seconds % (60 * 60) == 0)
+    {
+	return $[
+	    "unit" : "hours",
+	    "count" : seconds / (60 * 60),
+	];
+    }
+    if (seconds % (60) == 0)
+    {
+	return $[
+	    "unit" : "minutes",
+	    "count" : seconds / (60),
+	];
+    }
+    return $[
+	"unit" : "seconds",
+	"count" : seconds,
+    ];
+
+}
+
+/**
+ * Common Config Dialog - Start Up
+ * @return term for Get_CommonDialog()
+ */
+term Common_StartUpDialog() {
+
+    term dialog = 
+	`VBox(
+	    `VSpacing (1),
+            `RadioButtonGroup( `id ("dhcp_server_type"),
+                `VBox(
+		    // Radiobutton label
+                    `Left(`RadioButton(`id("serveron"), _("O&n  -- Start DHCP Server during Boot") ) ),
+		    // Radiobutton label
+                    `Left(`RadioButton(`id("serveroff"), _("O&ff -- Start Server Manually") ) )
+                )
+            ),
+	    `VStretch ()//,
+	    // push button
+//	    `Right (`PushButton (`id (`expert), _("&Expert settings...") ) ),
+//	    `VSpacing (1)
+	);
+
+    return dialog;
+}
+
+void StartUpInit ()
+{
+    boolean enabled = DhcpServer::GetStartService ();
+    
+    UI::ChangeWidget ( `id ("serveron"), `Value, enabled );
+    UI::ChangeWidget ( `id ("serveroff"), `Value, ! enabled );
+}
+
+void StartUpStore ()
+{
+    DhcpServer::SetStartService ( (boolean)UI::QueryWidget ( `id ("serveron"), `Value ) );
+}
+
+boolean quit = false;
+list<string> ifaces = [];
+
+/**
+ * Common Config Dialog - Card Selection
+ * @return term for Get_CommonDialog()
+ */
+term Common_CardSelectionDialog() {
+
+    ifaces = filter (
+	string s,
+        (list<string>)SCR::Dir (.network.section),
+        ``(s != "lo")
+    );
+
+
+    if ( size(ifaces) == 0 )
+    {
+	// error report
+	Report::Error (_("This server needs at least one 
+configured network device (besides loopback) for its
+proper function.
+Configure one.
+
+YaST will quit now."));
+	quit = true;
+    }
+    
+    term dialog = `VBox(
+	    // detection and selection of network card to configure 1/2
+            `Left(`Label(_("YaST detected the following network devices."))),
+	    // detection and selection of network card to configure 2/2
+            `Left(`Label(_("Select the interface the DHCP server should use."))
+),
+            `VSpacing(1),
+
+            `VBox(
+		// Selectionbox - listing available network cards
+                `SelectionBox(`id("nic_selection"), `opt(`hstretch), _("Network Card Selection"), 
+		    maplist (string s, ifaces, 
+                    ``(`item (`id (s), s)))
+		)
+            ),
+            `VStretch()
+
+        );
+
+    return dialog;
+}
+
+void CardSelectionInit ()
+{
+    list dhcp_ifaces = DhcpServer::GetAllowedInterfaces ();
+    
+    if ( size(dhcp_ifaces) > 1 )
+    {
+	y2warning ("More than one interface allowed, using the first one only.");
+    }
+    
+    if ( !contains ( ifaces, dhcp_ifaces[0]:"" ) )
+    {
+	UI::ChangeWidget (`id("nic_selection"), `CurrentItem, ifaces[0]:nil);
+    }
+    else
+    {
+	UI::ChangeWidget (`id("nic_selection"), `CurrentItem, dhcp_ifaces[0]:nil);
+    }
+}
+
+void CardSelectionStore ()
+{
+    // FIXME: validation
+    string item = (string)UI::QueryWidget (`id ("nic_selection"), `CurrentItem);
+    
+    DhcpServer::SetAllowedInterfaces ([item]);
+    DhcpServer::SetModified ();
+}
+
+/**
+ * Common Config Dialog - Global Settings
+ * @return term for Get_CommonDialog()
+ */
+term Common_GlobalSettingsDialog() {
+// Textentry with primary name server
+string xxx = _("Primary Name Server");
+// Textentry with secondary name server
+xxx = _("Secondary Name Server");
+    term dialog = `VBox(
+            `VBox(
+		// configuration will be saved in ldap?
+                `Left(`CheckBox(`id("ldap"), `opt( `notify), _("LDAP Support"), true)),
+                `VSpacing(2)
+            ),
+            `HBox(
+                `HWeight(43, `VBox(
+				// Textentry with name of the domain
+                    `Left(`TextEntry(`id("domainname"), _("Domain Name"))),
+
+				// Textentry with IP address of primary name server
+                    `Left(`TextEntry(`id("primarydnsip"), _("Primary Name Server IP"))),
+
+				// Textentry with IP address of secondary name server
+                    `Left(`TextEntry(`id("secondarydnsip"), _("Secondary Name Server IP"))),
+
+				// Textentry with IP address of default router
+                    `Left(`TextEntry(`id("defaultgw"), _("Default Gateway (Router) ")))
+                )),
+                `HWeight(14, `VBox(
+                    `HStretch()
+                )),
+                `HWeight(43, `VBox(
+			// Textentry with IP address of time server
+                    `Left(`TextEntry(`id("timeserver"), _("Time Server"))),
+
+			// Textentry with IP address of print server
+                    `Left(`TextEntry(`id("printserver"), _("Print Server"))),
+
+			// Textentry with IP address of WINS (Windows Internet Naming Service) server
+                    `Left(`TextEntry(`id("winsserver"), _("WINS Server"))),
+                    `HBox(
+			// Textentry with default lease time of IP address from dhcp server    
+                        `Left(`TextEntry(`id("defaultleasetime"), _("Default Lease Time"))),
+                        `HSpacing(1),
+			// Units for defaultleasetime
+                        `Right(`ComboBox(`id("defaultleasetimeunits"), `opt( `hstretch), "", time_combo_items))
+                    )
+                        
+                ))
+            ),
+            `VStretch()
+        );
+
+
+
+    return dialog;
+}
+
+void GlobalSettingsValidChars ()
+{
+    // ValidChars definition for GlobalSettingsDialog
+    UI::ChangeWidget(`id( "domainname" ),	`ValidChars, Address::ValidChars4);
+    UI::ChangeWidget(`id( "primarydnsip" ),	`ValidChars, IP::ValidChars4);
+    UI::ChangeWidget(`id( "secondarydnsip" ),	`ValidChars, IP::ValidChars4);
+    UI::ChangeWidget(`id( "defaultgw" ),	`ValidChars, Address::ValidChars4);
+    UI::ChangeWidget(`id( "timeserver" ),	`ValidChars, Address::ValidChars4);
+    UI::ChangeWidget(`id( "printserver" ),	`ValidChars, Address::ValidChars4);
+    UI::ChangeWidget(`id( "winsserver" ),	`ValidChars, Address::ValidChars4);
+    UI::ChangeWidget(`id( "defaultleasetime" ),	`ValidChars, "0123456789");
+}
+
+void GlobalSettingsInit ()
+{
+    // get the global options
+    list< map<string,string> > options = DhcpServer::GetEntryOptions ("","");
+    
+    if ( options == nil ) 
+    {
+	options = [];
+    }
+
+    // setup the corresponding values
+    foreach ( map<string,string> opt, options, ``{
+	if ( opt["key"]:nil == "domain-name" )
+	{
+	    string value = opt["value"]:"";
+	    if (regexpmatch (value, "^[ \t]*\".*\"[ \t]*$"))
+		value = regexpsub (value, "^[ \t]*\"(.*)\"[ \t]*$", "\\1");
+	    UI::ChangeWidget ( `id ("domainname"), `Value, value );
+	}
+	else if ( opt["key"]:nil == "domain-name-servers" )
+	{
+	    list<string> vals = splitstring ( opt["value"]:"", " ," );
+	    vals = filter (string v, vals, ``(v != ""));
+	    UI::ChangeWidget ( `id ("primarydnsip"), `Value, vals[0]:"" );
+	    UI::ChangeWidget ( `id ("secondarydnsip"), `Value, vals[1]:"" );
+	}
+	else if ( opt["key"]:nil == "routers" )
+	{
+	    list<string> vals = splitstring ( opt["value"]:"", ", " );
+	    vals = filter (string v, vals, ``(v != ""));
+	    UI::ChangeWidget ( `id ("defaultgw"), `Value, vals[0]:"" );
+	}
+	else if ( opt["key"]:nil == "time-servers" )
+	{
+	    list<string> vals = splitstring ( opt["value"]:"", " " );
+	    UI::ChangeWidget ( `id ("timeserver"), `Value, vals[0]:"" );
+	}
+	else if ( opt["key"]:nil == "lpr-servers" )
+	{
+	    list<string> vals = splitstring ( opt["value"]:"", " " );
+	    UI::ChangeWidget ( `id ("printserver"), `Value, vals[0]:"" );
+	}
+	else if ( opt["key"]:nil == "netbios-name-servers" )
+	{
+	    list<string> vals = splitstring ( opt["value"]:"", " " );
+	    UI::ChangeWidget ( `id ("winsserver"), `Value, vals[0]:"" );
+	}
+    });
+
+    // get the global directives
+    list< map<string,string> > directives = DhcpServer::GetEntryDirectives ("","");
+    
+    if ( directives == nil ) 
+    {
+	directives = [];
+    }
+
+    // setup the corresponding values
+    foreach ( map<string,string> opt, directives, ``{
+	if ( opt["key"]:nil == "default-lease-time" )
+	{
+	    integer value = tointeger ( opt["value"]:"0" );
+	    map vu = seconds2time (value);
+	    value = vu["count"]:0;
+	    string unit = vu["unit"]:"seconds";
+	    UI::ChangeWidget ( `id ("defaultleasetime"), `Value, tostring (value) );
+	    UI::ChangeWidget ( `id ("defaultleasetimeunits"), `Value, unit );
+	}
+    });
+    
+    UI::ChangeWidget ( `id ("ldap"), `Value, DhcpServer::GetUseLdap () );
+}
+
+void GlobalSettingsHandle (map event)
+{
+    if (event ["ID"]:nil == "ldap" && event ["EventReason"]:nil == "ValueChanged")
+    {
+	boolean ldap = (boolean) UI::QueryWidget ( `id ("ldap"), `Value );
+	// warning popup
+//	if (Popup::ContinueCancel (
+ string warning = _("You have modified usage of LDAP.
+All your previous settings will be lost.");// ))
+//	{
+	    // LDAP switch
+	    DhcpServer::SetUseLdap (ldap, false);
+	    DhcpServer::InitYapiConfigOptions ($["use_ldap" : ldap]);
+	    DhcpServer::LdapInit ([], true);
+	    DhcpServer::CleanYapiConfigOptions ();
+//	}
+	ldap = DhcpServer::GetUseLdap ();
+	UI::ChangeWidget (`id ("ldap"), `Value, ldap);
+    }
+}
+
+void GlobalSettingsStore ()
+{
+    list< map<string,string> > directives = [];
+    
+    // get the global options
+    list< map<string,string> > options = DhcpServer::GetEntryOptions ("","");
+    
+    if ( directives == nil ) 
+    {
+	directives = [];
+    }
+
+    // filter out those we know to change
+    list<string> keys = [ "domain-name", "domain-name-servers", 
+	"routers", "time-servers", "lpr-servers", "netbios-name-servers" ];
+	
+    options = filter ( map<string,string> opt, options, ``( 
+	! contains (keys, opt["key"]:"")
+    ));
+    
+    string value = (string) UI::QueryWidget ( `id ("domainname"), `Value );
+    if (size(value)>0)
+    {
+	options = add (options, $[ "key" : "domain-name",
+	    "value": sformat ("\"%1\"", value) ] );
+    }
+
+    string value1 = (string) UI::QueryWidget ( `id ("primarydnsip"), `Value );
+    string value2 = (string) UI::QueryWidget ( `id ("secondarydnsip"), `Value );
+    if (size(value1)>0 || size(value2)>0)
+    {
+	value1 = value1 == nil ? "" : value1;
+	value2 = value2 == nil ? "" : value2;
+
+	string domain_servers =
+	    value1 + ((size(value2) > 0) ? (size(value1) > 0 ? ", " : "") + value2 : "");
+
+	options = add (options, $[ "key" : "domain-name-servers", "value": domain_servers ] );
+    }
+
+    value = (string) UI::QueryWidget ( `id ("defaultgw"), `Value );
+    if (size(value)>0)
+    {
+	options = add (options, $[ "key" : "routers", "value": value ] );
+    }
+
+    value = (string) UI::QueryWidget ( `id ("timeserver"), `Value );
+    if (size(value)>0)
+    {
+	options = add (options, $[ "key" : "time-servers", "value": value ] );
+    }
+
+    value = (string) UI::QueryWidget ( `id ("printserver"), `Value );
+    if (size(value)>0)
+    {
+	options = add (options, $[ "key" : "lpr-servers", "value": value ] );
+    }
+
+    value = (string) UI::QueryWidget ( `id ("winsserver"), `Value );
+    if (size(value)>0)
+    {
+	options = add (options, $[ "key" : "netbios-name-servers", "value": value ] );
+    }
+
+    DhcpServer::SetEntryOptions ("","", options);
+
+    // get the global directives
+    directives = DhcpServer::GetEntryDirectives ("","");
+    if ( directives == nil ) 
+    {
+	directives = [];
+    }
+    
+    // filter out the known ones
+    keys = [ "default-lease-time" ];
+    
+    directives = filter ( map<string,string> opt, directives, ``( 
+	! contains (keys, opt["key"]:"")
+    ));
+
+    value = (string)UI::QueryWidget ( `id ("defaultleasetime"), `Value );
+    if (size(value)>0)
+    {
+	integer val = tointeger (value);
+	string units = (string)
+	    UI::QueryWidget ( `id ("defaultleasetimeunits"), `Value );
+	val = time2seconds (val, units);
+	directives = add (directives, $[ "key" : "default-lease-time", "value": tostring (val) ] );
+    }
+
+    DhcpServer::SetEntryDirectives ("","", directives);
+
+    DhcpServer::SetModified ();
+}
+
+boolean GlobalSettingsValidate ()
+{
+    string domainname =		(string) UI::QueryWidget ( `id ("domainname"),		`Value );
+    string primarydnsip =	(string) UI::QueryWidget ( `id ("primarydnsip"),	`Value );
+    string secondarydnsip =	(string) UI::QueryWidget ( `id ("secondarydnsip"),	`Value );
+    string defaultgw =		(string) UI::QueryWidget ( `id ("defaultgw"),		`Value );
+    string timeserver =		(string) UI::QueryWidget ( `id ("timeserver"),		`Value );
+    string printserver =	(string) UI::QueryWidget ( `id ("printserver"),		`Value );
+    string winsserver =		(string) UI::QueryWidget ( `id ("winsserver"),		`Value );
+    string defaultleasetime =	(string) UI::QueryWidget ( `id ("defaultleasetime"),	`Value );
+
+    // FIXME:	it is not defined which of values must be filled (must be lease time defined?)
+    //		shouldn't be lease time controlled for too small or too big value?
+
+    // checking domain name
+    if ( domainname != "" && Hostname::CheckDomain(domainname) != true ) {
+	UI::SetFocus ( `id ( "domainname" ) );
+	Popup::Error ( Hostname::ValidDomain () );
+	return false;
+    }
+
+    // checking primary server
+    if ( primarydnsip != "" && IP::Check4(primarydnsip) != true ) {
+	UI::SetFocus ( `id ( "primarydnsip" ) );
+	Popup::Error ( IP::Valid4  () );
+	return false;
+    }
+
+    // checking secondary server
+    if ( secondarydnsip != "" && IP::Check4(secondarydnsip) != true ) {
+	UI::SetFocus ( `id ( "primarydnsip" ) );
+	Popup::Error ( IP::Valid4  () );
+	return false;
+    }    
+
+    // checking default gateway server
+    if ( defaultgw != "" &&
+	Hostname::Check(defaultgw) != true && Hostname::CheckFQ(defaultgw) != true &&
+	IP::Check4(defaultgw) != true
+    ) {
+	UI::SetFocus ( `id ( "defaultgw" ) );
+	// error popup
+	Popup::Error ( _("Specified value is not a valid host name or IP address.") );
+	return false;
+    }
+
+    // checking time server
+    if ( timeserver != "" &&
+	Hostname::Check(timeserver) != true && Hostname::CheckFQ(timeserver) != true &&
+	IP::Check4(timeserver) != true
+    ) {
+	UI::SetFocus ( `id ( "timeserver" ) );
+	// error popup
+	Popup::Error ( _("Specified value is not a valid host name or IP address.") );
+	return false;
+    }
+
+    // checking print server
+    if ( printserver != "" &&
+	Hostname::Check(printserver) != true && Hostname::CheckFQ(printserver) != true &&
+	IP::Check4(printserver) != true
+    ) {
+	UI::SetFocus ( `id ( "printserver" ) );
+	// error popup
+	Popup::Error ( _("Specified value is not a valid host name or IP address.") );
+	return false;
+    }
+
+    // checking wins server
+    if ( winsserver != "" &&
+	Hostname::Check(winsserver) != true && Hostname::CheckFQ(winsserver) != true &&
+	IP::Check4(winsserver) != true
+    ) {
+	UI::SetFocus ( `id ( "winsserver" ) );
+	// error popup
+	Popup::Error ( _("Specified value is not a valid host name or IP address.") );
+	return false;
+    }
+
+    return true;
+}
+
+/**
+ * Common Config Dialog - Dynamic DHCP
+ * @return term for Get_CommonDialog()
+ */
+term Common_DynamicDHCPDialog() {
+    term dialog = 
+	`VBox(
+            `VBox(
+		// frame
+                `Frame (_("IP Address Range") ,
+		    `VBox(
+			// text entry
+		    `Left( `TextEntry ( `id ("from_ip"), _("First IP Address:") ) ),
+			// text entry
+		    `Left( `TextEntry ( `id ("to_ip"), _("Last IP Address:") ) )
+		) ) 
+            ),
+	    `VSpacing (1),
+	    // frame
+            `Frame(_("Lease"),
+                `VBox(
+                    `HBox(
+                            `HBox(
+					// Textentry label - lease time for IPs in the range
+                                `Left(`TextEntry(`id("defaultleasetime"), _("Lease Time"))),
+                        		// Combobox - type of units for lease time
+			        `Left(`ComboBox(`id("defaultleasetimeunits"), "",
+				time_combo_items
+                                ))
+                            ),
+                            `HBox(
+				//TextEntryLabel - max. time for leasing of IPs from the range
+                                `Left(`TextEntry(`id("maxleasetime"), _("Max. Lease Time (optional)"))),
+				// Combobox - type of units for max lease time
+                                `Left(`ComboBox(`id("maxleasetimeunits"), "",
+				    time_combo_items
+                                 ))
+                            )
+                        )
+                    )
+            )
+        );
+
+    return dialog;
+}
+
+void DynamicDHCPValidChars ()
+{
+    // ValidChars definition for DynamicDHCPDialog
+    UI::ChangeWidget(`id( "from_ip" ),		`ValidChars, IP::ValidChars4);
+    UI::ChangeWidget(`id( "to_ip" ),		`ValidChars, IP::ValidChars4);
+    UI::ChangeWidget(`id( "defaultleasetime" ),	`ValidChars, "0123456789");
+    UI::ChangeWidget(`id( "maxleasetime" ),	`ValidChars, "0123456789");
+}
+
+void DynamicDHCPInit ()
+{
+    // find out the our subnet identification
+    
+    list<string> ifaces = DhcpServer::GetAllowedInterfaces ();
+    
+    if ( size(ifaces) > 1 )
+    {
+	y2warning ("More than one interface allowed, using the first one only.");
+    }
+    
+    if ( size(ifaces) == 0 )
+    {
+	y2error ("No interfaces set");
+	return;
+    }
+
+    string interface = ifaces[0]:nil;
+    map m = DhcpServer::GetInterfaceInformation (interface);
+    string id = m["network"]:"" + " netmask " + m["netmask"]:"";
+
+    y2milestone ("Id to lookup: %1", id );
+
+    if (! DhcpServer::EntryExists ("subnet", id) )
+    {
+	DhcpServer::CreateEntry ("subnet", id, "", "" );
+    }
+
+    // FIXME: it may not exist
+    list < map< string,string> > directives
+	= DhcpServer::GetEntryDirectives ( "subnet", id );
+
+    if (directives != nil)
+    {
+	foreach (map<string,string> opt, directives, ``{
+	    if ( opt["key"]:nil == "range" )
+	    {
+		list<string> range = splitstring ( opt["value"]:"", " " );
+		UI::ChangeWidget ( `id ("from_ip"), `Value, range[0]:"" );
+		UI::ChangeWidget ( `id ("to_ip"), `Value, range[1]:"" );
+	    }
+	    else if ( opt["key"]:nil == "default-lease-time" )
+	    {
+		integer value = tointeger ( opt["value"]:"0" );
+		map vu = seconds2time (value);
+		value = vu["count"]:0;
+		string unit = vu["unit"]:"seconds";
+		UI::ChangeWidget ( `id ("defaultleasetime"), `Value, tostring (value) );
+		UI::ChangeWidget ( `id ("defaultleasetimeunits"), `Value, unit );
+	    }
+	    else if ( opt["key"]:nil == "max-lease-time" )
+	    {
+		integer value = tointeger ( opt["value"]:"0" );
+		map vu = seconds2time (value);
+		value = vu["count"]:0;
+		string unit = vu["unit"]:"seconds";
+		UI::ChangeWidget ( `id ("maxleasetime"), `Value, tostring (value) );
+		UI::ChangeWidget ( `id ("maxleasetimeunits"), `Value, unit );
+	    }
+	});
+    }
+}
+
+void DynamicDHCPStore ()
+{
+    list<string> ifaces = DhcpServer::GetAllowedInterfaces ();
+
+    // we assume there is only a single interface at this stage        
+    string interface = ifaces[0]:nil;
+
+    map m = DhcpServer::GetInterfaceInformation (interface);
+    string id = m["network"]:"" + " netmask " + m["netmask"]:"";
+
+    y2milestone ("Id to store: %1", id );
+
+    list < map< string,string> > directives 
+	= DhcpServer::GetEntryDirectives ( "subnet", id );
+	
+    if ( directives == nil ) 
+    {
+	directives = [];
+    }
+
+    string from_ip = (string) UI::QueryWidget ( `id ("from_ip"), `Value );
+    string to_ip = (string) UI::QueryWidget ( `id ("to_ip"), `Value );
+    
+    // FIXME: validation
+    
+    // now update the directives
+    
+    // remove the old ones
+    list<string> keys = [ "max-lease-time", "range", "default-lease-time" ];
+    
+    directives = filter ( map<string,string> opt, directives, ``( 
+	! contains (keys, opt["key"]:"")
+    ));
+    
+    if ( size(from_ip) != 0 && size(to_ip) != 0 )
+    {
+	directives = add ( directives, 
+	    $[ "key" : "range" , "value" : from_ip + " " + to_ip ]
+	);
+    }
+
+    string value = (string)UI::QueryWidget ( `id ("defaultleasetime"), `Value );
+    if (size(value)>0)
+    {
+	integer val = tointeger (value);
+	string units = (string)
+	    UI::QueryWidget ( `id ("defaultleasetimeunits"), `Value );
+	val = time2seconds (val, units);
+	directives = add (directives, $[ "key" : "default-lease-time", "value": tostring (val) ] );
+    }
+
+    value = (string)UI::QueryWidget ( `id ("maxleasetime"), `Value );
+    if (size(value)>0)
+    {
+	integer val = tointeger (value);
+	string units = (string)
+	    UI::QueryWidget ( `id ("maxleasetimeunits"), `Value );
+	val = time2seconds (val, units);
+	directives = add (directives, $[ "key" : "max-lease-time", "value": tostring (val) ] );
+    }
+
+    DhcpServer::SetEntryDirectives ( "subnet", id, directives );    
+}
+
+boolean DynamicDHCPValidate ()
+{
+    string from_ip		= (string) UI::QueryWidget ( `id ("from_ip"),		`Value );
+    string to_ip		= (string) UI::QueryWidget ( `id ("to_ip"),		`Value );
+    string defaultleasetime	= (string) UI::QueryWidget ( `id ("defaultleasetime"),	`Value );
+    string maxleasetime		= (string) UI::QueryWidget ( `id ("maxleasetime"),	`Value );
+
+    // defined only one, both from and to must be defined
+    if ( from_ip != "" && to_ip == "" ) {
+	UI::SetFocus ( `id ( "to_ip" ) );
+	// A popup error text
+	Popup::Error ( _("The input value must be defined.") );
+	return false;
+    }
+
+    // defined only one, both from and to must be defined
+    if ( from_ip == "" && to_ip != "" ) {
+	UI::SetFocus ( `id ( "from_ip" ) );
+	// A popup error text
+	Popup::Error ( _("The input value must be defined.") );
+	return false;
+    }
+
+    // Checking from_ip for IPv4
+    if ( from_ip != "" && IP::Check4(from_ip) == false ) {
+	UI::SetFocus ( `id ( "from_ip" ) );
+	Popup::Error ( IP::Valid4 () );
+	return false;
+    }
+
+    // Checking to_ip for IPv4
+    if ( to_ip != "" && IP::Check4(to_ip) == false ) {
+	UI::SetFocus ( `id ( "to_ip" ) );
+	Popup::Error ( IP::Valid4 () );
+	return false;
+    }
+
+    // FIXME: Lease Time should NOT be zero or means zero NO expiration?
+
+    // FIXME: from_ip and to_ip must have the same netmask
+
+    return true;
+}
+
+/**
+ * Common Config Dialog - Host Management
+ * @return term for Get_CommonDialog()
+ */
+
+term Common_HostManagementDialog() {
+    term dialog = `VBox(
+            `VBox(
+			// Label of the registered hosts table
+                    `Left(`Label(_("Registered Host"))),
+                    `Table(`id("registered_hosts_table"), 
+			`opt(`notify, `immediate ),
+			`header(
+			// Table header item - Name of the host
+			_("Name"), 
+			// Table header item - IP of the host
+			_("IP"), 
+			// MAC address of the host
+			_("Hardware Address"), 
+			// Network type of the host
+			_("Type")))
+                ),
+
+		// Frame label - configuration of particular host
+            `Frame( _("List Setup"),
+                `VBox(
+                    `HBox(
+                        `HWeight(45,`VBox(
+                            `HBox(
+				// Textentry label - name of the host
+                                `Left(`TextEntry(`id("hostname"), _("Name"))),
+				// noneditable textentry
+				// FIXME - fill in real domain, default is just an example
+                                `Left(`TextEntry(`id("domain"), `opt(`disabled), "  "))
+                            ),
+				// Textentry label - IP address of the host
+                            `Left(`TextEntry(`id("hostip"), _("IP Address")))
+                        )),
+                        `HWeight(10, `VBox(
+                            `HStretch()
+                        )),
+                        `HWeight(45, `VBox(
+				// Textentry label - hardware (mac) address of the host
+                            `Left(`TextEntry(`id("hosthwaddress"), _("Hardware Address"))),
+				// Radiobutton label - network type of the host
+                            `RadioButtonGroup(`id("network_type"), 
+                                `HBox(
+                                    `Left(`RadioButton(`id("ethernet"), _("Ethernet"), true)),
+                                    `Left(`RadioButton(`id("token-ring"), _("Token Ring")))
+                                )
+                            )
+                        ))
+                    ),
+                    `VSpacing(1),
+                    `HBox(
+				// Pushbutton label - add host into list
+                        `HSquash(`Left(`PushButton(`id("addhost"), _("Add")))),
+                        `HSpacing(1),
+				// Pushbutton label - change host in list
+                        `HSquash(`Left(`PushButton(`id("edithost"), _("Change in List")))),
+                        `HSpacing(1),
+				// Pushbutton label - delete host from list
+                        `Left(`PushButton(`id("deletehost"), _("Delete from List"))),
+                        `HStretch()
+                    )
+                )
+            )
+        );
+
+    return dialog;
+}
+
+void HostManagementValidChars ()
+{
+    // ValidChars definition for HostManagementDialog
+    UI::ChangeWidget(`id( "hostname" ),		`ValidChars, Hostname::ValidChars);
+    UI::ChangeWidget(`id( "hostip" ),		`ValidChars, IP::ValidChars4);
+    UI::ChangeWidget(`id( "hosthwaddress" ),	`ValidChars, "ABCDEFabcdef0123456789:");
+}
+
+string hosts_parent_id = "";
+
+map<string, map<string, string> > hosts = $[];
+
+void SelectItem (string id)
+{
+    map<string,string> opts = hosts[id]:$[];
+    
+    UI::ChangeWidget ( `id ("hostname"), `Value, id ); 
+    UI::ChangeWidget ( `id ("hostip"), `Value, opts["ip"]:"" ); 
+    UI::ChangeWidget ( `id ("hosthwaddress"), `Value, opts["hardware"]:"" ); 
+    UI::ChangeWidget ( `id ("network_type"), `CurrentButton, opts["type"]:"ethernet" ); 
+}
+
+void HostManagementInit ()
+{
+    hosts = $[];
+    hosts_parent_id = "";
+
+    list<string> ifaces = DhcpServer::GetAllowedInterfaces ();
+
+    // we assume there is only a single interface at this stage
+    string interface = ifaces[0]:nil;
+
+    map m = DhcpServer::GetInterfaceInformation (interface);
+    string id = m["network"]:"" + " netmask " + m["netmask"]:"";
+
+    hosts_parent_id = id;
+
+    y2milestone ("Id to get hosts from: %1", id );
+    
+    if (! DhcpServer::EntryExists ("subnet", id) )
+    {
+	DhcpServer::CreateEntry ("subnet", id, "", "" );
+    }
+
+    // now, get the list of interesting children
+    list< map<string,string> > children = DhcpServer::GetChildrenOfEntry ("subnet", id);
+
+    foreach (map<string,string> child, children, ``{
+	if (child["type"]:nil == "host")
+	{
+	    string child_id = child["id"]:"";
+	    // let's initialize our cache
+	    hosts[ child_id ] = $[];
+	    
+	    list< map<string,string> > directives = DhcpServer::GetEntryDirectives ("host", child["id"]:"");
+	    foreach ( map<string,string> opt, directives, ``{
+		if( opt["key"]:nil == "hardware" )
+		{
+		    list<string> parts = splitstring (opt["value"]:"", " ");
+		    
+		    hosts[ child_id, "hardware" ] = parts[1]:"";
+		    hosts[ child_id, "type" ] = parts[0]:"ethernet";
+		}
+		else if (opt["key"]:nil == "fixed-address")
+		{
+		    hosts[ child_id, "ip" ] = opt["value"]:"";
+		}
+	    });
+	}
+    });
+    
+    // now, fill the dialog
+    list<term> items = maplist (string id, map<string,string> opts, hosts, ``(
+	`item ( `id (id), id, opts["ip"]:""
+	    , opts["hardware"]:""
+	    , opts["type"]:"ethernet" == "ethernet" ? _("Ethernet") : _("Token Ring") )
+    ));
+    
+    UI::ChangeWidget ( `id("registered_hosts_table"), `Items, items );
+    
+    if ( size(items) > 0 )
+    {
+	// fill the corresponding fields
+	SelectItem ( items[0,1]:"" );
+    }
+
+    // get the global options
+    list< map<string,string> > options = DhcpServer::GetEntryOptions ("","");
+    
+    if ( options == nil )
+    {
+	options = [];
+    }
+
+    // setup the corresponding values
+    foreach ( map<string,string> opt, options, ``{
+	if ( opt["key"]:nil == "domain-name" ) {
+	    string value = opt["value"]:"";
+	    value = regexpsub (value, "^[ \t]*\"(.*)\"[ \t]*$", "\\1");
+	    if (size(value) > 0) {
+		value = "." + value;
+	    }
+	    UI::ChangeWidget ( `id("domain"), `Value, value );
+	    break;
+	}
+    });
+}
+
+list< map<string,string> > PrepareDirectives ()
+{
+    list <map<string,string> > directives = [];
+	
+    string value = (string) UI::QueryWidget ( `id ("hostip"), `Value );
+    if (size(value) > 0)
+    {
+	// FIXME: validation
+	directives = add (directives, $[ "key" : "fixed-address" ,
+		"value" : value ] );
+    }
+	
+    value = (string) UI::QueryWidget ( `id ("hosthwaddress" ), `Value );
+    if (size(value) > 0)
+    {
+	// FIXME: validation
+	string type = (string) UI::QueryWidget ( `id ("network_type"), `CurrentButton );
+	directives = add (directives, $[ "key" : "hardware" ,
+		"value" : type +" " + value ] );
+    }
+	
+    return directives;
+}
+
+void HostManagementHandle (map event_descr)
+{
+    if ( event_descr["ID"]:"" == "addhost" )
+    {
+	string name = (string) UI::QueryWidget ( `id ("hostname"), `Value );
+	if (size (name) == 0 )
+	{
+	    UI::SetFocus (`id("hostname"));
+	    // error popup
+	    Popup::Error (_("Host name cannot be empty."));
+	    return;
+	}
+	else if (! Hostname::Check(name))
+	{
+	    UI::SetFocus (`id("hostname"));
+	    Popup::Error (Hostname::ValidFQ());
+	    return;
+	}
+	else if ( haskey (hosts, name) )
+	{
+	    UI::SetFocus (`id("hostname"));
+	    // error popup, %1 is host name
+	    Popup::Error ( sformat (_("Host named '%1' already exists.
+Use Change instead.
+"), name ) );
+	    return;
+	}
+
+	// checking new IP
+	string hostip = (string) UI::QueryWidget ( `id ("hostip"), `Value );
+	if ( size ( hostip ) == 0 )
+	{
+	    UI::SetFocus ( `id ( "hostip" ) );
+	    // error popup
+	    Popup::Error ( _("The input value must be defined.") );
+	    return;
+	}
+	else if ( IP::Check4 ( hostip ) != true )
+	{
+	    UI::SetFocus ( `id ( "hostip" ) );
+	    Popup::Error ( IP::Valid4 () );
+	    return;
+	}
+
+	// checking new MAC
+	string hosthwaddress = (string) UI::QueryWidget ( `id ("hosthwaddress"), `Value );
+	if ( size ( hosthwaddress ) == 0 )
+	{
+	    UI::SetFocus ( `id ( "hosthwaddress" ) );
+	    // error popup
+	    Popup::Error ( _("The input value must be defined.") );
+	    return;
+	}
+	// FIXME: control HW address ... in future
+	
+	DhcpServer::CreateEntry ( "host", name, "subnet", hosts_parent_id );
+	DhcpServer::SetEntryDirectives ( "host", name, PrepareDirectives () );
+
+	HostManagementInit ();
+    }
+    else if ( event_descr["ID"]:"" == "deletehost" )
+    {
+	string id = (string) UI::QueryWidget ( `id ("registered_hosts_table")
+	    , `CurrentItem );
+	    
+	if (id == nil)
+	{
+	    // error popup
+	    Popup::Error (_("Select a host first.") );
+	    return;
+	}
+	// yes-no popup
+	if ( ! Popup::YesNo (sformat (_("Really delete '%1'?"), id ) ) )
+	{
+	    return;
+	}
+	
+	DhcpServer::DeleteEntry ( "host", id );
+
+	HostManagementInit ();
+    }
+    else if ( event_descr["ID"]:"" == "edithost" )
+    {
+	string id = (string) UI::QueryWidget ( `id ("registered_hosts_table")
+	    , `CurrentItem );
+	    
+	if (id == nil)
+	{
+	    Popup::Error (_("Select a host first.") );
+	    return;
+	}
+
+	// checking new IP
+	string hostip = (string) UI::QueryWidget ( `id ("hostip"), `Value );
+	if ( size ( hostip ) == 0 )
+	{
+	    // FIXME: text?
+	    UI::SetFocus ( `id ( "hostip" ) );
+	    Popup::Error ( _("The input value must be defined.") );
+	    return;
+	}
+	else if ( IP::Check4 ( hostip ) != true )
+	{
+	    UI::SetFocus ( `id ( "hostip" ) );
+	    Popup::Error ( IP::Valid4 () );
+	    return;
+	}
+
+	// checking new MAC
+	string hosthwaddress = (string) UI::QueryWidget ( `id ("hosthwaddress"), `Value );
+	if ( size ( hosthwaddress ) == 0 )
+	{
+	    UI::SetFocus ( `id ( "hosthwaddress" ) );
+	    Popup::Error ( _("The input value must be defined.") );
+	    return;
+	}
+	// FIXME: control HW address ... in future
+	
+	DhcpServer::SetEntryDirectives ( "host", id, PrepareDirectives () );
+
+	HostManagementInit ();
+    }
+    else if ( event_descr["ID"]:"" == "registered_hosts_table" 
+	&& event_descr["EventReason"]:"" == "SelectionChanged" )
+    {
+	string id = (string) UI::QueryWidget ( `id ("registered_hosts_table")
+	    , `CurrentItem );
+	    
+	if ( id != nil )
+	{
+	    SelectItem (id);
+	}
+    }
+}
+
+void HostManagementStore ()
+{
+    return;
+}
+
+map<string, map<string, any> > tabs = $[
+    "start_up" : $[
+	"contents"	: Common_StartUpDialog(),
+	// dialog caption
+	"caption"	: _("Start-Up"),
+	"init"		: StartUpInit,
+	"store"		: StartUpStore,
+    ],
+    "card_selection" : $[
+	"contents"	: Common_CardSelectionDialog(),
+	// dialog caption
+	"caption"	: _("Card Selection"),
+	"init"		: CardSelectionInit,
+	"store"		: CardSelectionStore,
+    ],
+    "global_settings" : $[
+	"contents"	: Common_GlobalSettingsDialog(),
+	// dialog caption
+	"caption"	: _("Global Settings"),
+	"validchars"	: GlobalSettingsValidChars,
+	"init"		: GlobalSettingsInit,
+	"handle"	: GlobalSettingsHandle,
+	"validate"	: GlobalSettingsValidate,
+	"store"		: GlobalSettingsStore,
+    ],
+    "dynamic_dhcp" : $[
+	"contents"	: Common_DynamicDHCPDialog(),
+	// dialog caption
+	"caption"	: _("Dynamic DHCP"),
+	"validchars"	: DynamicDHCPValidChars,
+	"init"		: DynamicDHCPInit,
+	"validate"	: DynamicDHCPValidate,
+	"store"		: DynamicDHCPStore,
+    ],
+    "host_management" : $[
+	"contents"	: Common_HostManagementDialog(),
+	// dialog caption
+	"caption"	: _("Host Management"),
+	"validchars"	: HostManagementValidChars,
+	"init"		: HostManagementInit,
+	"handle"	: HostManagementHandle,
+	"store"		: HostManagementStore,
+    ],
+    "expert_settings" : $[
+	// dialog caption
+	"caption"	: _("Expert Settings")
+    ],
+];
+
+/**
+ * Common Config Dialog 
+ * @return any dialog return for treewizard
+ */
+any CommonConfigDialog () {
+
+    Wizard::OpenTreeNextBackDialog();
+
+    // Tree (left menu) definiton
+    list<map> Tree = [];
+    Tree = Wizard::AddTreeItem( Tree, "", tabs [ "start_up", "caption"]: "", "start_up");
+    Tree = Wizard::AddTreeItem( Tree, "", tabs [ "card_selection", "caption"]: "", "card_selection");
+    Tree = Wizard::AddTreeItem( Tree, "", tabs [ "global_settings", "caption"]: "", "global_settings" );
+    Tree = Wizard::AddTreeItem( Tree, "", tabs [ "dynamic_dhcp", "caption"]: "",  "dynamic_dhcp" );
+    Tree = Wizard::AddTreeItem( Tree, "", tabs [ "host_management", "caption"]: "", "host_management" );
+    Tree = Wizard::AddTreeItem( Tree, "", tabs [ "expert_settings", "caption"]: "", "expert_settings" );
+
+    Wizard::CreateTree(Tree, ""); // FIXME shouldn't there be a label here?
+
+
+    // first dialog definition - according Mike Host Management will be the initial
+    // Merging common dialog title with title of every single dialog
+
+    string current_tab = "start_up";
+
+    string caption = _("DHCP Server") + " : " + tabs[current_tab, "caption"]: "";
+    string help = HELPS[current_tab]:"";
+    term dialog = tabs[current_tab, "contents" ]: `VSpacing (1);
+
+    Wizard::SetContentsButtons (caption, dialog, help,
+	Label::CancelButton(), Label::FinishButton());
+
+//    UI::WizardCommand(`SetNextButtonLabel( Label::OKButton() ) );
+//    UI::WizardCommand(`SetAbortButtonLabel( Label::CancelButton() ) );
+    if (UI::WidgetExists(`id(`wizardTree)))
+    {
+	Wizard::ReplaceBackButton (`PushButton (`id(`help), `opt(`key_F1), Label::HelpButton()));
+    }
+    else
+    {
+	Wizard::HideBackButton();
+    }
+
+
+    // initialize contents
+    void () func = (void ())tabs [current_tab, "init"]:nil;
+    if (func != nil)
+	func ();
+
+    if (UI::WidgetExists(`id(`wizardTree)))
+    {
+	UI::ChangeWidget(`id(`wizardTree), `CurrentItem, current_tab);
+	UI::SetFocus (`id (`wizardTree));
+    }
+    else
+    {
+	UI::WizardCommand(`SelectTreeItem(current_tab));
+    }
+
+    any ret = nil;
+    while(true) {
+
+	map event = UI::WaitForEvent ();
+	ret = event["ID"]:nil;
+	if (ret == `wizardTree)
+	{
+	    ret = (string)UI::QueryWidget (`id (`wizardTree), `CurrentItem);
+	}
+
+	if (ret == `abort || ret == `cancel) {
+	    if(confirmAbort()) break;
+	    else continue;
+	}
+	else if (ret == `back)
+	{
+	    break;
+	}
+	else if (ret == `next || ret == "expert_settings") {
+	    DhcpServer::SetModified ();
+	    // validate the settings before storing them
+	    boolean () runfunc = (boolean ())tabs [current_tab, "validate"]:nil;
+
+	    if (runfunc != nil)
+	    {
+		boolean validated = runfunc ();
+		if (validated == false) continue;
+		// else store them
+	    }
+	    if (ret == "expert_settings")
+	    {
+		// yes-no popup
+		if (! Popup::YesNo (_(
+"If you enter the expert settings, you cannot return 
+to this dialog. To display this dialog, save the changes
+and restart the module. If a too complex configuration
+is set, the expert settings dialog is displayed when you
+start the DHCP server module.
+
+Continue?
+")))
+		{
+		    Wizard::SelectTreeItem (current_tab);
+		    continue;
+		}
+		else
+		{
+		    ret = `expert;
+		}
+	    }
+
+	    // store the settings first
+	    func = (void ())tabs [current_tab, "store"]:nil;
+	    func ();
+	    break;
+	}
+	else if (ret == `help)
+	{
+
+	    UI::OpenDialog( `opt(`decorated ),
+		`HBox( `VSpacing(16),
+		    `VBox(
+			`HSpacing(60),
+// FIXME add heading for next version
+			// popup window header
+//			`Heading(_("Help")),
+			`VSpacing(0.5),
+			`RichText(help),
+			`VSpacing(1.5),
+			`PushButton(`id(`ok), `opt(`default, `key_F10), Label::OKButton())
+		    )
+		)
+	    );
+
+	    UI::SetFocus(`id(`ok));
+	    UI::UserInput();
+	    UI::CloseDialog();
+	}
+	else if ( ret == "start_up" || ret == "card_selection"  || ret == "global_settings" 
+                || ret == "dynamic_dhcp" || ret == "host_management" )
+        {
+	    if (current_tab == ret)
+	    {
+		// nothing to be changed
+		continue;
+	    }
+
+	    // validate the settings before storing them
+	    boolean () runfunc = (boolean ())tabs [current_tab, "validate"]:nil;
+	    
+	    if (runfunc != nil)
+	    {
+		boolean validated = runfunc ();
+		if (validated == false) continue;
+		// else store them
+	    }
+	    
+	    // store the settings first
+	    func = (void ())tabs [current_tab, "store"]:nil;
+	    func ();
+	    
+	    current_tab = (string) ret;
+            // Changing dialogs depending on tree item
+            caption = _("DHCP Server") + " - " + tabs [ current_tab, "caption"]: "";
+            help = HELPS[current_tab]:"";
+            dialog = tabs [current_tab, "contents"]:`VSpacing (1);
+            Wizard::SetContents( caption, dialog, help, true, true);
+
+	    // setting ValidChars for dialog
+	    func = (void ())tabs [current_tab, "validchars"]:nil;
+	    func ();
+
+	    // initialize the contents
+	    func = (void ())tabs [current_tab, "init"]:nil;
+	    func ();
+
+	    if (UI::WidgetExists(`id(`wizardTree)))
+	    {
+		UI::SetFocus (`id (`wizardTree));
+	    }
+        }
+
+	else{
+	    void (map) handler = (void (map))tabs[current_tab, "handle"]: nil;
+	    if ( handler != nil )
+	    {
+		handler (event);
+	    }
+	    else
+	    {
+		y2error("unexpected retcode: %1", ret);
+		continue;
+	    }
+	}
+    }
+
+    Wizard::RestoreBackButton();
+    UI::CloseDialog ();
+
+    return ret;
+
+
+}
+
+any FirstRunDialog (string current_tab, integer step_number) {
+// error report
+string qwerty = _("The input value is invalid.");
+// error report
+qwerty = _("At least one name server must be defined.");
+
+    // dialog caption, %1 is step number
+    string caption = sformat (_("DHCP Server Wizard (%1/3)"), step_number) 
+	+ " : " + tabs[current_tab, "caption"]: "";
+    string help = HELPS[current_tab]:"";
+    term dialog = tabs[current_tab, "contents" ]: `VSpacing (1);
+    
+    Wizard::SetContents( caption, dialog, help, true, true);
+
+    // initialize contents
+    void () func = (void ())tabs [current_tab, "init"]:nil;
+    func ();
+    
+    if (quit) return `abort;
+
+    any ret = nil;
+    while(true) {
+
+	map event = UI::WaitForEvent ();
+	
+	ret = event["ID"]:nil;
+
+	if (ret == `abort || ret == `cancel) {
+	    if(confirmAbort()) break;
+	    else continue;
+	}
+	else if (ret == `back) {
+	    break;
+	}
+	else if (ret == `next) {
+	    // store the settings first
+	    func = (void ())tabs [current_tab, "store"]:nil;
+	    func ();
+	    break;
+	}
+	
+	else{
+	    void (map) handler = (void (map))tabs[current_tab, "handle"]: nil;
+	    if ( handler != nil )
+	    {
+		handler (event);
+	    }
+	    else
+	    {
+		y2error("unexpected retcode: %1", ret);
+		continue;
+	    }
+	}
+    }
+
+    return ret;
+
+
+}
+
+/* EOF */
+}
+
+
+

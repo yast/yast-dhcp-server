@@ -11,8 +11,39 @@
 
 textdomain "dhcp-server";
 
+import "Directory";
 import "Wizard";
 import "Sequencer";
+
+any FirstRunSequence() {
+
+    map aliases = $[
+	"cardselection"	: ``( FirstRunDialog ("card_selection",1) ),
+	"globalsettings"  : ``( FirstRunDialog ("global_settings",2) ),
+	"dynamicdhcp"  : ``( FirstRunDialog ("dynamic_dhcp",3) ),
+    ];
+
+    map sequence = $[
+	"ws_start" : "cardselection",
+	"cardselection"	: $[
+	    `abort	: `abort,
+	    `next	: "globalsettings"
+	],
+	"globalsettings" : $[
+            `abort      : `abort,
+            `next       : "dynamicdhcp"
+        ],
+	"dynamicdhcp" : $[
+	    `abort	: `abort,
+	    `next	: `next
+	]
+    ];
+
+    any ret = Sequencer::Run(aliases, sequence);
+
+    return ret;
+
+}
 
 /**
   * Run wizard sequencer
@@ -21,8 +52,10 @@ import "Sequencer";
 global define symbol MainSequence () ``{
 
     map aliases = $[
+	"configtype_switch"	:[``(ConfigTypeSwitch ()), true ],
+	"commonsetup"		: ``(CommonConfigDialog()),
 	"ifaces_switch"		:[``(CheckConfiguredInterfaces ()), true ],
-	"main"			: ``(MainDialog ()),
+	"main"			: ``(OldMainDialog ()),
 	"globals"		: ``(GlobalsDialog ()),
 	"subnet"		: ``(SubnetDialog ()),
 	"host"			: ``(HostDialog ()),
@@ -36,12 +69,23 @@ global define symbol MainSequence () ``{
 	"dyn_dns"		: ``(DynDnsDialog ()),
 	"section_type_select"	:[``(SelectEditationDialog ()), true ],
 	"store"			:[``(SectionStore ()), true ],
-	"tsig_keys"		: ``(RunTsigKeysDialog ()),
-	"tsig_keys_1"		: ``(RunTsigKeysDialog ()),
+	"tsig_keys"		: ``(RunTsigKeysDialog (false)),
+	"tsig_keys_1"		: ``(RunTsigKeysDialog (true)),
+	"commonsetup"	:   ``( CommonConfigDialog() ),
     ];
 
     map sequence = $[
-	"ws_start" : "ifaces_switch",
+	"ws_start" : "configtype_switch",
+	"configtype_switch" : $[
+	    `simple		: "commonsetup",
+	    `expert		: "main",
+	],
+        "commonsetup" : $[
+	    `abort		: `abort,
+	    `next		: `next,
+	    `cancel		: `cancel,
+	    `expert		: "ifaces_switch",
+	],
 	"ifaces_switch" : $[
 	    `main		: "main",
 	    `ifaces		: "interfaces_initial",
@@ -122,6 +166,7 @@ global define symbol MainSequence () ``{
 	"tsig_keys_1" : $[
 	    `abort : `abort,
 	    `next : "dyn_dns",
+	    `subnet : "subnet",
 	],
     ];
 
@@ -150,8 +195,11 @@ global define symbol DhcpAutoSequence() ``{
   */
 global define symbol DhcpSequence() ``{
 
+y2error ("Running DHCP sequence");
+
     map aliases = $[
 	"read"      : [ ``( ReadDialog() ), true ],
+	"wizard"    :	``( FirstRunSequence () ),
 	"main"      :   ``( MainSequence() ),
 	"write"     : [ ``( WriteDialog() ), true ]
     ];
@@ -160,11 +208,16 @@ global define symbol DhcpSequence() ``{
 	"ws_start" : "read",
 	"read" : $[
 	    `abort  : `abort,
-	    `next   : "main"
+	    `next   : "main",
+	    `wizard : "wizard",
 	],
 	"main" : $[
 	    `abort  : `abort,
 	    `next   : "write"
+	],
+	"wizard" : $[
+	    `abort  : `abort,
+	    `next   : "main"
 	],
 	"write" : $[
 	    `abort  : `abort,
@@ -177,6 +230,12 @@ global define symbol DhcpSequence() ``{
     symbol ret = Sequencer::Run(aliases, sequence);
 
     UI::CloseDialog();
+    
+    if ( ret == `next )
+    {
+	SCR::Execute (.target.bash, "touch " + Directory::vardir + "/dhcp_server_done_once" );
+    }
+
     return ret;
 }
 
