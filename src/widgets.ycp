@@ -11,98 +11,24 @@
 
     textdomain "dhcp-server";
 
-    import "DhcpServer";
     import "CWM";
+    import "DhcpServer";
+    import "Label";
+    import "LogView";
+    import "Popup";
     import "TablePopup";
 
-    import "Popup";
-    import "Label";
+// pre-declarations
 
-// generic routines
+global define void configTreeInit (string id);
 
-    /**
-      * Fallback function to initialize the settings in the popup
-      * @param opt_id any option id
-      * @param key any option key
-      */
-    global define void commonPopupInit (any opt_id, string key) ``{
-	if (! is (opt_id, string))
-	    return ;
-	integer index = tointeger (
-	    regexpsub ((string)opt_id, "^[a-z]+ ([0-9]+)$", "\\1"));
-	if (substring (key, 0, 7) == "option ")
-	{
-	    UI::ChangeWidget (`id (key), `Value,
-		current_entry_options[index, "value"]:"");
-	}
-	else
-	{
-	    UI::ChangeWidget (`id (key), `Value,
-		current_entry_directives[index, "value"]:"");
-	}
-	UI::SetFocus (`id (key));
-    }
-
-    /**
-      * Fallback function to save settings from the popup
-      * @param opt_id any option id
-      * @param key any option key
-      * @return any modified operation if needed
-      */
-    global define void commonPopupSave (any opt_id, string key) ``{
-	any value = UI::QueryWidget (`id (key), `Value);
-	if (opt_id == nil)
-	{
-	    if (substring (key, 0, 7) == "option ")
-	    {
-		current_entry_options = add (current_entry_options, $[
-		    "key" : substring (key, 7),
-		    "value" : value,
-		]);
-	    }
-	    else
-	    {
-		 current_entry_directives = add (current_entry_directives, $[
-		    "key" : key,
-		    "value" : value,
-		]);
-	    }
-	    return;
-	}
-	if (! is (opt_id, string))
-	    return ;
-	integer index = tointeger (
-	    regexpsub ((string)opt_id, "^[a-z]+ ([0-9]+)$", "\\1"));
-	if (substring (key, 0, 7) == "option ")
-	    current_entry_options[index, "value"] = value;
-	else
-	    current_entry_directives[index, "value"] = value;
-	return;
-    }
-
-    /**
-      * Fallback function to display summary text in the table
-      * @param opt_id any option id
-      * @param key any option key
-      * @return string summary to be written to the table
-      */
-    global define string commonTableEntrySummary (any opt_id, string key) ``{
-	if (! is (opt_id, string))
-	    return "";
-	integer index = tointeger (
-	    regexpsub ((string)opt_id, "^[a-z]+ ([0-9]+)$", "\\1"));
-	if (substring (key, 0, 7) == "option ")
-	    return sformat ("%1", current_entry_options[index, "value"]:"");
-	else
-	    return sformat ("%1", current_entry_directives[index, "value"]:"");
-    }
 
     /**
       * Function for deleting entry from section
       * Used for all (global, host, subnet) section due to the same location
       *  of data
       * @param opt_id any option id
-      * @param key any option key
+      * @param key string option key
       * @return boolean true if was really deleted
       */
     global define boolean commonTableEntryDelete (any opt_id, string key) ``{
@@ -149,7 +75,7 @@
       * Transform table entry id to option id
       * @param table map table description
       * @param id any entry id
-      * @return any option key
+      * @return string option key
       */
     global define string id2key (map table, any id) ``{
 	if (! is (id, string))
@@ -171,10 +97,10 @@
 
     /**
       * Get the popup widget description map
-      * @param opt_key any option key
+      * @param opt_key string option key
       * @return map popup description map
       */
-    global define map key2descr (any opt_key) ``{
+    global define map key2descr (string opt_key) ``{
 	map ret = (map)(popups[opt_key]:nil);
 	if (ret != nil)
 	    return ret;
@@ -182,34 +108,6 @@
                 "init" : commonPopupInit,
                 "store" : commonPopupSave,
 	];
-    }
-
-    /**
-      * Handle function of the log button
-      * @param key any widget key
-      * @param event map event that occured
-      * @return value for wizard sequencer, always nil
-      */
-    global define any showLogPopup (any key, map event) ``{
-/*	map bash_out = SCR::Execute (.target.bash_output,
-	    "grep 'dhcpd' /var/log/messages | tail -n 50");
-	UI::OpenDialog (`VBox (
-	    // log view header
-	    `HSpacing (70),
-	    // log view header
-	    `LogView (`id (`log), _("DHCP Server Log"), 20, 50),
-	    `HBox (
-		`HStretch (),
-		`PushButton (`id (`close), Label::CloseButton ()),
-		`HStretch ()
-	    )));
-	UI::ChangeWidget (`id (`log), `Value, bash_out["stdout"]:"");
-	any ret = nil;
-	while (ret != `close)
-	    ret = UI::UserInput ();
-
-	UI::CloseDialog ();*/
-	return nil;
     }
 
     /**
@@ -226,7 +124,7 @@
 		"options": popups,
 		"id2key": id2key,
 		"ids": getTableContents,
-		"help": getOptionsHelp (),
+		"help": HELPS["options_table"]:"",
 		"fallback" : $[
 		    "init": commonPopupInit,
 		    "store": commonPopupSave,
@@ -273,12 +171,12 @@ global define void startInit (string id) ``{
 
 /**
  * Store settings of the widget
- * @param id any widget id
+ * @param id string widget id
  * @param event map event that caused storing process
  */
 global define void startStore (string id, map event) ``{
-    DhcpServer::SetStartService (
-	(boolean)UI::QueryWidget (`id ("start"), `Value));
+    boolean ss = (boolean)UI::QueryWidget (`id ("start"), `Value);
+    DhcpServer::SetStartService (ss);
 }
 
 /**
@@ -299,55 +197,96 @@ global define void interfaceInit (string id) ``{
     UI::ChangeWidget (`id (id), `Value, ifaces[0]:"");
 }
 
+/**
+ * Store settings of the widget
+ * @param id string widget id
+ * @param event map event that caused storing process
+ */
 global define void interfaceStore (string id, map event) ``{
     string iface = (string)UI::QueryWidget (`id (id), `Value);
     list<string> l = [ iface ];
     DhcpServer::SetAllowedInterfaces (l);
+    DhcpServer::SetModified ();
 }
 
-global define void rangeInit (string id) ``{
-    return;
+global define void FirewallInit (string id) ``{
+    boolean adapt = DhcpServer::GetAdaptFirewall ();
+    UI::ChangeWidget (`id (id), `Value, adapt);
 }
 
-global define void rangeStore (string id, map event) ``{
-    return;
+global define void FirewallStore (string id, map event) ``{
+    boolean adapt = (boolean)UI::QueryWidget (`id (id), `Value);
+    DhcpServer::SetAdaptFirewall (adapt);
+    DhcpServer::SetModified ();
 }
 
-global define void configTreeInit (string id);
 
 global define symbol configTreeHandle (string id, map event) ``{
+    if (event["ID"]:nil == `log)
+    {
+	LogView::Display ($[
+	    "file" : "/var/log/messages",
+	    "grep" : "dhcpd",
+	    "save" : true,
+	    "actions" : [
+		// menubutton entry, try to keep short
+		[ _("Restart DHCP Server"),
+		    ``{SCR::Execute (.target.bash,
+			"/etc/init.d/dhcpd restart");}],
+		// menubutton entry, try to keep short
+		[ _("Save Settings and Restart DHCP Server"),
+		    ``{DhcpServer::Write ();} ],
+	    ],
+	]);
+	return nil;
+    }
+    if (event["ID"]:nil == `interfaces)
+	return `interfaces;
     string current_item = (string)
 	UI::QueryWidget (`id ("configtree"), `CurrentItem);
     if (current_item == " ")
     {
 	UI::ChangeWidget (`id (`delete), `Enabled, false);
-	UI::ChangeWidget (`id (`move), `Enabled, false);
+//	UI::ChangeWidget (`id (`move), `Enabled, false);
     }
     else
     {
 	UI::ChangeWidget (`id (`delete), `Enabled, true);
-	UI::ChangeWidget (`id (`move), `Enabled, true);
+//	UI::ChangeWidget (`id (`move), `Enabled, true);
     }
+    map<string,string> selected = key2typeid (current_item);
+    if (selected == nil)
+    {
+	y2error ("Unexistent entry selected");
+	return nil;
+    }
+    string sel_type = selected["type"]:"";
+    if (sel_type == "pool" || sel_type == "class" || sel_type == "host")
+    {
+	UI::ChangeWidget (`id (`add), `Enabled, false);
+    }
+    else
+    {
+	UI::ChangeWidget (`id (`add), `Enabled, true);
+    }
+
     if (event["ID"]:nil == "configtree"
 	&& event["EventReason"]:nil == "Activated")
     {
 	event["ID"] = `edit;
     }
 
-    map selected = key2typeid (current_item);
-    if (selected == nil)
-    {
-	y2error ("Unexistent entry selected");
-	return nil;
-    }
     if (event["ID"]:nil == `add)
     {
+	original_entry_type = "";
+	original_entry_id = "";
 	parent_type = selected["type"]:"";
 	parent_id = selected["id"]:"";
 	current_entry_options = [];
 	current_entry_directives = [];
 	current_entry_type = "";
 	current_entry_id = "";
+	current_operation = `add;
 	return `add;
     }
     else if (event["ID"]:nil == `edit)
@@ -365,6 +304,7 @@ global define symbol configTreeHandle (string id, map event) ``{
 	original_entry_id = current_entry_id;
 	parent_type = "";
 	parent_id = "";
+	current_operation = `edit;
 
 	return `edit;
     }
@@ -404,6 +344,11 @@ global define void subnetInit (string id) ``{
     UI::ChangeWidget (`id (`netmask), `Value, l[1]:"");
 }
 
+/**
+ * Store settings of the widget
+ * @param id string widget id
+ * @param event map event that caused storing process
+ */
 global define void subnetStore (string id, map event) ``{
     string id = sformat ("%1 netmask %2",
 	(string)UI::QueryWidget (`id (`subnet), `Value),
@@ -411,15 +356,39 @@ global define void subnetStore (string id, map event) ``{
     current_entry_id = id;
 }
 
+global define void idInit (string id) ``{
+    UI::ChangeWidget (`id (id), `Value, current_entry_id);
+}
+
+/**
+ * Store settings of the widget
+ * @param id string widget id
+ * @param event map event that caused storing process
+ */
+global define void idStore (string id, map event) ``{
+    current_entry_id = (string)
+	UI::QueryWidget (`id (id), `Value);
+}
+
+global define void interfacesInit (string id) ``{
+    list ifaces = DhcpServer::GetAllowedInterfaces ();
+    UI::ChangeWidget (`id (id), `SelectedItems, ifaces);
+}
+
+global define void interfacesStore (string id, map event) ``{
+    list ifaces = (list)UI::QueryWidget (`id (id), `SelectedItems);
+    DhcpServer::SetAllowedInterfaces ((list<string>)ifaces);
+    DhcpServer::SetModified ();
+}
 
 
-    /**
-      * Initialize popups
-      * Create description map and copy it into appropriate variable of the
-      *  DhcpServer module
-      */
-    global define void InitWidgets () ``{
-	list options = [
+/**
+  * Initialize widgets
+  * Create description map and copy it into appropriate variable of the
+  *  DhcpServer module
+  */
+global define void InitWidgets () ``{
+    list options = [
 "option subnet-mask",
 "option broadcast-address",
 "option routers",
@@ -451,68 +420,65 @@ global define void subnetStore (string id, map event) ``{
 "option netbios-dd-server",
 "option netbios-note-type",
 "option netbios-scope",
-	];
+    ];
 
-	list common_commands = [
+    list common_commands = [
 "max-lease-time",
 "default-lease-time",
 "filename",
 "next-server",
-	];
+    ];
 
-	list global_commands = [
+    list global_commands = [
 "authoritative",
 "ddns-update-style none",
 "ddns-updates off",
 "log-facility",
-	];
+    ];
 
-	list subnet_commands = [
+    list subnet_commands = [
 "range",
-	];
+    ];
 
-	list host_commands = [
+    list host_commands = [
 "hardware",
 "fixed-address",
-	];
+    ];
 
-	common_commands = merge (common_commands, options);
-	global_commands = toset (merge (global_commands, common_commands));
-	subnet_commands = toset (merge (subnet_commands, common_commands));
-	host_commands = toset (merge (host_commands, common_commands));
+    list class_commands = [
+"match",
+    ];
 
-	map w = $[
-	    "global_table" : getOptionsTableWidget (global_commands),
-	    "host_table" : getOptionsTableWidget (subnet_commands),
-	    "subnet_table" : getOptionsTableWidget (host_commands),
-	    "shared-network_table" : getOptionsTableWidget (common_commands),
-	    "pool_table" : getOptionsTableWidget (common_commands),
-	    "group_table" : getOptionsTableWidget (common_commands),
-	    "log_button" : $[
-		"widget" : `push_button,
-		// push button
-		"label" : _("&Display Log"),
-		"handle" : showLogPopup,
-		"handle_events" : [ "log_button" ],
-		"help" : getLogButtonHelp (),
-	    ],
-	    "start" : $[
+    common_commands = merge (common_commands, options);
+    global_commands = toset (merge (global_commands, common_commands));
+    subnet_commands = toset (merge (subnet_commands, common_commands));
+    host_commands = toset (merge (host_commands, common_commands));
+
+    map w = $[
+	"global_table" : getOptionsTableWidget (global_commands),
+	"host_table" : getOptionsTableWidget (subnet_commands),
+	"subnet_table" : getOptionsTableWidget (host_commands),
+	"shared-network_table" : getOptionsTableWidget (common_commands),
+	"pool_table" : getOptionsTableWidget (common_commands),
+	"group_table" : getOptionsTableWidget (common_commands),
+	"class_table" : getOptionsTableWidget (class_commands),
+	"start" : $[
 		"widget" : `checkbox,
 		"label" : _("&Start DHCP server"),
-		"help" : HELPS["start"]:"TODO",
+		"help" : HELPS["start"]:"",
 		"init" : startInit,
 		"handle" : startHandle,
 		"store" : startStore,
 		"opt" : [`notify],
-	    ],
-	    "interface" : $[
+	],
+	"interface" : $[
 		"widget" : `textentry,
 		"label" : _("Network &interface"),
 		"help" : HELPS["interface"]:"FIXME",
 		"init" : interfaceInit,
 		"store" : interfaceStore,
-	    ],
-	    "configtree" : $[
+	],
+	"configtree" : $[
 		"widget" : `custom,
 		"custom_widget" : `VBox (
 		    `ReplacePoint (`id (`configtree_rp), `Tree (
@@ -524,29 +490,88 @@ global define void subnetStore (string id, map event) ``{
 			`PushButton (`id (`add), Label::AddButton ()),
 			`PushButton (`id (`edit), Label::EditButton ()),
 			`PushButton (`id (`delete), Label::DeleteButton ()),
-			`PushButton (`id (`move), _("&Move")),
+//			`PushButton (`id (`move), _("&Move")),
 			`HStretch (),
-			`MenuButton (`id (`adv), _("Ad&vanced"), [])
+			`MenuButton (`id (`adv), _("Ad&vanced"), [
+			    `item (`id (`log), _("Display &log")),
+			    `item (`id (`interfaces), _("Configure &interfaces")), // FIXME
+			])
 		    )),
-		"help" : HELPS["configtree"]:"TODO",
+		"help" : HELPS["configtree"]:"",
 		"init" : configTreeInit,
 		"handle" : configTreeHandle,
-	    ],
-	    "subnet" : $[
+	],
+	"subnet" : $[
 		"widget" : `custom,
 		"custom_widget" : `HBox (
 		    `HSpacing (2),
-		    `TextEntry (`id (`subnet), _("Subnet")),
-		    `TextEntry (`id (`netmask), _("Network mask")),
+		    `TextEntry (`id (`subnet), _("&Network Address")),
+		    `TextEntry (`id (`netmask), _("Network &Mask")),
 		    `HSpacing (2)
 		),
-		"help" : HELPS["subnet"]:"TODO",
+		"help" : HELPS["subnet"]:"",
 		"init" : subnetInit,
 		"store" : subnetStore,
 	    ],
-	];
-	DhcpServerUI::widgets = w;
-    }
+	    "host" : $[
+		"widget" : `textentry,
+		"label" : _("Host &name"),
+		"help" : HELPS["host"]:"",
+		"init" : idInit,
+		"store" : idStore,
+	],
+	"group" : $[
+		"widget" : `textentry,
+		"label" : _("Group &Name"),
+		"help" : HELPS["group"]:"TODO",
+		"init" : idInit,
+		"store" : idStore,
+	],
+	"pool" : $[
+		"widget" : `textentry,
+		"label" : _("Pool &Name"),
+		"help" : HELPS["pool"]:"",
+		"init" : idInit,
+		"store" : idStore,
+	],
+	"shared-network" : $[
+		"widget" : `textentry,
+		"label" : _("Shared network &name"),
+		"help" : HELPS["shared-network"]:"TODO",
+		"init" : idInit,
+		"store" : idStore,
+	],
+	"class" : $[
+		"widget" : `textentry,
+		"label" : _("Class &name"),
+		"help" : HELPS["class"]:"TODO",
+		"init" : idInit,
+		"store" : idStore,
+	],
+	"interfaces" : $[
+	    "widget" : `custom,
+	    "custom_widget" : `MultiSelectionBox (
+		`id ("interfaces"),
+		_("Available interfaces"),
+		filter (string s, (list<string>)SCR::Dir (.network.section), ``(
+		    s != "lo"
+		))
+	    ),
+	    "help" : HELPS["interfaces"]:"",
+	    "init" : interfacesInit,
+	    "store" : interfacesStore,
+	],
+	"adapt_firewall" : $[
+	    "widget" : `checkbox,
+	    // check box
+	    "label" : _("Adapt &Firewall settings"),
+	    "init" : FirewallInit,
+	    "store" : FirewallStore,
+	    "help" : HELPS["adapt_firewall"]:"",
+	],
+    ];
+    DhcpServerUI::widgets = w;
+}
 
 
 }

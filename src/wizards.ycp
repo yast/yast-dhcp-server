@@ -28,6 +28,9 @@ global define symbol MainSequence () ``{
 	"shared-network"	: ``(SharedNetworkDialog ()),
 	"pool"			: ``(PoolDialog ()),
 	"group"			: ``(Groupdialog ()),
+	"class"			: ``(ClassDialog ()),
+	"section_type_choose"	: ``(SectionTypeChoose ()),
+	"interfaces"		: ``(IfacesDialog ()),
 	"section_type_select"	:[``(SelectEditationDialog ()), true ],
 	"store"			:[``(SectionStore ()), true ],
     ];
@@ -35,30 +38,61 @@ global define symbol MainSequence () ``{
     map sequence = $[
 	"ws_start" : "main",
 	"main" : $[
-		`next : `next,
-		`abort : `abort,
-		`edit : "section_type_select",
+		`next		: `next,
+		`abort		: `abort,
+		`edit		: "section_type_select",
+		`add		: "section_type_choose",
+		`interfaces	: "interfaces",
+	],
+	"section_type_choose" : $[
+	    `abort		: `abort,
+	    `next		: "section_type_select",
 	],
 	"section_type_select" : $[
-	    `abort : `abort,
-	    `global : "globals",
-	    `subnet : "subnet",
+	    `abort		: `abort,
+	    `global		: "globals",
+	    `subnet		: "subnet",
+	    `host		: "host",
+	    `group		: "group",
+	    `pool		: "pool",
+	    `shared_network	: "shared-network",
+	    `class		: "class",
 	],
 	"globals" : $[
-		`next : "store",
-		`abort : `abort,
+	    `next		: "store",
+	    `abort		: `abort,
 	],
 	"subnet" : $[
-		`next : "store",
-		`abort : `abort,
+	    `next		: "store",
+	    `abort		: `abort,
 	],
 	"host" : $[
-		`next : "store",
-		`abort : `abort,
+	    `next		: "store",
+	    `abort		: `abort,
+	],
+	"group" : $[
+	    `next		: "store",
+	    `abort		: `abort,
+	],
+	"pool" : $[
+	    `next		: "store",
+	    `abort		: `abort,
+	],
+	"shared-network" : $[
+	    `next		: "store",
+	    `abort		: `abort,
+	],
+	"class" : $[
+	    `next		: "store",
+	    `abort		: `abort,
 	],
 	"store" : $[
-	    `abort : `abort,
-	    `next : "main",
+	    `abort		: `abort,
+	    `next		: "main",
+	],
+	"interfaces" : $[
+	    `abort		: `abort,
+	    `next		: "main",
 	],
     ];
 

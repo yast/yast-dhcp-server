@@ -57,6 +57,8 @@ sub _ {
 YaST::YCP::Import ("SCR");
 YaST::YCP::Import ("Mode");
 YaST::YCP::Import ("Service");
+YaST::YCP::Import ("Progress");
+YaST::YCP::Import ("SuSEFirewall");
 
 
 ##-------------------------------------------------------------------------
@@ -87,7 +89,7 @@ sub AdaptFirewall {
     if ($start_service)
     {
 	SCR::Write (".sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD",
-	    SuSEFirewall::MostInsecureInterface (@allowed_interfaces));
+	    SuSEFirewall::MostInsecureInterface (\@allowed_interfaces));
     }
     else
     {
@@ -255,7 +257,9 @@ sub CreateEntry {
 	"type" => $type,
 	"id" => $id,
     );
-    push @{$settings[$parent_index]->{"children"}}, \%link;
+    my @par_c = @{$settings[$parent_index]->{"children"}};
+    push @par_c, \%link;
+    $settings[$parent_index]->{"children"} = \@par_c;
 
     return 1;
 }
@@ -509,12 +513,12 @@ sub ChangeEntry {
 
 BEGIN { $TYPEINFO{GetStartService} = [ "function", "boolean" ];}
 sub GetStartService {
-    return $start_service;
+    return Boolean($start_service);
 }
 
 BEGIN{$TYPEINFO{SetStartService} = ["function", "void", "boolean"];}
 sub SetStartService {
-    $start_service = $_;
+    $start_service = $_[0];
 }
 
 BEGIN{$TYPEINFO{SetModified} = ["function", "void"];}
@@ -529,16 +533,50 @@ sub GetAllowedInterfaces {
 
 BEGIN{$TYPEINFO{SetAllowedInterfaces} = ["function", "void", ["list", "string"]];}
 sub SetAllowedInterfaces {
+print Dumper ($_);
     @allowed_interfaces = @{$_[0]};
+}
+
+BEGIN{$TYPEINFO{GetAdaptFirewall} = ["function", "boolean"];}
+sub GetAdaptFirewall {
+    return Boolean($adapt_firewall);
+}
+BEGIN{$TYPEINFO{SetAdaptFirewall} = ["function", "void", "boolean"];}
+sub SetAdaptFirewall {
+    $adapt_firewall = $_[0];
 }
 
 ##------------------------------------
 BEGIN { $TYPEINFO{Read} = ["function", "boolean"]; }
 sub Read {
+
+y2error ("Read the settings");
+
+    # Dhcp-server read dialog caption
+    my $caption = _("Initializing DHCP Server Configuration");
+
+    Progress::New( $caption, " ", 1, [
+	# progress stage
+	_("Read the settings"),
+    ],
+    [
+	# progress step
+	_("Reading the settings..."),
+	# progress step
+	_("Finished")
+    ],
+    ""
+    );
+
+    my $sl = 0.5;
+    sleep ($sl);
+
 # Check packages
 # TODO
 
 # Information about the daemon
+
+    Progress::NextStage ();
 
     $start_service = Service::Enabled ("dhcpd");
     y2milestone ("Service start: $start_service");
@@ -554,17 +592,44 @@ sub Read {
     @settings = ();
     PreprocessSettings ($ag_settings_ref, {});
 
+    Progress::NextStage ();
+
     return "true";
 }
 
 BEGIN { $TYPEINFO{Write} = ["function", "boolean"]; }
 sub Write {
+
+    # Dhcp-server read dialog caption */
+    my $caption = _("Saving DHCP Server Configuration");
+
+    # We do not set help text here, because it was set outside
+    Progress::New($caption, " ", 2, [
+	# progress stage
+	_("Write the settings"),
+	# progress stage
+	_("Restart DHCP server"),
+    ], [
+	# progress step
+	_("Writing the settings..."),
+	# progress step
+	_("Restarting DHCP server..."),
+	# progress step
+	_("Finished")
+    ],
+    ""
+    );
+
+
     my $ok = 1;
 
-#    if (! $modified)
-#    {
-#	return "true";
-#    }
+    if (! $modified)
+    {
+	y2milestone ("Nothing modified, nothing to save");
+	return Boolean(1);
+    }
+
+    Progress::NextStage ();
 
     #adapt firewall
     $ok = AdaptFirewall () && $ok;
@@ -574,7 +639,7 @@ sub Write {
 
     $ok = SCR::Write (".etc.dhcpd_conf", $settings_to_save_ref) && $ok;
 
-    return $ok;
+    Progress::NextStage ();
 
     #set daemon starting
     SCR::Write (".sysconfig.dhcpd.DHCPD_RUN_CHROOTED", $chroot ? "yes" : "no");
@@ -584,6 +649,7 @@ sub Write {
 
     if ($start_service)
     {
+	y2milestone ("Enabling the DHCP service");
 	my $ret = 0;
 	if (! $write_only)
 	{
@@ -597,12 +663,15 @@ sub Write {
     }
     else
     {
+	y2milestone ("Disabling the DHCP service");
 	if (! $write_only)
 	{
 	    SCR::Execute (".target.bash", "/etc/init.d/dhcpd stop");
 	}
 	Service::Disable ("dhcpd");
     }
+
+    Progress::NextStage ();
 
     return $ok;
 }

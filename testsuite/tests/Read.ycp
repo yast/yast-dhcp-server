@@ -21,7 +21,6 @@
     import "Progress";
     import "DhcpServer";
     import "Mode";
-    TESTSUITE_CLEAN ();
 
     Mode::test = true;
 
@@ -36,43 +35,38 @@
                     "dhcpd": $[
                         "start": [],
                         "stop":  [],
-                        ],
-                    ],
-                // their contents is not important for ServiceAdjust
-                "comment": $[
-                    "dhcpd": $[],
                     ],
                 ],
-            ],
-
+	    ],
+	],
+	"etc" : $[
+	    "dhcpd_conf" : [
+		$[
+		    "comment_after":"",
+		    "comment_before":"# dhcpd.conf",
+		    "key":"domain-name",
+		    "type":"option",
+		    "value":"\"example.org\""
+		],
+		$[
+		    "comment_after":"",
+		    "comment_before":"",
+		    "key":"domain-name-servers",
+		    "type":"option",
+		    "value":"ns1.example.org, ns2.example.org"
+		],
+		$[
+		    "comment_after":"",
+		    "comment_before":"",
+		    "key":"policy-filter",
+		    "type":"option",
+		    "value":"{ a1, a2 }, { a1, a2 }, { a3, a4 }"
+		],
+	    ]
+	],
 	"target" : $[
 	    "stat" : $[],
 	    "size" : 5,
-	    "ycp" : $[
-  "__run_dhcp_server" : true,
-  "globals" : $[
-    "authoritative" : "",
-    "ddns-update-style" : "none",
-    "ddns-updates" : "off",
-    "default-lease-time" : 600,
-    "log-facility" : "local7",
-    "max-lease-time" : 7200
-  ],
-  "hosts" : $[
-    "host" : $[
-      "fixed-address" : "10.20.1.50",
-      "hardware" : "ethernet 11:22:33:44:55:66",
-      "host" : "zealot"
-    ]
-  ],
-  "subnets" : $[
-    "subnet10.20.0.0netmask255.255.240.0" : $[
-      "netmask" : "255.255.240.0",
-      "range" : "10.20.5.1 10.20.5.10",
-      "subnet" : "10.20.0.0"
-    ]
-  ]
-],
 	],
     ];
     map WRITE = $[];

@@ -12,97 +12,69 @@
     textdomain "dhcp-server";
 
     map<string,string> HELPS = $[
+	// help text 1/1
+	"read" : _("<p><b><big>Initializing DHCP Server Configuration</big></b><br>
+Please wait...<br></p>"),
+
+        // help text 1/1
+	"write" : _("<p><b><big>Saving DHCP Server Configuration</big></b><br>
+Please wait...<br></p>"),
+
+	// help text 1/2
+	"interfaces" : _("<p><b><big>Network Interfaces</big></b><br>
+Select what network interfaces shall the DHCP server listen to from
+<b>Available Interfaces</b>.</p>"),
+
+	// help text 2/2
+	"adapt_firewall" : _("<p><b><big>Adapting Firewall Settings</big></b>
+<br>
+To adapt the firewall settings so that the DHCP server can be accessed
+through all network interfaces it listens to, check
+<b>Adapt Firewall Settings</b>.</p>"),
+
+	// help text 1/3
+	"start" : _("<p><b><big>Start DHCP Server</big></b><br>
+If you want to run DHCP server every time your computer is started, set
+<b>Start DHCP Server</b>.</p>"),
+
+	// help text 2/3
+	"configtree" : _("<p><b><big>Configured entries</big></b><br>
+FIXME Really is this called entries? <br>
+TODO this help
+	</p>")
+
+	// help text 3/3
+	+ _("<p><b><big>Advanced functions</big></b><br>
+To display the log of the DHCP server, or change network interfaces the DHCP
+server listens to, use <b>Advanced</b>.</p>"),
+
+	// help text 1/2, alt. 1
+	"subnet" : _("<p><b><big>Network Address and Mask</big></b><br>
+Set the <b>Network Address</b> and <b>Network Mask</b> of the subnet.</p>"),
+
+	// help text 1/2, alt. 1
+	"host" : _("<p><b><big>Host Name</big></b><br>
+Set the name of the host to set the fixed address or other special options
+for.</p>"),
+
+	// help text 1/2, alt. 3 // FIXME group
+	"host" : _("<p><b><big>Host Name</big></b><br>
+Set the name of the host to set the fixed address or other special options
+for.</p>"),
+
+	// help text 1/2, alt. 4
+	"pool" : _("<p><b><big>Pool Name</big></b><br>
+Set the name of the pool of addresses.</p>"),
+
+
+	// help text 2/2
+	"options_table" : _("<p><b><big>Options</big></b><br>
+To edit DHCP options, choose the appropriate
+entry of the table then click <b>Edit</b>.
+To add a new option, use <b>Add</b>. To remove
+an option, select it and click <b>Delete</b>.</p>"),
 
     ];
-
-    /**
-      * Get help text
-      * @return string help text
-      */
-    global define string getInitReadHelp () ``{
-	// help text 1/1
-	return _("<p><b><big>Initializing DHCP Server Configuration</big></b>
-<br>
-Please wait...<br></p>
-");
-    }
-
-    /**
-      * Get help text
-      * @return string help text
-      */
-    global define string getWriteHelp () ``{
-        // help text 1/1
-	return _("<p><b><big>Saving DHCP Server Configuration</big></b><br>
-Please wait...<br></p>
-");
-    }
-
-    /**
-      * Get help text
-      * @return string help text
-      */
-    global define string getOptionsHelp () ``{
-	// help text 1/3
-	string help = _("<P>To edit DHCP server settings, choose the appropriate
-entry of the table then click <B>Edit</B>.
-To add a new option, use <B>Add</B>. To remove
-an option, click <B>Delete</B>.</P>");
-	// help text 2/3, optional
-	help = help + _("<P>To edit the settings of subnets, choose
-<B>Subnets</B> and edit them.</P>");
-	// help text 2/3, optional
-	help = help + _("<P>To edit the settings of hosts with fixed
-IP addresses, choose <B>Hosts</B> and edit them.</P>");
-        return help;
-    }
-
-    /**
-      * Get help text
-      * @return string help text
-      */
-    global define string getLogButtonHelp () ``{
-	// help text
-	return _("<p>To display the DHCP server log, click <b>Display Log</b>.</p>");
-    }
-
-    /**
-      * Get help text
-      * @return string help text
-      */
-    global define string getSectionHelp () ``{
-	// help text
-	return _("<P>To edit settings, choose the appropriate
-entry of the table then click <B>Edit</B>.
-To add a new option, use <B>Add</B>. To remove
-an option, click <B>Delete</B>.</P>");
-    }
-
-    /**
-      * Get help text
-      * @return string help text
-      */
-    global define string getSubnetsHelp () ``{
-	// help text 1/1
-	return _("<P>To edit settings of a subnet, choose the appropriate
-entry of the table then click <B>Edit</B>.
-To add a new subnet, use <B>Add</B>. To remove
-a subnet, click <B>Delete</B>.</P>");
-    }
-
-    /**
-      * Get help text
-      * @return string help text
-      */
-    global define string getHostsHelp () ``{
-	// help text 1/1
-	return _("<P>To edit the settings of a host with a fixed address,
-choose the appropriate
-entry of the table then click <B>Edit</B>.
-To add a new host of this type, use <B>Add</B>. To remove
-a host, click <B>Delete</B>.</P>
-");
-    }
 
 
 /* EOF */

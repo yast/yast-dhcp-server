@@ -16,15 +16,11 @@
     module "DhcpServerUI";
     textdomain "dhcp-server";
 
-    import "Progress";
-    import "Report";
-    import "Summary";
-    import "Runlevel";
-    import "Popup";
-    import "Require";
-    import "Mode";
-    import "SuSEFirewall";
     import "DhcpServer";
+    import "Mode";
+    import "Popup";
+    import "Report";
+    import "SuSEFirewall"; // FIXME this is because of initialization problems
 
     global string current_entry_type = "";
     global string current_entry_id = "";
@@ -34,17 +30,21 @@
     global string original_entry_id = "";
     global string parent_type = "";
     global string parent_id = "";
+    global symbol current_operation = nil;
 
     global map widgets = $[];
 
     global map popups = $[];
 
+    // temporary variables
+    list<string> entry_list = [];
+
     include "dhcp-server/routines.ycp";
     include "dhcp-server/helps.ycp";
+    include "dhcp-server/options.ycp";
     include "dhcp-server/widgets.ycp";
     include "dhcp-server/dialogs.ycp";
     include "dhcp-server/wizards.ycp";
-//    include "dhcp-server/options.ycp";
 
     /**
       * Abort function
@@ -56,7 +56,7 @@
       * Constructor
       */
     global define void DhcpServerUI () ``{
-//	InitPopups ();
+	InitPopups ();
 	InitWidgets ();
     }
 
