@@ -343,8 +343,7 @@
       */
     global define void flagInit (any opt_id, string key) ``{
 	any value = fetchValue (opt_id, key);
-	UI::ChangeWidget ( `id (key), `Value,
-	    value != "off" && value != "\"off\"");
+	UI::ChangeWidget ( `id (key), `Value, value == "__true");
     }
 
     /**
@@ -354,7 +353,7 @@
       */
     global define void flagStore (any opt_id, string key) ``{
 	boolean value = (boolean)UI::QueryWidget ( `id (key), `Value);
-	storeValue (opt_id, key, value ? "\"on\"" : "\"off\"");
+	storeValue (opt_id, key, value ? "__true" : "__false");
     }
 
     /**
@@ -365,7 +364,7 @@
       */
     global define string flagSummary (any opt_id, string key) ``{
 	any value = fetchValue (opt_id, key);
-	if (value != "off")
+	if (value == "__true")
 	{
 	    // table item, means switched on
 	    return _("On");
