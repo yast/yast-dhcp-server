@@ -19,6 +19,9 @@ ynclude_DATA =			\
 config_DATA =			\
 	dhcp-server.y2cc
 
+desktop_DATA =                  \
+	dhcp-server.desktop
+
 module_DATA =			\
 	DhcpServer.ycp
 
