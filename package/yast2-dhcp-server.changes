@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Mar 29 13:40:08 CEST 2004 - jsrain@suse.de
+
+- add also includes added not using YaST to sysconfig to be copied
+  to chroot (#37281)
+
+-------------------------------------------------------------------
 Wed Mar 24 12:37:50 CET 2004 - jsrain@suse.cz
 
 - added check box for running DHCP server in chroot jail
