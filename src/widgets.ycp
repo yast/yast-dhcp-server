@@ -963,13 +963,13 @@ global define void InitWidgets () ``{
 	],
 	"configtree" : $[
 		"widget" : `custom,
-		"custom_widget" : `VBox (
-		    `ReplacePoint (`id (`configtree_rp), `Tree (
+		"custom_widget" : `VWeight (1, `VBox (
+		    `VWeight (1, `ReplacePoint (`id (`configtree_rp), `Tree (
 			`id ("configtree"),
 			// tree widget
 			_("&Configured Declarations"),
 			[]
-		    )),
+		    ))),
 		    `HBox (
 			`PushButton (`id (`add), Label::AddButton ()),
 			`PushButton (`id (`edit), Label::EditButton ()),
@@ -985,7 +985,7 @@ global define void InitWidgets () ``{
 			    // item of a menu button
 			    `item (`id (`tsig_keys), _("TSIG Key Management")),
 			])
-		    )),
+		    ))),
 		"help" : HELPS["configtree"]:"",
 		"init" : configTreeInit,
 		"handle" : configTreeHandle,
