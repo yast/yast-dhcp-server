@@ -24,8 +24,7 @@ desktop_DATA =                  \
 
 module_DATA =			\
 	DhcpServerUI.ycp	\
-	DhcpServer.pm		\
-	DhcpTsigKeys.pm
+	DhcpServer.pm
 
 YaPI_perldir = @moduledir@/YaPI
 

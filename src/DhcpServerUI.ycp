@@ -16,7 +16,6 @@
     module "DhcpServerUI";
     textdomain "dhcp-server";
 
-    import "DhcpTsigKeys";
     import "DhcpServer";
     import "Mode";
     import "Popup";

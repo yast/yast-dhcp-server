@@ -44,6 +44,8 @@ my $ldap_server = "";
 
 my $ldap_port = "";
 
+my @tsig_keys = ();
+
 #transient variables
 
 my $modified = 0;
@@ -70,9 +72,14 @@ my $was_configured = 1;
 
 my $dhcp_server_dn = "";
 
+my @new_include_files = ();
+
+my @deleted_include_files = ();
+
 
 
 YaST::YCP::Import ("SCR");
+YaST::YCP::Import ("CWMTsigKeys");
 YaST::YCP::Import ("DNS");
 YaST::YCP::Import ("Directory");
 YaST::YCP::Import ("IP");
@@ -86,11 +93,39 @@ YaST::YCP::Import ("Popup");
 YaST::YCP::Import ("Progress");
 YaST::YCP::Import ("Report");
 YaST::YCP::Import ("SuSEFirewall");
-#YaST::YCP::Import ("DhcpTsigKeys");
-use DhcpTsigKeys;
 
 use lib "/usr/share/YaST2/modules";
 use YaPI::LdapServer;
+
+##-------------------------------------------------------------------------
+##----------------- TSIG Key Management routines --------------------------
+
+BEGIN{$TYPEINFO{ListTSIGKeys}=["function",["list",["map","string","string"]]];}
+sub ListTSIGKeys {
+    return \@tsig_keys;
+}
+
+BEGIN{$TYPEINFO{GetKeysInfo}=["function", ["map", "string", "any"]];}
+sub GetKeysInfo {
+    my $self = shift;
+
+    return {
+	"removed_files" => \@deleted_include_files,
+	"new_files" => \@new_include_files,
+	"tsig_keys" => \@tsig_keys,
+    };
+}
+
+BEGIN{$TYPEINFO{SetKeysInfo}=["function", "void", ["map", "string", "any"]];}
+sub SetKeysInfo {
+    my $self = shift;
+    my $info = shift;
+
+    @tsig_keys = @{$info->{"tsig_keys"} };
+    @new_include_files = @{$info->{"new_files"} };
+    @deleted_include_files = @{$info->{"removed_files"} };
+}
+
 
 ##-------------------------------------------------------------------------
 ##----------------- various routines --------------------------------------
@@ -157,7 +192,7 @@ sub InitTSIGKeys {
 	{
 	    my $filename = $dir{"value"};
 	    $filename =~ s/^[\" \t]*(.*[^\" \t])[\" \t]*$/$1/;
-	    my @new_keys = @{DhcpTsigKeys->AnalyzeTSIGKeyFile ($filename)};
+	    my @new_keys = @{CWMTsigKeys->AnalyzeTSIGKeyFile ($filename)};
 	    foreach my $new_key (@new_keys) {
 		y2milestone ("Having key $new_key, file $filename");
 		push @read_keys, {
@@ -167,7 +202,9 @@ sub InitTSIGKeys {
 	    }
 	}
     }
-    DhcpTsigKeys->StoreTSIGKeys (\@read_keys);
+    @tsig_keys = @read_keys;
+    @new_include_files = ();
+    @deleted_include_files = ();
     return;
 }
 
@@ -181,10 +218,6 @@ sub AdaptDDNS {
     }
     my @directives = @{$self->GetEntryDirectives ("", "") || []};
 
-    my @current_keys = @{DhcpTsigKeys->ListTSIGKeys () || []};
-    my @deleted_keys = @{DhcpTsigKeys->ListDeletedKeyIncludes () || []};
-    my @new_keys = @{DhcpTsigKeys->ListNewKeyIncludes () || []};
-
     @directives = grep {
 	my %dir = %{$_};
 	my $ret = 1;
@@ -194,7 +227,7 @@ sub AdaptDDNS {
 	    $filename =~ s/^[\" \t]*(.*[^\" \t])[\" \t]*$/$1/;
 	    my @found = grep {
 		$_ eq $filename;
-	    } @deleted_keys;
+	    } @deleted_include_files;
 	    if (@found)
 	    {
 		y2debug ("not saving $filename");
@@ -215,12 +248,12 @@ sub AdaptDDNS {
 
     my $includes = SCR->Read (".sysconfig.dhcpd.DHCPD_CONF_INCLUDE_FILES")|| "";
     my @includes = split (/ /, $includes);
-    foreach my $dk (@deleted_keys) {
+    foreach my $dk (@deleted_include_files) {
         @includes = grep {
 	    $_ ne $dk;
 	} @includes;
     }
-    foreach my $new_inc (@new_keys) {
+    foreach my $new_inc (@new_include_files) {
 	push @includes, $new_inc;
 	push @directives, {
 	    "key" => "include",
@@ -231,7 +264,7 @@ sub AdaptDDNS {
     foreach my $include (@includes) {
 	$includes{$include} = 1;
     }
-    foreach my $tsig_key (@current_keys) {
+    foreach my $tsig_key (@tsig_keys) {
 	my $k_fn = $tsig_key->{"filename"};
 	if (! exists ($includes{$k_fn}))
 	{

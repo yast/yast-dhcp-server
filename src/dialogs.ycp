@@ -456,7 +456,7 @@ global define symbol RunTsigKeysDialog (boolean called_from_subnet) ``{
 
     if (ret == `next && called_from_subnet)
     {
-	if (size (DhcpTsigKeys::ListTSIGKeys ()) == 0)
+	if (size (DhcpServer::ListTSIGKeys ()) == 0)
 	    return `subnet;
     }
     return ret;
