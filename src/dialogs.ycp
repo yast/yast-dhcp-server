@@ -374,39 +374,50 @@ global define symbol IfacesDialog () ``{
   */
 global define symbol DynDnsDialog () ``{
     y2milestone ("Running interfaces dialog");
-    list<map> w = CWM::CreateWidgets (["ddns_enable", "zone", "zone_ip",
-	"reverse_zone", "reverse_ip", "key_filename", "create_key_file",
-	"update_global_ddns_settings", "key_file_browse_button"],
-	widgets);
+    list<string> w = ["ddns_enable", "zone", "zone_ip",
+	"reverse_zone", "reverse_ip"];
     term contents = `HBox (`HStretch (), `VBox (
 	`VStretch (),
-	`Left (w[0, "widget"]:`VSpacing (0)),
+	`Left ("ddns_enable"),
 	`VSpacing (2),
 	`HBox (
-	    w[1, "widget"]:`VSpacing (0),
-	    w[2, "widget"]:`VSpacing (0)
+	    "zone",
+	    "zone_ip"
 	),
 	`HBox (
-	    w[3, "widget"]:`VSpacing (0),
-	    w[4, "widget"]:`VSpacing (0)
+	    "reverse_zone",
+	    "reverse_ip"
 	),
-	`VSpacing (2),
-	`Left (w[7, "widget"]:`VSpacing (0)),
-	`HBox (
-	    w[5, "widget"]:`VSpacing (0),
-	    `VBox (`Label (""), w[8, "widget"]:`VSpacing (0))
-	),
-	`Left (w[6, "widget"]:`VSpacing (0)),
 	`VStretch ()
     ), `HStretch ());
     // dialog caption
     string caption = _("Interfaces Configuration");
-    string help = CWM::MergeHelps (w);
 
-    Wizard::SetContentsButtons (caption, contents, help,
-	Label::BackButton (), Label::OKButton ());
+    return CWM::ShowAndRun (w, widgets,
+	contents, caption, Label::BackButton (), Label::OKButton (), functions);
+}
 
-    return CWM::Run (w, functions);
+/**
+  * Run TSIG keys management dialog
+  * @return symbol for wizard sequencer
+  */
+global define symbol RunTsigKeysDialog () ``{
+    y2milestone ("Running TSIG keys management dialog");
+
+    list<string> w = ["tsig_keys"];
+
+    term contents = `HBox (`HSpacing (2), `VBox (
+        `VSpacing (1),
+        "tsig_keys",
+        `VSpacing (1)
+    ), `HSpacing (2));
+
+    // dialog caption
+    string caption = _("TSIG keys management");
+
+    return CWM::ShowAndRun (w, widgets,
+        contents, caption, Label::BackButton (), Label::OKButton (),
+        $[`abort : confirmAbort]);
 }
 
 // fake dialogs - switchers
@@ -459,8 +470,8 @@ global define symbol SectionStore () ``{
 	current_entry_options);
     DhcpServer::SetModified ();
 
-    DhcpServer::SetDDNSFileName (current_ddns_key_file);
-    DhcpServer::SetDDNSFileCreate (current_ddns_key_create);
+/*    DhcpServer::SetDDNSFileName (current_ddns_key_file);
+    DhcpServer::SetDDNSFileCreate (current_ddns_key_create);*/
 
     return `next;
 }

@@ -29,6 +29,11 @@ y2milestone("DhcpServer auto started");
 import "DhcpServer";
 import "DhcpServerUI";
 
+/**
+ * Remove all comments from export map
+ * @param exported map export map
+ * @return map exported map without comments
+ */
 define map KillComments (map exported) ``{
     list settings = exported["settings"]:[];
     settings = maplist(map decl, (list<map>)settings, ``{

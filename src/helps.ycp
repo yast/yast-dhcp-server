@@ -46,8 +46,10 @@ To delete a declaration, select it, and click <b>Delete</b>.</p>")
 
 	// help text 3/3
 	+ _("<p><b><big>Advanced functions</big></b><br>
-To display the log of the DHCP server, or change network interfaces the DHCP
-server listens to, use <b>Advanced</b>.</p>"),
+To display the log of the DHCP server,
+change network interfaces the DHCP server listens to
+or manage TSIG keys that can be used for authentication of Dynamic DNS updates,
+use <b>Advanced</b>.</p>"),
 
 	// help text 1/3, alt. 1
 	"subnet" : _("<p><b><big>Network Address and Mask</big></b><br>
@@ -90,25 +92,35 @@ To adjust dynamic DNS for hosts of this subnet, use <b>Dynamic DNS</b>.</p>"),
 	// help text 1/4
 	"enable_ddns" : _("<p><b><big>Enabling Dynamic DNS</big></b><br>
 For enabling Dynamic DNS updates for this subnet, set
-<b>Enable Dynamic DNS for this subnet</b>.</p>"),
-
+<b>Enable Dynamic DNS for this subnet</b>.</p>")
+	+
 	// help text 2/4
+	_("<p><b><big>TSIG key</big></b><br>
+For making Dynamic DNS updates, the authentication key must be set. Use
+<b>TSIG key</b> to select the key to be used for authentication. The key must
+be the same for both DHCP and DNS servers. Specify key for both forward
+and reverse zone.</p>")
+	+
+	// help text 3/4
+	_("<p><b><big>Global DHCP Server Settings</big></b><br>
+Global settings of DHCP server must be updated in order to make Dynamic
+DNS work properly. To do it automatically, set
+<b>Update global Dynamic DNS settings</b>.</p>"),
+
+	// help text 4/4
 	"ddns_zones" : _("<p><b><big>Zones to update</big></b><br>
 Specify forward and reverse zonest to update. For both of them, specify also
 their primary name server. If the name server runs on the same host as DHCP
 server, you can leave the fields empty.</p>"),
 
-	"update_global_ddns" : _(
-	// help text 3/4
-"<p><b><big>Updating Global Dynamic DNS settings</big></b><br>
-To make necessary updates to local Dynamic DNS settings, set
-<b>Update global DHCP server settings</b>.</p>"),
-
-	// help text 4/4
-	"updater_key" : _("<p><b><big>Updater key</big></b><br>
-Both DHCP and DNS servers must share one security key. To specify file
-containing this key, use <b>Filename with updater key</b>. To create the
-file, set <b>Create file with updater key</b>.</p>"),
+    // ddns keys dialog
+    // help text 1/1
+    "ddns_keys" :  _("<p><b><big>TSIG Keys Management</big></b><br>
+Define TSIG keys used for dynamic zone updates here.
+To add a new TSIG key, use the 
+<b>File Name</b> text field or the <b>Browse</b> button, and click <b>Add</b>.
+To delete existing TSIG key, select it in the list, and click <b>Delete</b>.
+</p>"),
 
     ];
 

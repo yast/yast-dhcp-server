@@ -2,7 +2,7 @@
 # neededforbuild yast2-devel-packages yast2-firewall yast2-perl-bindings perl-gettext
 
 @HEADER@
-Requires:	yast2 yast2-firewall perl-gettext
+Requires:	yast2 yast2-firewall perl-gettext yast2-perl-bindings
 
 BuildArchitectures:	noarch
 
@@ -25,8 +25,7 @@ Summary:	Configuration of dhcp-server
 @yncludedir@/dhcp-server/*
 @clientdir@/dhcp-server.ycp
 @clientdir@/dhcp-server_*.ycp
-@moduledir@/DhcpServer.pm
-@moduledir@/DhcpServerUI.y*
+@moduledir@/*
 @desktopdir@/dhcp-server.desktop
 @scrconfdir@/cfg_dhcpd.scr
 @scrconfdir@/etc_dhcpd_conf.scr

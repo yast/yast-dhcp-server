@@ -34,16 +34,23 @@ global define symbol MainSequence () ``{
 	"dyn_dns"		: ``(DynDnsDialog ()),
 	"section_type_select"	:[``(SelectEditationDialog ()), true ],
 	"store"			:[``(SectionStore ()), true ],
+	"tsig_keys"		: ``(RunTsigKeysDialog ()),
+	"tsig_keys_1"		: ``(RunTsigKeysDialog ()),
     ];
 
     map sequence = $[
 	"ws_start" : "main",
 	"main" : $[
-		`next		: `next,
-		`abort		: `abort,
-		`edit		: "section_type_select",
-		`add		: "section_type_choose",
-		`interfaces	: "interfaces",
+	    `next		: `next,
+	    `abort		: `abort,
+	    `edit		: "section_type_select",
+	    `add		: "section_type_choose",
+	    `interfaces	: "interfaces",
+	    `tsig_keys	: "tsig_keys",
+	],
+	"tsig_keys" : $[
+	    `next : "main",
+	    `abort : `abort,
 	],
 	"section_type_choose" : $[
 	    `abort		: `abort,
@@ -99,6 +106,11 @@ global define symbol MainSequence () ``{
 	"dyn_dns" : $[
 	    `abort		: `abort,
 	    `next		: "subnet",
+	    `tsig_keys		: "tsig_keys_1"
+	],
+	"tsig_keys_1" : $[
+	    `abort : `abort,
+	    `next : "dyn_dns",
 	],
     ];
 

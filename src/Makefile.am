@@ -23,7 +23,8 @@ desktop_DATA =                  \
 
 module_DATA =			\
 	DhcpServerUI.ycp	\
-	DhcpServer.pm
+	DhcpServer.pm		\
+	DhcpTsigKeys.pm
 
 EXTRA_DIST = $(client_DATA) $(ynclude_DATA) $(module_DATA) $(desktop_DATA)
 

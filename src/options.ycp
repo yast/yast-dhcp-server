@@ -685,7 +685,7 @@ all clients*/
     /**
       * Store function of a table entry / popup
       * @param opt_id any option id
-      * @param string_key any option key
+      * @param opt_key string option key
       */
     global define void hardwareStore (any opt_id, string opt_key) ``{
 	storeValue (opt_id, opt_key, sformat ("%1 %2",
@@ -713,6 +713,11 @@ all clients*/
 	UI::ChangeWidget (`id (`upper), `Value, l[hindex]:"");
     }
 
+    /**
+      * Store function of a table entry / popup
+      * @param opt_id any option id
+      * @param key string option key
+      */
     global define void rangeStore (any opt_id, string key) ``{
 	string val = sformat ("%1 %2",
 	    UI::QueryWidget (`id (`lower), `Value),
@@ -725,10 +730,10 @@ all clients*/
     /**
       * Validate function of a popup
       * @param opt_id any option id
-      * @param key any option key
+      * @param key string option key
       * @return boolean true if widget settings ok
       */
-    global define boolean rangeValidate (any opt_id, string key, map event) ``{
+    global define boolean rangeValidate (any opt_id, string key) ``{
 	string lvalue = (string)UI::QueryWidget (`id (`lower), `Value);
 	if (! Address::Check4 (lvalue))
 	{

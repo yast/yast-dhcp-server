@@ -240,17 +240,18 @@ global define symbol configTreeHandle (string id, map event) ``{
 	    "actions" : [
 		// menubutton entry, try to keep short
 		[ _("Restart DHCP Server"),
-		    ``{SCR::Execute (.target.bash,
-			"/etc/init.d/dhcpd restart");}],
+		    RestartDhcpDaemon ],
 		// menubutton entry, try to keep short
 		[ _("Save Settings and Restart DHCP Server"),
-		    ``{DhcpServer::Write ();} ],
+		    DhcpServer::Write ],
 	    ],
 	]);
 	return nil;
     }
     if (event["ID"]:nil == `interfaces)
 	return `interfaces;
+    if (event["ID"]:nil == `tsig_keys)
+	return `tsig_keys;
     string current_item = (string)
 	UI::QueryWidget (`id ("configtree"), `CurrentItem);
     if (current_item == " ")
@@ -327,11 +328,11 @@ global define symbol configTreeHandle (string id, map event) ``{
 	return nil;
 // TODO move button
     }
-    if (event["ID"]:nil == `add || event["ID"]:nil == `edit)
+/*    if (event["ID"]:nil == `add || event["ID"]:nil == `edit)
     {
 	current_ddns_key_file = DhcpServer::GetDDNSFileName ();
 	current_ddns_key_create = DhcpServer::GetDDNSFileCreate ();
-    }
+    }*/
 
     return nil;
 }
@@ -450,6 +451,9 @@ global define symbol DDNSZonesHandle (string id, map event) ``{
     UI::ChangeWidget (`id ("zone_ip"), `Enabled, enabled);
     UI::ChangeWidget (`id ("reverse_zone"), `Enabled, enabled);
     UI::ChangeWidget (`id ("reverse_ip"), `Enabled, enabled);
+    UI::ChangeWidget (`id ("ddns_key"), `Enabled, enabled);
+    UI::ChangeWidget (`id ("ddns_rev_key"), `Enabled, enabled);
+    UI::ChangeWidget (`id (`update_ddns_glob), `Enabled, enabled);
     return nil;
 }
 
@@ -462,37 +466,59 @@ global define void DDNSZonesInit (string id) ``{
     string ip = "";
     string rev_zone = "";
     string rev_ip = "";
+    string key = "";
+    string rev_key = "";
     boolean found_ddns = false;
     foreach (map d, current_entry_directives, ``{
 	if (d["key"]:"" == "zone")
 	{
 	    string value = (string)(d["value"]:"");
-	    list<string> l = regexptokenize (value, "^[ \t]*([^ \t]+)[ \t]*\\{[ \t]*primary[ \t]+([^ \t]+)[ \t]*;[ \t]*key[ \t]+DHCP_UPDATER[ \t]*;[ \t]*\}[ \t]*$");
-	    if (size (l) == 2)
+	    list<string> l = regexptokenize (value, "^[ \t]*([^ \t]+)[ \t]*\\{[ \t]*primary[ \t]+([^ \t]+)[ \t]*;[ \t]*key[ \t]+([^ \t]+)[ \t]*;[ \t]*\}[ \t]*$");
+	    if (size (l) == 3)
 	    {
 		string z = l[0]:"";
 		string a = l[1]:"";
+		string k = l[2]:"";
 		if (issubstring (z, "in-addr.arpa"))
 		{
 		    rev_zone = z;
 		    rev_ip = a;
+		    rev_key = k;
 		}
 		else
 		{
 		    zone = z;
 		    ip = a;
+		    key = k;
 		}
 		found_ddns = true;
 	    }
 	}
     });
+
+    list<map<string,string> > updater_keys_m = DhcpTsigKeys::ListTSIGKeys ();
+    list<string> updater_keys = maplist (map m, updater_keys_m, ``(
+	m["key"]:""
+    ));
+
+    UI::ReplaceWidget (`ddns_key_rp, `ComboBox (`id("ddns_key"),
+	// combo box
+	_("Forward zone TSIG &key"), updater_keys));
+    UI::ReplaceWidget (`rev_ddns_key_rp, `ComboBox (`id("ddns_rev_key"),
+	// combo box
+	_("Reverse zone TSIG &key"), updater_keys));
+
     if (found_ddns)
     {
 	UI::ChangeWidget (`id ("zone"), `Value, zone);
 	UI::ChangeWidget (`id ("zone_ip"), `Value, ip);
 	UI::ChangeWidget (`id ("reverse_zone"), `Value, rev_zone);
 	UI::ChangeWidget (`id ("reverse_ip"), `Value, rev_ip);
+	UI::ChangeWidget (`id ("ddns_key"), `Value, key);
+	UI::ChangeWidget (`id ("ddns_rev_key"), `Value, rev_key);
     }
+    UI::ChangeWidget (`id (`update_ddns_glob), `Value,
+	DhcpServer::GetAdaptDdnsSettings ());
     UI::ChangeWidget (`id ("ddns_enable"), `Value, found_ddns);
     DDNSZonesHandle (id, $[]);
 }
@@ -512,6 +538,8 @@ global define void DDNSZonesStore (string id, map event) ``{
 	string ip = (string)UI::QueryWidget (`id ("zone_ip"), `Value);
 	string rev_zone = (string)UI::QueryWidget (`id ("reverse_zone"),`Value);
 	string rev_ip = (string)UI::QueryWidget (`id ("reverse_ip"), `Value);
+	string key = (string)UI::QueryWidget (`id ("ddns_key"), `Value);
+	string rev_key = (string)UI::QueryWidget (`id ("ddns_rev_key"), `Value);
 	if (ip == "")
 	    ip = "127.0.0.1";
 	if (rev_ip == "")
@@ -520,68 +548,21 @@ global define void DDNSZonesStore (string id, map event) ``{
 	{
 	    current_entry_directives = add (current_entry_directives, $[
 		"key" : "zone",
-		"value" : sformat ("%1 { primary %2; key DHCP_UPDATER; }",
-		    zone, ip),
+		"value" : sformat ("%1 { primary %2; key %3; }",
+		    zone, ip, key),
 	    ]);
 	}
 	if (rev_zone != "")
 	{
 	    current_entry_directives = add (current_entry_directives, $[
 		"key" : "zone",
-		"value" : sformat ("%1 { primary %2; key DHCP_UPDATER; }",
-		    rev_zone, rev_ip),
+		"value" : sformat ("%1 { primary %2; key %3; }",
+		    rev_zone, rev_ip, rev_key),
 	    ]);
 	}
+	boolean ug = (boolean)UI::QueryWidget (`id (`update_ddns_glob), `Value);
+	DhcpServer::SetAdaptDdnsSettings (ug);
     }
-}
-
-/**
- * Handle events of the widget
- * @param id string widget id
- * @param event map event that is handled
- * @return symbol for WS
- */
-global define symbol DDNSGlobalsHandle (string id, map event) ``{
-    boolean enabled = (boolean)UI::QueryWidget (
-	`id ("update_global_ddns_settings"), `Value);
-    UI::ChangeWidget (`id ("key_filename"), `Enabled, enabled);
-    UI::ChangeWidget (`id ("key_file_browse_button"), `Enabled, enabled);
-    UI::ChangeWidget (`id ("create_key_file"), `Enabled, enabled);
-    return nil;
-}
-
-/**
- * Initialize the widget
- * @param id string widget id
- */
-global define void DDNSGlobalsInit (string id) ``{
-    UI::ChangeWidget (`id ("update_global_ddns_settings"), `Value,
-	current_ddns_key_file != "");
-    UI::ChangeWidget (`id ("key_filename"), `Value, current_ddns_key_file);
-    UI::ChangeWidget (`id ("create_key_file"), `Value,
-	current_ddns_key_create);
-    DDNSGlobalsHandle (id, $[]);
-}
-
-/**
- * Store settings of the widget
- * @param id string widget id
- * @param event map event that caused storing process
- */
-global define void DDNSGlobalsStore (string id, map event) ``{
-    if ((boolean)UI::QueryWidget (`id ("update_global_ddns_settings"), `Value))
-    {
-	current_ddns_key_file = (string)
-	    UI::QueryWidget (`id ("key_filename"), `Value);
-	current_ddns_key_create = (boolean)
-	    UI::QueryWidget (`id ("create_key_file"), `Value);
-    }
-    else
-    {
-	current_ddns_key_file = "";
-	current_ddns_key_create = false;
-    }
-    return;
 }
 
 /**
@@ -614,6 +595,196 @@ global define boolean EmptyOrIpValidate (string id, map event) ``{
     UI::SetFocus (`id (id));
     return false;
 }
+
+
+// get TSIG keys management widget
+
+/**
+ * Redraw table of TSIG keys
+ */
+define void TsigKeysRedraw () ``{
+    list items = maplist (map<string,string> k, current_tsig_keys, ``(
+        `item (`id (k["key"]:""), k["key"]:"", k["filename"]:"")
+    ));
+    UI::ChangeWidget (`id (`k_delete), `Enabled, size(items) > 0);
+    UI::ChangeWidget (`id (`keys), `Items, items);
+    UI::SetFocus (`id (`keys));
+}
+
+
+/**
+ * Initialize the widget
+ * @param id any widget id
+ */
+global define void TsigKeysInit (string id) ``{
+    current_tsig_keys = DhcpTsigKeys::ListTSIGKeys ();
+    TsigKeysRedraw ();
+}
+
+/**
+ * Handle function of the widget
+ * @param id string widget id
+ * @param event map event that caused storing process
+ * @return symbol always nil
+ */
+global define symbol TsigKeysHandle (string id, map event) ``{
+    string filename = (string)UI::QueryWidget (`id (`k_new), `Value);
+    if (event["ID"]:nil == `k_browse)
+    {
+        filename = UI::AskForExistingFile (filename, "",
+            // popup headline
+            _("Select file with authentication key"));
+        if (filename != nil)
+            UI::ChangeWidget (`id (`k_new), `Value, filename);
+    }
+    else if (event["ID"]:nil == `k_add)
+    {
+        list<string> keys = DhcpTsigKeys::AnalyzeTSIGKeyFile (filename);
+        if (size (keys) == 0)
+        {
+            // message popup
+            Popup::Message (_("Specified file does not contain any TSIG key"));
+            return nil;
+        }
+        boolean collision = false;
+        foreach (map<string,string> k, current_tsig_keys, ``{
+            if (contains (keys, k["key"]:""))
+                collision = true;
+        });
+        if (collision)
+        {
+            // yes-no popup
+            if (!Popup::YesNo (_("Specified file contains TSIG key with the same
+identifier, as some of already present keys.
+Old keys will be removed. Continue?")))
+            {
+                return nil;
+            }
+        }
+        new_tsig_keys = add (new_tsig_keys, filename);
+        foreach (string k, keys, ``{
+            current_tsig_keys = filter (map key, current_tsig_keys, ``(
+                key["key"]:nil != k
+            ));
+            current_tsig_keys = add (current_tsig_keys, $[
+                "key" : k,
+                "filename" : filename,
+            ]);
+        });
+    }
+    else if (event["ID"]:nil == `k_delete)
+    {
+        string key = (string)UI::QueryWidget (`id (`keys), `CurrentItem);
+        current_tsig_keys = filter (map<string,string>k, current_tsig_keys, ``(
+            k["key"]:nil != key
+        ));
+        deleted_tsig_keys = add (deleted_tsig_keys, key);
+    }
+    else if (event["ID"]:nil == `k_create)
+    {
+        UI::OpenDialog (`VBox (
+            `HBox (
+                // text entry
+                `TextEntry (`id (`filename), _("&File Name")),
+                `VBox (
+                    `Label (" "),
+                    `PushButton (`id (`browse), Label::BrowseButton ())
+                )
+            ),
+            // text entry
+            `TextEntry (`id (`key_id), _("Key identifier")),
+            `HBox (
+                `HStretch (),
+                `PushButton (`id (`ok), Label::OKButton ()),
+                `PushButton (`id (`cancel), Label::CancelButton ()),
+                `HStretch ()
+            )
+        ));
+       symbol ret = nil;
+        while (ret == nil)
+        {
+            ret = (symbol)UI::UserInput ();
+            if (ret == `browse)
+            {
+                string filename = (string)
+                    UI::QueryWidget (`id (`filename), `Value);
+                filename = (string)UI::AskForSaveFileName (filename, "",
+                    // popup headline
+                    _("Select file for creatint the authentication key"));
+                if (filename != nil)
+                    UI::ChangeWidget (`id (`filename), `Value, filename);
+                ret = nil;
+            }
+        }
+        string filename = (string)UI::QueryWidget (`id (`filename), `Value);
+        string key = (string)UI::QueryWidget (`id (`key_id), `Value);
+        UI::CloseDialog ();
+        if (ret != `ok)
+            return nil;
+	// yes-no popup
+        if (! Popup::YesNo (_("The key will be created now. Continue?")))
+            return nil;
+        SCR::Execute (.target.bash, sformat ("touch %1", filename));
+    }
+    TsigKeysRedraw ();
+    return nil;
+}
+
+/**
+ * Store settings of the widget
+ * @param id string widget id
+ * @param event map event that caused storing process
+ */
+global define void TsigKeysStore (string id, map event) ``{
+    foreach (string key, deleted_tsig_keys, ``{
+        DhcpTsigKeys::DeleteTSIGKey (key);
+    });
+    foreach (string file, new_tsig_keys, ``{
+        DhcpTsigKeys::AddTSIGKey (file);
+    });
+    DhcpServer::SetModified ();
+    return;
+}
+
+/**
+ * Het widget description map
+ * @return widget description map
+ */
+define map getTsigKeysWidget () ``{
+    return $[
+        "widget" : `custom,
+        "custom_widget" : `VBox (
+            `Table ( `id (`keys), `header (
+		// table header
+		_("Key"),
+		// table header
+		_("File"))),
+            `Left (`PushButton (`id (`k_delete), Label::DeleteButton ())),
+            `VSpacing (1),
+	    // frame
+            `Frame (_("Add new key"), `VBox (
+                `HBox (
+                    `TextEntry (`id (`k_new), _("&File Name")),
+                    `VBox (
+                        `Label (" "),
+                        `PushButton (`id (`k_browse), Label::BrowseButton ())
+                    )
+                ),
+                `HBox (
+                    `PushButton (`id (`k_add), Label::AddButton ()),
+                    `HStretch (),
+		    // push button
+                    `PushButton (`id (`k_create), _("Create &new key"))
+                )
+            ))
+        ),
+        "help" : HELPS["ddns_keys"]:"",
+        "init" : TsigKeysInit,
+        "store" : TsigKeysStore,
+        "handle" : TsigKeysHandle,
+    ];
+}
+
 
 /**
   * Initialize widgets
@@ -734,6 +905,8 @@ global define void InitWidgets () ``{
 			    `item (`id (`log), _("Display &log")),
 			    // item of a menu button
 			    `item (`id (`interfaces), _("&Interfaces configuration")),
+			    // item of a menu button
+			    `item (`id (`tsig_keys), _("TSIG keys management")),
 			])
 		    )),
 		"help" : HELPS["configtree"]:"",
@@ -817,10 +990,23 @@ global define void InitWidgets () ``{
 	    "help" : HELPS["adapt_firewall"]:"",
 	],
 	"ddns_enable" : $[
-	    "widget" : `checkbox,
+	    "widget" : `custom,
+	    "custom_widget" : `VBox (
+		`Left (`CheckBox (`id ("ddns_enable"),
+		    // check box
+		    _("&Enable Dynamic DNS for this subnet"))),
+		`VSpacing (0.5),
+		`Left (`ReplacePoint (`id (`ddns_key_rp),
+			// combo box
+			`ComboBox (`id("ddns_key"), _("Forward zone TSIG &key")))),
+		`Left (`ReplacePoint (`id (`rev_ddns_key_rp),
+                        // combo box
+                        `ComboBox (`id("rev_ddns_key"), _("Reverse zone TSIG &key")))),
+		`Left (`CheckBox (`id (`update_ddns_glob),
+		    // check box
+		    _("Update global Dynamic DNS settings")))
+	    ),
 	    // check box
-	    "label" : _("&Enable Dynamic DNS for this subnet"),
-	    "opt" : [ `notify ],
 	    "help" : HELPS["enable_ddns"]:"",
 	],
 	"zone" : $[
@@ -855,44 +1041,7 @@ global define void InitWidgets () ``{
 	    "validate_type" : `function,
 	    "validate_function" : EmptyOrIpValidate,
 	],
-	"key_filename" : $[
-	    "init" : DDNSGlobalsInit,
-	    "store" : DDNSGlobalsStore,
-	    "widget" : `textentry,
-	    // text entry
-	    "label" : _("&Filename with updater key"),
-	    "help" : HELPS["updater_key"]:"",
-	],
-	"key_name" : $[
-	    "widget" : `textentry,
-	    // text entry
-	    "label" : _("Key &name"),
-	    "help" : " ",
-	],
-	"key_file_browse_button" : $[
-	    "widget" : `push_button,
-	    "label" : Label::BrowseButton (),
-	    "handle_events" : [ "key_file_browse_button" ],
-	    "handle" : KeyFileBrowseButtonHandle,
-	    "help" : " ",
-	],
-	"create_key_file" : $[
-	    "widget" : `checkbox,
-	    // check box
-	    "label" : _("&Create file with updater key"),
-	    "help" : " ",
-	],
-        "update_global_ddns_settings" : $[
-	    "widget": `checkbox,
-	    // check box
-	    "label": _("&Update global DHCP server settings"),
-	    "opt" : [ `notify ],
-	    "help" : HELPS["update_global_ddns"]:"",
-	    "handle" : DDNSGlobalsHandle,
-	    "handle_events" : [ "update_global_ddns_settings" ],
-	],
-
-
+	"tsig_keys" : getTsigKeysWidget (),
     ];
     DhcpServerUI::widgets = w;
 }
