@@ -68,6 +68,7 @@
     global define void DhcpServerUI () ``{
 	InitPopups ();
 	InitWidgets ();
+	widgets = union (widgets, new_widgets);
     }
 
 

@@ -13,8 +13,6 @@ Read	.etc.install_inf.UseSSH nil
 Read	.etc.install_inf.InstMode nil
 Read	.target.tmpdir nil
 Log	Failed to set temporary directory: nil
-Execute	.target.bash "rpm -q dhcp-server" 1
-Execute	.target.bash "rpm -q dhcp-server" 1
 Execute	.target.bash_output "/bin/hostname --short" $["exit":0, "stderr":"localhost", "stdout":"localhost"]
 Execute	.target.bash_output "/bin/hostname --fqdn" $["exit":0, "stderr":"localhost", "stdout":"localhost"]
 Read	.init.scripts.exists "dhcpd" true

@@ -374,7 +374,7 @@ global define symbol SectionTypeChoose () ``{
   */
 global define symbol IfacesDialog (boolean initial) ``{
     y2milestone ("Running interfaces dialog");
-    list<map<string,any> > w = CWM::CreateWidgets (["interfaces", "adapt_firewall"],widgets);
+    list<map<string,any> > w = CWM::CreateWidgets (["interfaces", "open_firewall"],widgets);
     term contents = `HBox (`HStretch (), `VBox (
 	`VStretch (),
 	w[0, "widget"]:`VSpacing (0),

@@ -21,6 +21,8 @@ import "Hostname";
 import "Progress";
 import "DialogTree";
 import "CWMServiceStart";
+import "CWMFirewallInterfaces";
+import "ProductFeatures";
 
 
 include "dhcp-server/helps.ycp";
@@ -125,9 +127,7 @@ YaST will quit now."));
 		    maplist (string s, ifaces, 
                     ``(`item (`id (s), s)))
 		)
-            ),
-            `VStretch()
-
+            )
         );
 
     return dialog;
@@ -1105,12 +1105,19 @@ map<string, map<string, any> > tabs = $[
 	"widget_names"	: ["start_up", "expert_settings"],
     ],
     "card_selection" : $[
-	"contents"	: Common_CardSelectionDialog(),
+	"contents"	: `VBox (
+	    `VSpacing (1),
+	    Common_CardSelectionDialog(),
+	    `VSpacing (1),
+	    `Left ("open_firewall"),
+	    `VStretch ()
+	),
 	// dialog caption
 	"caption"	: _("DHCP Server -- Card Selection"),
 	// tree item
 	"tree_item_label"	: _("Card Selection"),
-	"widget_names"	: ["card_selection", "expert_settings"],
+	"widget_names"	: ["card_selection", "expert_settings",
+	    "open_firewall"],
     ],
     "global_settings" : $[
 	"contents"	: Common_GlobalSettingsDialog(),
@@ -1145,7 +1152,9 @@ map<string, map<string, any> > tabs = $[
     ],
 ];
 
-map<string,map<string,any> > new_widgets = $[
+map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
+  widgets,
+  $[
     "start_up" : CWMServiceStart::CreateWidget ($[
 	"get_service_auto_start" : DhcpServer::GetStartService,
 	"set_service_auto_start" : DhcpServer::SetStartService,
@@ -1169,6 +1178,14 @@ map<string,map<string,any> > new_widgets = $[
 	"save_now_action" : DhcpServer::Write,
 	// push button
 	"save_now_button" : _("Save Settings and Restart DHCP Server &Now"),
+/*
+"get_open_firewall" : nil,
+"set_open_firewall" : nil,
+"common_details_handler" : CWMFirewallInterfaces::DisplayPopup,
+//"firewall_details_handler" : nil,
+"get_allowed_interfaces" : nil,
+"set_allowed_interfaces" : nil,
+*/
     ]),
     "card_selection" : $[
 	"widget"	: `custom,
@@ -1209,19 +1226,26 @@ map<string,map<string,any> > new_widgets = $[
 	"custom_widget"	: `VBox (),
 	"help"		: HELPS["expert_settings"]:"",
     ],
-];
+]);
 
 /**
  * Common Config Dialog
  * @return symbol for the wizard sequencer
  */
 symbol CommonConfigDialog () {
+    list<string> ids_order = ["start_up", "card_selection", "global_settings",
+	"dynamic_dhcp", "host_management", "expert_settings"];
+    list<string> simple_ids_order = ["start_up", "card_selection",
+	"global_settings", "dynamic_dhcp"];
+    if (ProductFeatures::ui_mode == "simple")
+    {
+	ids_order = simple_ids_order;
+    }
     return DialogTree::ShowAndRun ($[
-	"ids_order" : ["start_up", "card_selection", "global_settings",
-	    "dynamic_dhcp", "host_management", "expert_settings"],
+	"ids_order" : ids_order,
 	"initial_screen" : "start_up",
 	"screens" :  tabs,
-	"widget_descr" : new_widgets,
+	"widget_descr" : widgets,
 	"back_button" : "",
 	"abort_button" :  Label::CancelButton (),
 	"next_button" : Label::FinishButton (),
@@ -1240,7 +1264,7 @@ any FirstRunDialog (string current_tab, integer step_number) {
 
     return CWM::ShowAndRun (
 	tab_descr["widget_names"]:[],
-	new_widgets,
+	widgets,
 	tab_descr["contents"]:`VBox (),
 	caption,
 	Label::BackButton (),

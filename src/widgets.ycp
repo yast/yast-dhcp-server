@@ -315,8 +315,8 @@ global define symbol ldapHandle (string id, map event) ``{
  * @param id any widget id
  */
 global define void FirewallInit (string id) ``{
-    boolean adapt = DhcpServer::GetAdaptFirewall ();
-    UI::ChangeWidget (`id (id), `Value, adapt);
+    boolean open = DhcpServer::GetOpenFirewall ();
+    UI::ChangeWidget (`id (id), `Value, open);
 }
 
 /**
@@ -325,8 +325,8 @@ global define void FirewallInit (string id) ``{
  * @param event map event that caused storing process
  */
 global define void FirewallStore (string id, map event) ``{
-    boolean adapt = (boolean)UI::QueryWidget (`id (id), `Value);
-    DhcpServer::SetAdaptFirewall (adapt);
+    boolean open = (boolean)UI::QueryWidget (`id (id), `Value);
+    DhcpServer::SetOpenFirewall (open);
     DhcpServer::SetModified ();
 }
 
@@ -1032,10 +1032,10 @@ global define void InitWidgets () ``{
 	    "init" : interfacesInit,
 	    "store" : interfacesStore,
 	],
-	"adapt_firewall" : $[
+	"open_firewall" : $[
 	    "widget" : `checkbox,
 	    // check box
-	    "label" : _("Adapt &Firewall Settings"),
+	    "label" : _("Open &Firewall for Selected Interface"),
 	    "init" : FirewallInit,
 	    "store" : FirewallStore,
 	    "help" : HELPS["adapt_firewall"]:"",
