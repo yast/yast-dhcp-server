@@ -94,7 +94,7 @@ else if (func == "Reset") {
     ret = $[];
 }
 else if (func == "GetModified") {
-    ret = DhcpServer::modified;
+    ret = DhcpServer::GetModified ();
 }
 /* Change configuration (run AutoSequence) */
 else if (func == "Change") {
