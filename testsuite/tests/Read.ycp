@@ -42,6 +42,7 @@
 
 	"target" : $[
 	    "stat" : $[],
+	    "size" : 5,
 	    "ycp" : $[
   "__run_dhcp_server" : true,
   "globals" : $[

@@ -21,6 +21,8 @@
     import "Summary";
     import "Runlevel";
     import "Popup";
+    import "Require";
+    import "Mode";
 
     include "dhcp-server/routines.ycp";
     include "dhcp-server/helps.ycp";
@@ -94,6 +96,19 @@
 	if(UI::PollInput() == `abort) return false;
 	Progress::NextStage();
 
+	if (! Require::AreAllPackagesInstalled (["dhcp-server"]) || Mode::config)
+	{
+            boolean install_ok = Require::RequireAndConflictTarget (["dhcp-server"], [],
+		// richtext, %1 is name of package
+		_("For running DHCP sevrer, a DHCP daemon is required.
+YaST2 will install package %1."));
+	    if (! install_ok && ! Require::LastOperationCanceled ())
+	    {
+		// error popup
+		Report::Error (_("Installing required packages failed."));
+	    }
+	}
+
 	map bash_out = SCR::Execute (.target.bash_output,
 "/usr/bin/grep '^# Creation time:' /etc/dhcpd.conf |head -n 1 |sed 's/# Creation time: \\([^$]*\\)/\\1/'");
 
@@ -107,7 +122,11 @@
 	integer difference = inode_time - file_time;
 	y2milestone ("Difference between last modification time and value stored in file is %1 seconds", difference);
 
-        settings = SCR::Read (.target.ycp, "/var/lib/YaST2/dhcp_server.ycp");
+	if (0 < SCR::Read (.target.size, "/var/lib/YaST2/dhcp_server.ycp"))
+	    settings = SCR::Read (.target.ycp, "/var/lib/YaST2/dhcp_server.ycp");
+	else
+	    settings = nil;
+
         if (settings == nil)
         {
 	    // yes-no popup
@@ -174,6 +193,7 @@ Continue?
 	// write settings
 	if(UI::PollInput() == `abort) return false;
 	Progress::NextStage();
+
 	createDhcpdConf ();
 	SCR::Write (.target.ycp, "/var/lib/YaST2/dhcp_server.ycp", settings);
 

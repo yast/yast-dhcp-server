@@ -1,5 +1,5 @@
 @HEADER-COMMENT@
-# neededforbuild yast2-devel-packages
+# neededforbuild yast2-devel-packages yast2-packager
 
 @HEADER@
 Requires:	yast2
@@ -26,5 +26,6 @@ Summary:	Configuration of dhcp-server
 @clientdir@/dhcp-server.ycp
 @clientdir@/dhcp-server_*.ycp
 @moduledir@/DhcpServer.ycp
+@desktopdir@/dhcp-server.desktop
 @configdir@/dhcp-server.y2cc
 %doc @docdir@
