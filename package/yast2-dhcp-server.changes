@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Sep 27 14:37:01 CEST 2004 - jsrain@suse.cz
+
+- fixed error reported after configuration was saved even it it was
+  saved successfully (#46223)
+
+-------------------------------------------------------------------
 Mon Sep 20 09:41:39 CEST 2004 - jsrain@suse.cz
 
 - fixed "Save and Restart" (the progress was kept instead of

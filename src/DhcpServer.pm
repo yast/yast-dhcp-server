@@ -1471,7 +1471,7 @@ sub Write {
     my $caption = __("Saving DHCP Server Configuration");
 
     # We do not set help text here, because it was set outside
-    Progress->New($caption, " ", 2, [
+    Progress->New($caption, " ", 3, [
 	# progress stage
 	__("Write DHCP server settings"),
 	# progress stage
@@ -1617,7 +1617,7 @@ sub Write {
 
     Progress->NextStage ();
 
-    return $ok;
+    return Boolean ($ok);
 }
 
 BEGIN { $TYPEINFO{Export}  =["function", [ "map", "any", "any" ] ]; }
@@ -2648,7 +2648,7 @@ sub LdapStore {
 
     if (ProductFeatures->ui_mode () eq "simple")
     {
-	return;
+	return 1;
     }
 
     my $ret = 1;
