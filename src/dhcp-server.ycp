@@ -28,7 +28,10 @@
     Wizard::CreateDialog ();
     boolean read = DhcpServer::Read ();
     if (! read)
+    {
+	UI::CloseDialog();
 	return `abort;
+    }
     boolean exit = false;
     symbol ret = nil;
     while (! exit)

@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Thu Sep 18 10:22:42 CEST 2003 - jsrain@suse.de
+
+- closing dialog properly if read aborted (#31249)
+
+-------------------------------------------------------------------
 Wed Sep 17 10:22:43 CEST 2003 - jsrain@suse.de
 
 - added possibility to adapt firewall settings when saving DNS
