@@ -476,7 +476,8 @@ global define void interfacesInit (string id) ``{
  */
 global define void interfacesStore (string id, map event) ``{
     list ifaces = (list)UI::QueryWidget (`id (id), `SelectedItems);
-    DhcpServer::SetAllowedInterfaces ((list<string>)ifaces);
+    list<string> interfaces = (list<string>)ifaces;
+    DhcpServer::SetAllowedInterfaces (interfaces);
     DhcpServer::SetModified ();
 }
 
@@ -1052,9 +1053,14 @@ global define void InitWidgets () ``{
 		`id ("interfaces"),
 		// multi selection box
 		_("Available Interfaces"),
-		filter (string s, (list<string>)SCR::Dir (.network.section), ``(
-		    s != "lo"
-		))
+		maplist (string s,
+		    filter (
+			string s,
+			(list<string>)SCR::Dir (.network.section),
+			``(s != "lo")
+		    ),
+		    ``(`item (`id (s), s))
+		)
 	    ),
 	    "help" : HELPS["interfaces"]:"",
 	    "init" : interfacesInit,

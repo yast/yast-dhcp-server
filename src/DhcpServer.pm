@@ -44,10 +44,6 @@ my $adapt_firewall = 0;
 
 my $write_only = 0;
 
-my %current_entry = ();
-
-my $current_entry_index = 0;
-
 my $adapt_ddns_settings = 0;
 
 
