@@ -1,0 +1,13 @@
+/**
+ * File:        etc_named_conf.scr
+ * Summary:     Agent for rading and writing of DNS zone files
+ * Author:      Jiri Srain <jsrain@suse.cz>
+ * Access:      read, write
+ *
+ * $Id$
+ *
+ */
+.etc.dhcpd_conf
+
+`ag_dhcpd_conf ()
+

@@ -1,7 +1,13 @@
 -------------------------------------------------------------------
+Thu Jan 29 15:15:41 CET 2004 - jsrain@suse.de
+
+- created agent for reading/writing /etc/dhcpd.conf file
+
+-------------------------------------------------------------------
 Fri Oct  3 14:24:05 CEST 2003 - jsrain@suse.de
 
 - adapted to Table/Popup stuff split off from CWM.ycp
+- 2.9.0
 
 -------------------------------------------------------------------
 Wed Oct  1 13:07:02 CEST 2003 - jsrain@suse.de
