@@ -822,7 +822,7 @@ global define void InitWidgets () ``{
 "option vendor-class-identifier",
 "option netbios-name-servers",
 "option netbios-dd-server",
-"option netbios-note-type",
+"option netbios-node-type",
 "option netbios-scope",
     ];
 
