@@ -486,7 +486,7 @@ all clients*/
 "ddns-domainname" : "name",
 "ddns-rev-domainname"  : "name",
 "ddns-update-style" : "style",
-"ddns-updates" : "flag",
+"ddns-updates" : "string",
 "default-lease-time" : "time",
 "do-forward-updates" : "flag",
 "dynamic-bootp-lease-cutoff" : "date",
