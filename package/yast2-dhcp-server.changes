@@ -3,6 +3,7 @@ Thu Aug 28 09:35:48 CEST 2003 - jsrain@suse.de
 
 - checking if dhcp server is installed (#29423)
 - added .desktop file
+- fixed help text (#29385)
 
 -------------------------------------------------------------------
 Tue Aug 26 14:50:05 CEST 2003 - jsrain@suse.de

@@ -59,7 +59,7 @@ IP addresses, choose <B>Hosts</B> and edit them.</P>");
       */
     global define string getLogButtonHelp () ``{
 	// help text
-	return _("<p>To display the DNS server log, click <b>Display Log</b>.</p>");
+	return _("<p>To display the DHCP server log, click <b>Display Log</b>.</p>");
     }
 
     /**
