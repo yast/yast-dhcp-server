@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Mon Nov  8 13:03:32 CET 2004 - jsrain@suse.cz
+
+- prevent used TSIG keys from being removed
+
+-------------------------------------------------------------------
 Tue Nov  2 13:48:50 CET 2004 - jsrain@suse.cz
 
 - adapted to new Mode.ycp

@@ -131,6 +131,34 @@ sub SetKeysInfo {
     $self->SetModified ();
 }
 
+BEGIN{$TYPEINFO{ListUsedKeys}=["function", ["list","string"]];}
+sub ListUsedKeys {
+    my $lself = shift;
+
+    my @used_keys = ();
+
+    foreach my $rec (@settings) {
+	my @directives = @{$rec->{"directives"}};
+	foreach my $dir (@directives) {
+	    if ($dir->{"key"} eq "zone")
+	    {
+		my $val = $dir->{"value"};
+		if ($val =~ m/^[ \t]*[^ \t]+[ \t]*\{[ \t]*primary[ \t]+[^ \t]+[ \t]*;[ \t]*key[ \t]+([^ \t]+)[ \t]*;[ \t]*\}[ \t]*$/)
+		{
+		    push @used_keys, $1;
+		}
+	    }
+
+	}
+    }
+    my %used_keys = ();
+    foreach my $k (@used_keys) {
+	$used_keys{$k} = 1;
+    }
+    @used_keys = keys (%used_keys);
+    return \@used_keys;
+}
+
 
 ##-------------------------------------------------------------------------
 ##----------------- various routines --------------------------------------
