@@ -125,6 +125,7 @@ global define symbol MainSequence () ``{
 global define symbol DhcpAutoSequence() ``{
 
     Wizard::CreateDialog();
+    Wizard::SetDesktopIcon("dhcp-server");
     Wizard::SetContentsButtons("", `VBox (), "",
 	Label::BackButton(), Label::NextButton());
     symbol ret = MainSequence();
@@ -161,7 +162,7 @@ global define symbol DhcpSequence() ``{
     ];
 
     Wizard::CreateDialog();
-
+    Wizard::SetDesktopIcon("dhcp-server");
     symbol ret = Sequencer::Run(aliases, sequence);
 
     UI::CloseDialog();
