@@ -217,6 +217,41 @@ global define symbol startHandle (string id, map event) ``{
     return nil;
 }
 
+// chroot widget
+
+/**
+ * Initialize the widget
+ * @param id any widget id
+ */
+global define void chrootInit (string id) ``{
+    boolean ss = DhcpServer::GetChrootJail();
+    UI::ChangeWidget (`id (id), `Value, ss);
+}
+
+/**
+ * Store settings of the widget
+ * @param id string widget id
+ * @param event map event that caused storing process
+ */
+global define void chrootStore (string id, map event) ``{
+    boolean ss = (boolean)UI::QueryWidget (`id (id), `Value);
+    DhcpServer::SetChrootJail (ss);
+}
+
+/**
+ * Handle function of the widget
+ * @param id string widget id
+ * @param event map event that caused storing process
+ * @return symbol always nil
+ */
+global define symbol chrootHandle (string id, map event) ``{
+    boolean start = (boolean)UI::QueryWidget (`id (id), `Value);
+    if (start != DhcpServer::GetChrootJail ())
+        DhcpServer::SetModified ();
+    return nil;
+}
+
+
 /**
  * Initialize the widget
  * @param id any widget id
@@ -904,6 +939,15 @@ global define void InitWidgets () ``{
 		"handle" : startHandle,
 		"store" : startStore,
 		"opt" : [`notify],
+	],
+	"chroot" : $[
+	    "widget" : `checkbox,
+	    // check box
+	    "label" : _("&Run DHCP Server in Chroot Jail"),
+	    "help" : HELPS["chroot"]:"",
+	    "init" : chrootInit,
+	    "handle" : chrootHandle,
+	    "store" : chrootStore,
 	],
 	"configtree" : $[
 		"widget" : `custom,
