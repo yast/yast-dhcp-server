@@ -3,6 +3,7 @@ Wed Dec 15 13:04:09 CET 2004 - jsrain@suse.cz
 
 - cleanup of requires and neededforbuild
 - using new function for disabling/enabling progress bar
+- 2.11.1
 
 -------------------------------------------------------------------
 Tue Nov  9 14:10:22 CET 2004 - jsrain@suse.cz
