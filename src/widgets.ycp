@@ -21,11 +21,8 @@
 
 // pre-declarations
 
-/**
- * Initialize the widget
- * @param id any widget id
- */
 global define void configTreeInit (string id);
+global define symbol chrootHandle (string id, map event);
 
 
     /**
@@ -226,6 +223,7 @@ global define symbol startHandle (string id, map event) ``{
 global define void chrootInit (string id) ``{
     boolean ss = DhcpServer::GetChrootJail();
     UI::ChangeWidget (`id (id), `Value, ss);
+    chrootHandle (id, $[ "ID" : "start" ]);
 }
 
 /**
@@ -245,6 +243,12 @@ global define void chrootStore (string id, map event) ``{
  * @return symbol always nil
  */
 global define symbol chrootHandle (string id, map event) ``{
+    if (event["ID"]:nil == "start")
+    {
+	boolean en = (boolean)UI::QueryWidget (`id ("start"), `Value);
+	UI::ChangeWidget (`id (id), `Enabled, en);
+	return nil;
+    }
     boolean start = (boolean)UI::QueryWidget (`id (id), `Value);
     if (start != DhcpServer::GetChrootJail ())
         DhcpServer::SetModified ();
@@ -280,6 +284,13 @@ global define void FirewallStore (string id, map event) ``{
  * @return symbol always nil
  */
 global define symbol configTreeHandle (string id, map event) ``{
+    boolean enabled = (boolean)UI::QueryWidget (`id ("start"), `Value);
+    if (event["ID"]:nil == "start")
+    {
+        UI::ChangeWidget (`id ("configtree"), `Enabled, enabled);
+        UI::ChangeWidget (`id (`adv), `Enabled, enabled);
+        UI::ChangeWidget (`id (`edit), `Enabled, enabled);
+    }
     if (event["ID"]:nil == `log)
     {
 	LogView::Display ($[
@@ -303,7 +314,7 @@ global define symbol configTreeHandle (string id, map event) ``{
 	return `tsig_keys;
     string current_item = (string)
 	UI::QueryWidget (`id ("configtree"), `CurrentItem);
-    if (current_item == " ")
+    if (current_item == " " || ! enabled)
     {
 	UI::ChangeWidget (`id (`delete), `Enabled, false);
 //	UI::ChangeWidget (`id (`move), `Enabled, false);
@@ -320,7 +331,8 @@ global define symbol configTreeHandle (string id, map event) ``{
 	return nil;
     }
     string sel_type = selected["type"]:"";
-    if (sel_type == "pool" || sel_type == "class" || sel_type == "host")
+    if (sel_type == "pool" || sel_type == "class" || sel_type == "host"
+	|| ! enabled)
     {
 	UI::ChangeWidget (`id (`add), `Enabled, false);
     }
@@ -403,7 +415,7 @@ global define void configTreeInit (string id) ``{
         items
     ));
     UI::ChangeWidget (`id ("configtree"), `CurrentItem, " ");
-    configTreeHandle (id, $[]);
+    configTreeHandle (id, $["ID" : "start"]);
     return;
 }
 

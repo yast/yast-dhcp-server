@@ -2,6 +2,8 @@
 Wed Mar 24 12:37:50 CET 2004 - jsrain@suse.cz
 
 - added check box for running DHCP server in chroot jail
+- disabling possibility to change the settings if the DNS service
+  is disabled (#36799)
 
 -------------------------------------------------------------------
 Mon Mar 22 14:22:10 CET 2004 - jsrain@suse.cz
