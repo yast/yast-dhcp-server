@@ -497,6 +497,8 @@ global define void DynDnsButtonInit (string id) ``{
  * @return symbol for WS
  */
 global define symbol DynDnsButtonHandle (string id, map event) ``{
+    if (size (DhcpTsigKeys::ListTSIGKeys ()) == 0)
+	return `tsig_keys;
     return `dyn_dns;
 }
 
@@ -1070,6 +1072,7 @@ global define void InitWidgets () ``{
 	    "widget" : `custom,
 	    "custom_widget" : `VBox (
 		`Left (`CheckBox (`id ("ddns_enable"),
+		    `opt (`notify),
 		    // check box
 		    _("&Enable Dynamic DNS for This Subnet"))),
 		`VSpacing (0.5),

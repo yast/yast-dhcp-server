@@ -74,6 +74,7 @@ global define symbol MainSequence () ``{
 	    `next		: "store",
 	    `abort		: `abort,
 	    `dyn_dns		: "dyn_dns",
+	    `tsig_keys		: "tsig_keys_1",
 	],
 	"host" : $[
 	    `next		: "store",

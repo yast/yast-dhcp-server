@@ -88,7 +88,7 @@ sub AddTSIGKey {
     my $self = shift;
     my $filename = shift;
 
-    my @new_keys = $self->AnalyzeTSIGKeyFile ($filename);
+    my @new_keys = @{$self->AnalyzeTSIGKeyFile ($filename)};
     y2milestone ("Reading TSIG file $filename");
     $filename = $self->NormalizeFilename ($filename);
     my $contents = SCR->Read (".target.string", $filename);
