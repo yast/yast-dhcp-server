@@ -1,0 +1,26 @@
+/**
+ * File:
+ *  Summary.ycp
+ *
+ * Module:
+ *  DHCP server configurator
+ *
+ * Summary:
+ *  Summary testsuite
+ *
+ * Authors:
+ *  Jiri Srain <jsrain@suse.cz>
+ *
+ * $Id$
+ *
+ */
+
+{
+    include "testsuite.ycp";
+    import "DhcpServer";
+
+    DhcpServer::settings["__run_dhcp_server"] = false;
+    TEST (``(DhcpServer::Summary ()), [], 0);
+    DhcpServer::settings["__run_dhcp_server"] = true;
+    TEST (``(DhcpServer::Summary ()), [], 0);
+}

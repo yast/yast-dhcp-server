@@ -1,0 +1,2 @@
+Return	["The DHCP server is not started at boot time"]
+Return	["The DHCP server is started at boot time"]

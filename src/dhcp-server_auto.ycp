@@ -21,91 +21,74 @@
 
 {
 
-    textdomain "dhcp-server";
+textdomain "dhcp-server";
 
-    y2milestone("----------------------------------------");
-    y2milestone("Dhcp-server auto started");
+y2milestone("----------------------------------------");
+y2milestone("DhcpServer auto started");
 
-    // global variables
-    map settings = $[];
+import "DhcpServer";
+include "dhcp-server/ui.ycp";
 
-    Mode::config = true;
-    /**
-     * Test for abort.
-     * @return true if abort was pressed
-     */
-    define boolean testAbort () ``{
-        if (`abort == UI::PollInput ())
-        {
-            UI::CloseDialog ();
-            return true;
-        }
-        return false;
-    }
-    // ===== arguments ================================================
+any ret = nil;
+string func = "";
+map param = $[];
 
-    boolean test_mode = false;
+/* Check arguments */
+if(size(Args()) > 0 && is(Args(0), string)) {
+    func = WFM::Args(0);
+    if(size(Args()) > 1 && is(Args(1), map))
+        param = WFM::Args(1);
+}
+y2debug("func=%1", func);
+y2debug("param=%1", param);
 
-    {
-        integer i = 0;
-        while (i < size (Args()))
-        {
-            if (is (Args (i), map) && nil != Args (i))  settings = Args (i);
-            if (.test == Args (i))             test_mode = true;
-            i = i + 1;
-        }
-    }
-    /**
-      * Set contents of main dialog for printer autoinstallation
-      */
-    define void set_contents() ``{
-        term contents =
-            `VBox(
-                  `VSpacing(1),
-                  `RichText( `id(`summary), DhcpServer::Summary([])),
-                  `VSpacing(),
-                  `HBox(
-                        // pushbutton
-                        `PushButton(`id(`configure), _("&Configure DHCP Server")),
-                        `HStretch(),
-                        // pushbutton
-                        `PushButton(`id(`reset), _("&Reset Configuration"))
-                        )
-                  );
-        // dialog caption
-        Wizard::SetContents(_("DHCP Server Configuration"),
-                            contents, "", true, true);
-    }
+/* Create a summary*/
+if(func == "Summary") {
+    ret = select(DhcpServer::Summary(), 0, "");
+}
+/* Reset configuration */
+else if (func == "Reset") {
+    DhcpServer::Import($[]);
+    ret = $[];
+}
+/* Change configuration (run AutoSequence) */
+else if (func == "Change") {
+    ret = runWizard ();
+}
+/* Import configuration */
+else if (func == "Import") {
+    ret = DhcpServer::Import(param);
+}
+/* Return actual state */
+else if (func == "Export") {
+    ret = DhcpServer::Export();
+}
+/* Read current state */
+else if (func == "Read") {
+    import "Progress";
+    Progress::off();
+    ret = DhcpServer::Read();
+    Progress::on();
+}
+/* Write givven settings */
+else if (func == "Write") {
+    import "Progress";
+    Progress::off();
+    DhcpServer::write_only = true;
+    ret = DhcpServer::Write();
+    Progress::on();
+}
+/* Unknown function */
+else {
+    y2error("Unknown function: %1", func);
+    ret = false;
+}
 
-    // Create Summary and buttons for launching
-    // in auto mode
+y2debug("ret=%1", ret);
+y2milestone("DhcpServer auto finished");
+y2milestone("----------------------------------------");
 
-    set_contents();
-    any result = nil;
-    any ret = nil;
-    repeat {
-        ret = UI::UserInput();
-        if (ret == `configure)
-        {
-                Wizard::CreateDialog ();
-                result = runWizard (true);
-                UI::CloseDialog ();
-                if (result == `next || result == `finish)
-                {
-                     settings = DhcpServer::Export ();
-                }
-                DhcpServer::Import(settings);
-                set_contents();
-        }
-        else if ( ret == `reset)
-        {
-            settings= $[];
-            DhcpServer::Import(settings);
-            set_contents();
-        }
-    } until (ret == `back || ret == `next || ret ==`key || ret ==`abort);
-
-    return [ret, settings];
+return ret;
 
 }
 

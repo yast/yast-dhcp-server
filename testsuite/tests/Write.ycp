@@ -1,0 +1,84 @@
+/**
+ * File:
+ *  rw.ycp
+ *
+ * Module:
+ *  DHCP server configurator
+ *
+ * Summary:
+ *  Read and write testsuite
+ *
+ * Authors:
+ *  Jiri Srain <jsrain@suse.cz>
+ *
+ * $Id$
+ *
+ */
+
+{
+    include "testsuite.ycp";
+    import "Progress";
+    import "DhcpServer";
+
+    Progress::off ();
+
+    map READ = $[
+	// Runlevel
+        "init": $[
+            "scripts": $[
+                "exists": true,
+                "runlevel": $[
+                    "dhcpd": $[
+                        "start": [],
+                        "stop":  [],
+                        ],
+                    ],
+                // their contents is not important for ServiceAdjust
+                "comment": $[
+                    "dhcpd": $[],
+                    ],
+                ],
+            ],
+
+	"target" : $[
+	    "stat" : $[],
+	    "ycp" : $[],
+	],
+    ];
+    map WRITE = $[];
+    map EXEC = $[
+	"target" : $[
+	    "bash_output" : $[],
+	],
+    ];
+
+    TEST (``(DhcpServer::Write ()), [READ, WRITE, EXEC], 0);
+    TEST (``(DhcpServer::Import ($[
+  "__run_dhcp_server" : true,
+  "globals" : $[
+    "authoritative" : "",
+    "ddns-update-style" : "none",
+    "ddns-updates" : "off",
+    "default-lease-time" : 600,
+    "log-facility" : "local7",
+    "max-lease-time" : 7200
+  ],
+  "hosts" : $[
+    "host" : $[
+      "fixed-address" : "10.20.1.50",
+      "hardware" : "ethernet 11:22:33:44:55:66",
+      "host" : "zealot"
+    ]
+  ],
+  "subnets" : $[
+    "subnet10.20.0.0netmask255.255.240.0" : $[
+      "netmask" : "255.255.240.0",
+      "range" : "10.20.5.1 10.20.5.10",
+      "subnet" : "10.20.0.0"
+    ]
+  ]
+])), [], 0);
+    TEST (``(DhcpServer::Write ()), [READ, WRITE, EXEC], 0);
+
+
+}

@@ -106,6 +106,7 @@
 
     /**
       * Handle function of the log button
+      * @param key any widget key
       * @param event map event that occured
       * @return value for wizard sequencer, always nil
       */
@@ -164,6 +165,7 @@
 
     /**
       * Initialize the widget
+      * @param key any widget key
       */
     global define void globalsInit (string key) ``{
 	current_section = eval (settings["globals"]:nil);
@@ -172,6 +174,7 @@
 
     /**
       * Save the settings of the widget
+      * @param key any widget key
       * @param event map event that started the save process
       * @return any modified event if needed
       */
@@ -205,6 +208,7 @@
 
     /**
       * Save the settings of the widget
+      * @param key any widget key
       * @param event map event that started the save process
       * @return any modified event if needed
       */
@@ -237,6 +241,7 @@
 
     /**
       * Save the settings of the widget
+      * @param key any widget key
       * @param event map event that started the save process
       * @return any modified event if needed
       */
@@ -283,6 +288,7 @@
 
     /**
       * Read the settings, initialize the widget
+      * @param key any widget key
       */
     global define void subnetsRead (any key) ``{
 	list items = maplist (`k, `v, current_list, ``(
@@ -293,6 +299,7 @@
 
     /**
       * Save the settings of the widget
+      * @param key any widget key
       * @param event map event that started the save process
       * @return any modified event if needed
       */
@@ -302,6 +309,7 @@
 
     /**
       * Handle events that occured on the widget
+      * @param key any widget key
       * @param event map event that occured
       * @return any modified event if needed
       */
@@ -362,6 +370,7 @@
 
     /**
       * Read the settings, initialize the widget
+      * @param key any widget key
       */
     global define void hostsRead (any key) ``{
         list items = maplist (`k, `v, current_list, ``(
@@ -372,6 +381,7 @@
 
     /**
       * Save the settings of the widget
+      * @param key any widget key
       * @param event map event that started the save process
       * @return any modified event if needed
       */
@@ -381,6 +391,7 @@
 
     /**
       * Handle events that occured on the widget
+      * @param key any widget key
       * @param event map event that occured
       * @return any modified event if needed
       */
@@ -429,7 +440,6 @@
       * Fallback function to save settings from the popup
       * @param opt_id any option id
       * @param key any option key
-      * @param op any operation that started save process
       * @return any modified operation if needed
       */
     global define any commonPopupSave (any opt_id, any key) ``{
@@ -461,6 +471,7 @@
 
     /**
       * Transform table entry id to option id
+      * @param table map table description
       * @param id any entry id
       * @return any option key
       */
