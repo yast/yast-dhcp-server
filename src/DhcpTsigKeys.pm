@@ -43,7 +43,7 @@ YaST::YCP::Import ("Report");
 
 BEGIN{$TYPEINFO{ListTSIGKeys}=["function",["list",["map","string","string"]]];}
 sub ListTSIGKeys {
-    return @tsig_keys;
+    return \@tsig_keys;
 }
 
 # FIXME the same function in DNS server component

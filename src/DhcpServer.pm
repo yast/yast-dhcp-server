@@ -118,7 +118,7 @@ sub AdaptFirewall {
 }
 
 sub InitTSIGKeys {
-    my @directives = GetEntryDirectives ("", "");
+    my @directives = @{GetEntryDirectives ("", "") || []};
     my @read_keys = ();
     foreach my $dir_ref (@directives) {
 	my %dir = %{$dir_ref};
@@ -126,7 +126,7 @@ sub InitTSIGKeys {
 	{
 	    my $filename = $dir{"value"};
 	    $filename =~ s/^[\" \t]*(.*[^\" \t])[\" \t]*$/$1/;
-	    my @new_keys = DhcpTsigKeys::AnalyzeTSIGKeyFile ($filename);
+	    my @new_keys = @{DhcpTsigKeys::AnalyzeTSIGKeyFile ($filename)};
 	    foreach my $new_key (@new_keys) {
 		y2milestone ("Having key $new_key, file $filename");
 		push @read_keys, {
@@ -137,6 +137,7 @@ sub InitTSIGKeys {
 	}
     }
     DhcpTsigKeys::StoreTSIGKeys (\@read_keys);
+    return;
 }
 
 sub AdaptDDNS {
@@ -145,12 +146,12 @@ sub AdaptDDNS {
     {
 	return 1;
     }
-    my @directives = GetEntryDirectives ("", "");
+    my @directives = @{GetEntryDirectives ("", "") || []};
     my %includes = ();
 
-    my @current_keys = DhcpTsigKeys::ListTSIGKeys ();
-    my @deleted_keys = DhcpTsigKeys::ListDeletedKeyIncludes ();
-    my @new_keys = DhcpTsigKeys::ListNewKeyIncludes ();
+    my @current_keys = @{DhcpTsigKeys::ListTSIGKeys () || []};
+    my @deleted_keys = @{DhcpTsigKeys::ListDeletedKeyIncludes () || []};
+    my @new_keys = @{DhcpTsigKeys::ListNewKeyIncludes () || []};
 
     @directives = grep {
 	my %dir = %{$_};
@@ -277,6 +278,7 @@ sub PreprocessSettings {
 	"comment_after" => $header_ref->{"comment_after"},
     );
     push @settings, \%ret;
+    return;
 }
 
 sub PrepareToSave {
@@ -407,6 +409,7 @@ sub DeleteEntry {
     if ($parent_index == -1)
     {
 	y2error ("DeleteEntry: Parent doesn't exist - internal structure error");
+	return 0;
     }
     else
     {
@@ -422,6 +425,7 @@ sub DeleteEntry {
     @settings = grep {
 	$_->{"type"} ne $type || $_->{"id"} ne $id;
     } @settings;
+    return 1;
 }
 
 BEGIN{$TYPEINFO{GetEntryParent} = [ "function", ["map", "string", "string"], "string", "string"];}
@@ -508,7 +512,7 @@ sub GetChildrenOfEntry {
 	y2error ("GetChildrenOfEntry: Specified non-existint entry");
 	return ();
     }
-    @{$settings[$index]->{"children"}};
+    return \@{$settings[$index]->{"children"}};
 }
 
 BEGIN{$TYPEINFO{GetEntryOptions} = ["function", ["list", ["map", "string", "string"]], "string", "string"];}
@@ -522,7 +526,7 @@ sub GetEntryOptions {
 	y2error ("GetEntryoptions: Specified non-existint entry");
 	return undef;
     }
-    @{$settings[$index]->{"options"}};
+    return \@{$settings[$index]->{"options"}};
 }
 
 BEGIN{$TYPEINFO{SetEntryOptions} = ["function", "boolean", "string", "string", ["list", ["map", "string", "string"]]];}
@@ -552,7 +556,7 @@ sub GetEntryDirectives {
 	y2error ("GetEntryDirectives: Specified non-existint entry");
 	return undef;
     }
-    @{$settings[$index]->{"directives"}};
+    return \@{$settings[$index]->{"directives"}};
 }
 
 BEGIN{$TYPEINFO{SetEntryDirectives} = ["function", "boolean", "string", "string", ["list", ["map", "string", "string"]]];}
@@ -577,7 +581,7 @@ sub ExistsEntry {
     my $id = $_[1];
 
     my $index = FindEntry ($type, $id);
-    $index != -1;
+    return $index != -1;
 }
 
 BEGIN{$TYPEINFO{ChangeEntry} = ["function", "boolean", "string", "string", "string", "string"];}
@@ -618,7 +622,7 @@ sub ChangeEntry {
 	$entry{"children"} = \@children;
 	\%entry;
     } @settings;
-    1;
+    return 1;
 }
 
 
@@ -653,7 +657,7 @@ sub SetWriteOnly {
 
 BEGIN{$TYPEINFO{GetAllowedInterfaces} = ["function", ["list", "string"] ];}
 sub GetAllowedInterfaces {
-    return @allowed_interfaces;
+    return \@allowed_interfaces;
 }
 
 BEGIN{$TYPEINFO{SetAllowedInterfaces} = ["function", "void", ["list", "string"]];}
@@ -876,7 +880,7 @@ sub Summary {
 	push (@ret, _("The DHCP server is not started at boot time"));
     }
 
-    return @ret;
+    return \@ret;
 }
 
 ##------------------------------------
@@ -971,7 +975,7 @@ sub SetOption {
 	    $o{"key"} ne $key;
 	} @options;
    }
-   return @options;
+   return \@options;
 }
 
 BEGIN{$TYPEINFO{SetGlobalOption} = ["function","boolean","string","string"];}
@@ -984,13 +988,13 @@ sub SetGlobalOption {
 
     if (substr ($option, 0, 7) eq "option ")
     {
-	@options = GetEntryOptions ("", "");
+	@options = @{GetEntryOptions ("", "") || []};
     }
     else
     {
-	@options = GetEntryDirectives ("", "");
+	@options = @{GetEntryDirectives ("", "") || []};
     }
-    @options = SetOption (\@options, $option, $value);
+    @options = @{SetOption (\@options, $option, $value) || []};
     if (substr ($option, 0, 7) eq "option ")
     {
 	$ret = SetEntryOptions ("", "", \@options);
@@ -1015,13 +1019,13 @@ sub SetSubnetOption {
 
     if (substr ($option, 0, 7) eq "option ")
     {
-	@options = GetEntryOptions ("subnet", "");
+	@options = @{GetEntryOptions ("subnet", "") || []};
     }
     else
     {
-	@options = GetEntryDirectives ("subnet", "");
+	@options = @{GetEntryDirectives ("subnet", "") || []};
     }
-    @options = SetOption (\@options, $option, $value);
+    @options = @{SetOption (\@options, $option, $value) || []};
     if (substr ($option, 0, 7) eq "option ")
     {
 	$ret = SetEntryOptions ("subnet", "", \@options);
@@ -1045,13 +1049,13 @@ sub SetHostOption {
 
     if (substr ($option, 0, 7) eq "option ")
     {
-	@options = GetEntryOptions ("host", "$id");
+	@options = @{GetEntryOptions ("host", "$id") || []};
     }
     else
     {
-	@options = GetEntryDirectives ("host", "$id");
+	@options = @{GetEntryDirectives ("host", "$id") || []};
     }
-    @options = SetOption (\@options, $option, $value);
+    @options = @{SetOption (\@options, $option, $value) || []};
     if (substr ($option, 0, 7) eq "option ")
     {
 	$ret = SetEntryOptions ("host", "$id", \@options);
