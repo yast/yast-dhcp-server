@@ -917,8 +917,8 @@ global define void InitWidgets () ``{
 
     list<string> global_commands = [
 "authoritative",
-"ddns-update-style none",
-"ddns-updates off",
+"ddns-update-style",
+"ddns-updates",
 "log-facility",
     ];
 
