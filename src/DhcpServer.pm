@@ -1,6 +1,6 @@
 #! /usr/bin/perl -w
 #
-# DnsServer module written in Perl
+# DhcpServer module written in Perl
 #
 
 package DhcpServer;
@@ -46,6 +46,7 @@ sub _ {
 YaST::YCP::Import ("SCR");
 YaST::YCP::Import ("Mode");
 YaST::YCP::Import ("Service");
+
 
 ##-------------------------------------------------------------------------
 ##----------------- various routines --------------------------------------
@@ -139,7 +140,7 @@ sub PreprocessSettings {
 	"parent_type" => $parent_type,
 	"parent_id" => $parent_id,
 	"type" => $type,
-	"key" => $id,
+	"id" => $id,
 	"options" => \@options,
 	"directives" => \@directives,
 	"children" => \@children,
@@ -153,20 +154,60 @@ sub PrepareToSave {
     my $type = $_[0];
     my $id = $_[1];
 
-    #TODO continue here
+    my $record_index = FindEntry ($type, $id);
+
+    # FIXME
+    return if ($record_index == -1);
+    my %record = %{$settings[$record_index]};
+
+    my @to_save = ();
+    foreach my $rec_ref (@{$record{"options"}}) {
+	my %r = %{$rec_ref};
+	$r{"type"} = "option";
+	push @to_save, \%r;
+    }
+    foreach my $rec_ref (@{$record{"directives"}}) {
+	my %r = %{$rec_ref};
+	$r{"type"} = "directive";
+	push @to_save, \%r;
+    }
+
+    foreach my $child_ref (@{$record{"children"}}) {
+	my $c_type = $child_ref->{"type"};
+	my $c_id = $child_ref->{"id"};
+	my $processed_child_ref = PrepareToSave ($c_type, $c_id);
+	push @to_save, $processed_child_ref;
+    }
+
+    if ($type ne "")
+    {
+	my %r = (
+	    "type" => $type,
+	    "key" => $id,
+	    "comment_before" => $record{"comment_before"},
+	    "comment_after" => $record{"comment_after"},
+	    "value" => \@to_save,
+	);
+	return \%r;
+    }
+    return \@to_save;
 }
 
 
 sub FindEntry {
     my $type = $_[0];
     my $id = $_[1];
-    my $list_ref = $_[3];
 
-
-
-#    foreach my $rec @{}
-
-
+    my $index = -1;
+    my $found = -1;
+    foreach my $rec (@settings) {
+	$index = $index + 1;
+	if ($rec->{"type"} eq $type && $rec->{"id"} eq $id)
+	{
+	    $found = $index;
+	}
+    }
+    return $found;
 }
 
 BEGIN {$TYPEINFO{CreateEntry} = [ "function", "boolean", "string", "string", "string", "string" ];}
@@ -176,60 +217,258 @@ sub CreateEntry {
     my $parent_type = $_[2];
     my $parent_id = $_[3];
 
+    my $parent_index = FindEntry ($parent_type, $parent_id);
+    if ($parent_index == -1)
+    {
+	y2error ("Specified non-existint parent entry");
+	return 0;
+    }
+
+    # create new entry, push it
     my %new_entry = (
 	"type" => $type,
 	"id" => $id,
-	"value" => [],
+	"parent_id" => $parent_id,
+	"parent_type" => $parent_type,
+	"options", [],
+	"directives" => [],
+	"children" => [],
+	"comment_before" => "",
+	"comment_after" => "",
     );
 
-#    foreach my $entry, 
+    push @settings, \%new_entry;
 
+    #create link from parent
+    my %link = (
+	"type" => $type,
+	"id" => $id,
+    );
+    push @{$settings[$parent_index]->{"children"}}, \%link;
+
+    return 1;
 }
 
 BEGIN {$TYPEINFO{DeleteEntry} = [ "function", "boolean", "string", "string" ];}
 sub DeleteEntry {
     my $type = $_[0];
     my $id = $_[1];
+
+    if ($type eq "" || $id eq "")
+    {
+	y2error ("Cannot delete root entry");
+	return 0;
+    }
+    my $index = FindEntry ($type, $id);
+    if ($index == -1)
+    {
+	y2error ("Specified non-existint entry");
+	return 0;
+    }
+    my $parent_type = $settings[$index]->{"parent_type"};
+    my $parent_id = $settings[$index]->{"parent_id"};
+    my $parent_index = FindEntry ($parent_type, $parent_id);
+    if ($parent_index == -1)
+    {
+	y2error ("Parent doesn't exist - internal structure error");
+	return 0;
+    }
+    @settings = grep {
+	$_->{"type"} != $type || $_->{"id"} != $id;
+    } @settings;
+    %{$settings[$parent_index]->{"children"}} = grep {
+	$_->{"type"} != $type || $_->{"id"} != $id;
+    } %{$settings[$parent_index]->{"children"}}
 }
 
 BEGIN{$TYPEINFO{GetEntryParent} = [ "function", ["map", "string", "string"], "string", "string"];}
 sub GetEntryParent {
     my $type = $_[0];
     my $id = $_[1];
+
+    if ($type eq "" || $id eq "")
+    {
+	y2error ("Cannot get parent of root entry");
+	return undef;
+    }
+    my $index = FindEntry ($type, $id);
+    if ($index == -1)
+    {
+	y2error ("Specified non-existint entry");
+	return undef;
+    }
+    my %parent = (
+	"type" => $settings[$index]->{"parent_type"},
+	"id" => $settings[$index]->{"parent_id"},
+    );
+    return \%parent;
 }
 
 BEGIN{$TYPEINFO{SetEntryParent} = [ "function", "boolean", "string", "string", "string", "string" ];}
 sub SetEntryParent {
     my $type = $_[0];
     my $id = $_[1];
-    my $parent_type = $_[2];
-    my $parent_id = $_[3];
+    my $new_parent_type = $_[2];
+    my $new_parent_id = $_[3];
+
+    if ($type eq "" || $id eq "")
+    {
+	y2error ("Cannot set parent of root entry");
+	return 0;
+    }
+    my $index = FindEntry ($type, $id);
+    if ($index == -1)
+    {
+	y2error ("Specified non-existint entry");
+	return 0;
+    }
+    my $new_parent_index = FindEntry ($new_parent_type, $new_parent_id);
+    if ($new_parent_index == -1)
+    {
+	y2error ("Specified non-existint new parent entry");
+	return 0;
+    }
+    my $old_parent_type = $settings[$index]->{"parent_type"};
+    my $old_parent_id = $settings[$index]->{"parent_id"};
+    my $old_parent_index = FindEntry ($old_parent_type, $old_parent_id);
+    if ($old_parent_index == -1)
+    {
+	y2error ("Current parent entry not found - internal error.");
+	return 0;
+    }
+
+    # remove from list of children of old parent    
+    %{$settings[$old_parent_index]->{"children"}} = grep {
+	$_->{"type"} != $type || $_->{"id"} != $id;
+    } %{$settings[$old_parent_index]->{"children"}};
+    # add to list of children of new parent
+    my %link = (
+	"type" => $type,
+	"id" => $id,
+    );
+    push @{$settings[$new_parent_index]->{"children"}}, \%link;
+    # change the parent
+    $settings[$index]->{"parent_type"} = $new_parent_type;
+    $settings[$index]->{"parent_id"} = $new_parent_id;
+
+    return 1;
 }
 
 BEGIN{$TYPEINFO{GetChildrenOfEntry} = ["function", ["list", ["map", "string", "string"]], "string", "string"];}
 sub GetChildrenOfEntry {
     my $type = $_[0];
     my $id = $_[1];
+
+    my $index = FindEntry ($type, $id);
+    if ($index == -1)
+    {
+	y2error ("Specified non-existint entry");
+	return 0;
+    }
+    @{$settings[$index]->{"children"}};
 }
 
-BEGIN{$TYPEINFO{GetEntryRecrds} = ["function", ["map", "any", "any"], "string", "string"];}
-sub GetEntryRecords {
+BEGIN{$TYPEINFO{GetEntryOptinos} = ["function", ["list", "any"], "string", "string"];}
+sub GetEntryOptions {
     my $type = $_[0];
     my $id = $_[1];
+
+    my $index = FindEntry ($type, $id);
+    if ($index == -1)
+    {
+	y2error ("Specified non-existint entry");
+	return undef;
+    }
+    $settings[$index]->{"options"};
 }
 
-BEGIN{$TYPEINFO{SetEntryRecords} = ["function", "boolean", "string", "string", ["map", "any", "any"]];}
-sub SetEntryRecords {
+BEGIN{$TYPEINFO{SetEntryOptions} = ["function", "boolean", "string", "string", ["list", "any"]];}
+sub SetEntryOptions {
     my $type = $_[0];
     my $id = $_[1];
-    my %records = %{$_[0]};
+    my @records = @{$_[0]};
 
+    my $index = FindEntry ($type, $id);
+    if ($index == -1)
+    {
+	y2error ("Specified non-existint entry");
+	return 0;
+    }
+    $settings[$index]->{"options"} = \@records;
+    return 1;
+}
+
+BEGIN{$TYPEINFO{GetEntryDirectives} = ["function", ["list", "any"], "string", "string"];}
+sub GetEntryDirectives {
+    my $type = $_[0];
+    my $id = $_[1];
+
+    my $index = FindEntry ($type, $id);
+    if ($index == -1)
+    {
+	y2error ("Specified non-existint entry");
+	return undef;
+    }
+    $settings[$index]->{"directives"};
+}
+
+BEGIN{$TYPEINFO{SetEntryDirectives} = ["function", "boolean", "string", "string", ["list", "any"]];}
+sub SetEntryDirectives {
+    my $type = $_[0];
+    my $id = $_[1];
+    my @records = @{$_[0]};
+
+    my $index = FindEntry ($type, $id);
+    if ($index == -1)
+    {
+	y2error ("Specified non-existint entry");
+	return 0;
+    }
+    $settings[$index]->{"directives"} = \@records;
+    return 1;
 }
 
 BEGIN{$TYPEINFO{ExistsEntry} = ["function", "boolean", "string", "string"];}
 sub ExistsEntry {
     my $type = $_[0];
     my $id = $_[1];
+
+    my $index = FindEntry ($type, $id);
+    $index != -1;
+}
+
+BEGIN{$TYPEINFO{SelectEntry} = ["function", "boolean", "string", "string"];}
+sub SelectEntry {
+
+
+}
+
+##------------------------------------
+# Wrappers for accessing local data
+
+BEGIN { $TYPEINFO{GetStartService} = [ "function", "boolean" ];}
+sub GetStartService {
+    return $start_service;
+}
+
+BEGIN{$TYPEINFO{SetStartService} = ["function", "void", "boolean"];}
+sub SetStartService {
+    $start_service = $_;
+}
+
+BEGIN{$TYPEINFO{SetModified} = ["function", "void"];}
+sub SetModified {
+    $modified = 1;
+}
+
+BEGIN{$TYPEINFO{GetAllowedInterfaces} = ["function", ["list", "string"] ];}
+sub GetAllowedInterfaces {
+    return @allowed_interfaces;
+}
+
+BEGIN{$TYPEINFO{SetAllowedInterfaces} = ["function", "void", ["list", "string"]];}
+sub SetAllowedInterfaces {
+    @allowed_interfaces = @{$_[0]};
 }
 
 ##------------------------------------
@@ -250,10 +489,9 @@ sub Read {
     @allowed_interfaces = split (/ /, $ifaces_list);
 
     my $ag_settings_ref = SCR::Read (".etc.dhcpd_conf");
+
     @settings = ();
     PreprocessSettings ($ag_settings_ref, {});
-
-print Dumper(\@settings);
 
     return "true";
 }
@@ -262,17 +500,20 @@ BEGIN { $TYPEINFO{Write} = ["function", "boolean"]; }
 sub Write {
     my $ok = 1;
 
-    if (! $modified)
-    {
-	return "true";
-    }
+#    if (! $modified)
+#    {
+#	return "true";
+#    }
 
     #adapt firewall
     $ok = AdaptFirewall () && $ok;
 
     #save globals
-    my @settings_to_save = PrepareToSave ("", "");
-    $ok = SCR::Write (".etc.dhcpd_conf", \@settings_to_save) && $ok;
+    my $settings_to_save_ref = PrepareToSave ("", "");
+
+    $ok = SCR::Write (".etc.dhcpd_conf", $settings_to_save_ref) && $ok;
+
+    return $ok;
 
     #set daemon starting
     SCR::Write (".sysconfig.dhcpd.DHCPD_RUN_CHROOTED", $chroot ? "yes" : "no");
