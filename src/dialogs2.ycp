@@ -309,7 +309,7 @@ void GlobalSettingsInit (string key)
     GlobalSettingsValidChars ();
 }
 
-void GlobalSettingsHandle (string key, map event)
+symbol GlobalSettingsHandle (string key, map event)
 {
 /*    if (event ["ID"]:nil == "ldap" && event ["EventReason"]:nil == "ValueChanged")
     {
@@ -319,7 +319,7 @@ void GlobalSettingsHandle (string key, map event)
 	ldap = DhcpServer::GetUseLdap ();
 	UI::ChangeWidget (`id ("ldap"), `Value, ldap);
     }*/
-    return;
+    return nil;
 }
 
 void GlobalSettingsStore (string key, map event)
@@ -417,7 +417,7 @@ void GlobalSettingsStore (string key, map event)
     DhcpServer::SetModified ();
 }
 
-boolean GlobalSettingsValidate (string key)
+boolean GlobalSettingsValidate (string key, map event)
 {
     string domainname =		(string) UI::QueryWidget ( `id ("domainname"),		`Value );
     string primarydnsip =	(string) UI::QueryWidget ( `id ("primarydnsip"),	`Value );
@@ -687,7 +687,7 @@ void DynamicDHCPStore (string key, map event)
     DhcpServer::SetEntryDirectives ( "subnet", id, directives );    
 }
 
-boolean DynamicDHCPValidate (string key)
+boolean DynamicDHCPValidate (string key, map event)
 {
     string from_ip		= (string) UI::QueryWidget ( `id ("from_ip"),		`Value );
     string to_ip		= (string) UI::QueryWidget ( `id ("to_ip"),		`Value );
@@ -936,7 +936,7 @@ list< map<string,string> > PrepareDirectives ()
     return directives;
 }
 
-void HostManagementHandle (string key, map event_descr)
+symbol HostManagementHandle (string key, map event_descr)
 {
     if ( event_descr["ID"]:"" == "addhost" )
     {
@@ -946,13 +946,13 @@ void HostManagementHandle (string key, map event_descr)
 	    UI::SetFocus (`id("hostname"));
 	    // error popup
 	    Popup::Error (_("Host name cannot be empty."));
-	    return;
+	    return nil;
 	}
 	else if (! Hostname::Check(name))
 	{
 	    UI::SetFocus (`id("hostname"));
 	    Popup::Error (Hostname::ValidFQ());
-	    return;
+	    return nil;
 	}
 	else if ( haskey (hosts, name) )
 	{
@@ -960,7 +960,7 @@ void HostManagementHandle (string key, map event_descr)
 	    // error popup, %1 is host name
 	    Popup::Error ( sformat (_("Host named '%1' already exists.
 Use Change instead."), name ) );
-	    return;
+	    return nil;
 	}
 
 	// checking new IP
@@ -970,13 +970,13 @@ Use Change instead."), name ) );
 	    UI::SetFocus ( `id ( "hostip" ) );
 	    // error popup
 	    Popup::Error ( _("The input value must be defined.") );
-	    return;
+	    return nil;
 	}
 	else if ( IP::Check4 ( hostip ) != true )
 	{
 	    UI::SetFocus ( `id ( "hostip" ) );
 	    Popup::Error ( IP::Valid4 () );
-	    return;
+	    return nil;
 	}
 
 	// checking new MAC
@@ -986,7 +986,7 @@ Use Change instead."), name ) );
 	    UI::SetFocus ( `id ( "hosthwaddress" ) );
 	    // error popup
 	    Popup::Error ( _("The input value must be defined.") );
-	    return;
+	    return nil;
 	}
 	// FIXME: control HW address ... in future
 	
@@ -1004,12 +1004,12 @@ Use Change instead."), name ) );
 	{
 	    // error popup
 	    Popup::Error (_("Select a host first.") );
-	    return;
+	    return nil;
 	}
 	// yes-no popup
 	if ( ! Popup::YesNo (sformat (_("Really delete '%1'?"), id ) ) )
 	{
-	    return;
+	    return nil;
 	}
 	
 	DhcpServer::DeleteEntry ( "host", id );
@@ -1024,7 +1024,7 @@ Use Change instead."), name ) );
 	if (id == nil)
 	{
 	    Popup::Error (_("Select a host first.") );
-	    return;
+	    return nil;
 	}
 
 	// checking new IP
@@ -1034,13 +1034,13 @@ Use Change instead."), name ) );
 	    // FIXME: text?
 	    UI::SetFocus ( `id ( "hostip" ) );
 	    Popup::Error ( _("The input value must be defined.") );
-	    return;
+	    return nil;
 	}
 	else if ( IP::Check4 ( hostip ) != true )
 	{
 	    UI::SetFocus ( `id ( "hostip" ) );
 	    Popup::Error ( IP::Valid4 () );
-	    return;
+	    return nil;
 	}
 
 	// checking new MAC
@@ -1049,7 +1049,7 @@ Use Change instead."), name ) );
 	{
 	    UI::SetFocus ( `id ( "hosthwaddress" ) );
 	    Popup::Error ( _("The input value must be defined.") );
-	    return;
+	    return nil;
 	}
 	// FIXME: control HW address ... in future
 	
@@ -1068,6 +1068,7 @@ Use Change instead."), name ) );
 	    SelectItem (id);
 	}
     }
+    return nil;
 }
 
 void HostManagementStore (string key, map event)

@@ -344,6 +344,7 @@ Continue?")))
 	    return false;
 	}
     }
+    return true;
 }
 
 
