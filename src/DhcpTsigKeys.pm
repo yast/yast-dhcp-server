@@ -39,8 +39,6 @@ YaST::YCP::Import ("Mode");
 YaST::YCP::Import ("Service");
 YaST::YCP::Import ("Progress");
 YaST::YCP::Import ("Report");
-YaST::YCP::Import ("Require");
-YaST::YCP::Import ("SuSEFirewall");
 
 
 BEGIN{$TYPEINFO{ListTSIGKeys}=["function",["list",["map","string","string"]]];}

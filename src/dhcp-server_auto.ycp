@@ -104,6 +104,10 @@ else if (func == "Import") {
 else if (func == "Export") {
     ret = KillComments (DhcpServer::Export());
 }
+/* Return needed packages */
+else if (func == "Packages") {
+    ret = DhcpServer::AutoPackages();
+}
 /* Read current state */
 else if (func == "Read") {
     import "Progress";
