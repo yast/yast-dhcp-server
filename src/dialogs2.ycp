@@ -1064,7 +1064,7 @@ symbol HostManagementHandle (string key, map event_descr)
 	{
 	    UI::SetFocus ( `id ( "hosthwaddress" ) );
 	    // error popup
-	    Report::Error ( _("The hardware addrress must be defined.") );
+	    Report::Error ( _("The hardware address must be defined.") );
 	    return nil;
 	}
 	// check the syntax
