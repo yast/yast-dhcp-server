@@ -20,6 +20,7 @@
     import "LogView";
     import "Popup";
     import "TablePopup";
+    import "SuSEFirewall";
 
 
 // pre-declarations
@@ -128,7 +129,7 @@ global define symbol ldapHandle (string id, map event);
       */
     global define map<string,any> getOptionsTableWidget (list add_values) ``{
 	map<string,any> ret = TablePopup::CreateTableDescr (
-	    $["add_delete_butons" : true, "up_down_buttons" : false],
+	    $["add_delete_buttons" : true, "up_down_buttons" : false],
 	    $[
 		"init": TablePopup::TableInitWrapper,
 		"handle": TablePopup::TableHandleWrapper,
@@ -315,7 +316,7 @@ global define symbol ldapHandle (string id, map event) ``{
  * @param id any widget id
  */
 global define void OpenFirewallInit (string id) ``{
-    boolean enabled = Service::Enabled("SuSEfirewall2_init");
+    boolean enabled = SuSEFirewall::GetEnableService();
     boolean open = DhcpServer::GetOpenFirewall ();
     UI::ChangeWidget (`id (id), `Enabled, enabled);
     UI::ChangeWidget (`id (id), `Value, open);
@@ -333,18 +334,54 @@ global define void OpenFirewallStore (string id, map event) ``{
 }
 
 global boolean OpenFirewallValidate (string id, map event) {
-    boolean open = (boolean)UI::QueryWidget (`id (id), `Value);
-    boolean enabled = Service::Enabled("SuSEfirewall2_init");
-    if (enabled && ! open)
-    {
+    boolean open = (boolean) UI::QueryWidget (`id (id), `Value);
+    boolean enabled = SuSEFirewall::GetEnableService();
+
+    if (enabled && ! open) {
 	// yes-no popup
 	if (! Popup::YesNo (_("The port in firewall is not open. The DHCP server
 will not be able to serve your network.
-Continue?")))
-	{
+Continue?"))) {
 	    return false;
 	}
     }
+
+    // firewall is enabled
+    if (enabled) {
+	// active interfaces not mentioned in firewall
+	list <string> ifaces_not_in_fw = [];
+	foreach (string ifcfg, map <string, any> interface, DhcpServerUI::ifaces, {
+	    // interface is active
+	    if (interface["active"]:false == true) {
+		if (SuSEFirewall::GetZoneOfInterface(ifcfg) == nil) {
+		    ifaces_not_in_fw = add (ifaces_not_in_fw, ifcfg);
+		}
+	    }
+	});
+
+	// more than one
+	if (size(ifaces_not_in_fw)>1) {
+	    // TRANSLATORS: popup error message, %1 is list of network interfaces
+	    Report::Error(sformat(
+		_("Network interfaces listed below are not mentioned in any firewall zone.
+%1
+Run YaST2 firewall configuration to assign them into any zone."),
+		mergestring(ifaces_not_in_fw,"\n")
+	    ));
+	    //return false;
+	    // FIXME: dialog for adding interfaces into firewall zones
+	// only one
+	} else if (size(ifaces_not_in_fw)>0) {
+	    // TRANSLATORS: popup error message, %1 a network interface name
+	    Report::Error(sformat(
+		_("Network interface '%1' is not mentioned in any firewall zone.
+Run YaST2 firewall configuration to assign it into any zone."), ifaces_not_in_fw[0]:""
+	    ));
+	    //return false;
+	    // FIXME: dialog for adding interfaces into firewall zones
+	}
+    }
+
     return true;
 }
 
@@ -546,8 +583,8 @@ global define void idStore (string id, map event) ``{
  * @param id string widget id
  */
 global define void interfacesInit (string id) ``{
-    list ifaces = DhcpServer::GetAllowedInterfaces ();
-    UI::ChangeWidget (`id (id), `SelectedItems, ifaces);
+    list allowed_ifaces = DhcpServer::GetAllowedInterfaces ();
+    UI::ChangeWidget (`id (id), `SelectedItems, allowed_ifaces);
 }
 
 /**
@@ -556,8 +593,8 @@ global define void interfacesInit (string id) ``{
  * @param event map event that caused storing process
  */
 global define void interfacesStore (string id, map event) ``{
-    list ifaces = (list)UI::QueryWidget (`id (id), `SelectedItems);
-    list<string> interfaces = (list<string>)ifaces;
+    list selected_ifaces = (list) UI::QueryWidget (`id (id), `SelectedItems);
+    list<string> interfaces = (list<string>) selected_ifaces;
     DhcpServer::SetAllowedInterfaces (interfaces);
     DhcpServer::SetModified ();
 }
@@ -951,8 +988,8 @@ global define void InitWidgets () ``{
 	"ldap_support" : $[
 	    "widget" : `checkbox,
 	    // check box
-	    "label" : _("LDAP Support"),
-	    "help" : HELPS["ldap_support"]:"",
+	    "label" : _("&LDAP Support"),
+	    "help" : HELPS["ldap_support"]:" ",
 	    "init" : ldapInit,
 	    "handle" : ldapHandle,
 	    "opt" : [ `notify ],
@@ -1062,7 +1099,7 @@ global define void InitWidgets () ``{
 	"open_firewall" : $[
 	    "widget" : `checkbox,
 	    // check box
-	    "label" : _("Open &Firewall for Selected Interface"),
+	    "label" : _("Open &Firewall for Selected Interfaces"),
 	    "init" : OpenFirewallInit,
 	    "store" : OpenFirewallStore,
 	    "validate_type" : `function,

@@ -21,7 +21,7 @@
     import "Popup";
     import "Report";
     import "Service";
-    import "SuSEFirewall"; // FIXME this is because of initialization problems
+    import "SuSEFirewall";
 
     global string current_entry_type = "";
     global string current_entry_id = "";
@@ -47,6 +47,10 @@
 
     // temporary variables
     list<string> entry_list = [];
+
+    /* Network interfaces */
+    global map <string, map <string, any> > ifaces = $[];
+
 
     include "dhcp-server/routines.ycp";
     include "dhcp-server/helps.ycp";

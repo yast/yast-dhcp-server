@@ -23,13 +23,16 @@ import "Progress";
 import "DialogTree";
 import "CWMServiceStart";
 import "ProductFeatures";
-
+import "NetworkDevices";
+import "Report";
 
 include "dhcp-server/helps.ycp";
+include "dhcp-server/widgets.ycp";
 
+/* Using expert UI */
+define boolean expert_ui = (ProductFeatures::ui_mode == "expert");
 
 /* Start of common configuration section */
-
 
 define list time_combo_items = [
     // combo box item
@@ -90,80 +93,162 @@ define map<string,any> seconds2time (integer seconds) {
 }
 
 boolean quit = false;
-list<string> ifaces = [];
+
+/* Currently selected item in the interface table */
+string current_item_iface = nil;
 
 /**
  * Common Config Dialog - Card Selection
  * @return term for Get_CommonDialog()
  */
 term Common_CardSelectionDialog() {
-
-    ifaces = filter (
-	string s,
-        (list<string>)SCR::Dir (.network.section),
-        ``(s != "lo")
-    );
-
-
-    if ( size(ifaces) == 0 )
-    {
-	// error report
-	Report::Error (_("This server needs at least one 
-configured network device (besides loopback) for its
-proper function.
-Configure one.
-
-YaST will quit now."));
-	quit = true;
-    }
-    
     term dialog = `VBox(
 	    // detection and selection of network card to configure 1/2
             `Left(`Label(_("YaST detected the following network devices."))),
 	    // detection and selection of network card to configure 2/2
-            `Left(`Label(_("Select the interface the DHCP server should use."))
-),
+            `Left(`Label(_("Select the interface the DHCP server should use."))),
+
             `VSpacing(1),
 
             `VBox(
 		// Selectionbox - listing available network cards
-                `SelectionBox(`id("nic_selection"), `opt(`hstretch), _("&Network Card Selection"), 
-		    maplist (string s, ifaces, 
-                    ``(`item (`id (s), s)))
+		`Left( `Label( _("Network Card Selection") ) ),
+                `Table (
+		    `id("nic_selection"),
+		    `header (
+			// TRANSLATORS: table header item
+			_("Active"),
+			// TRANSLATORS: table header item
+			_("Interface Name"),
+			// TRANSLATORS: table header item
+			_("Device Name"),
+			// TRANSLATORS: table header item
+			_("IP")
+		    ),
+		    []
 		)
-            )
+            ),
+	    `HBox (
+		`PushButton(`id("add"), Label::AddButton()),
+		`PushButton(`id("remove"), Label::RemoveButton())
+	    )
         );
 
     return dialog;
 }
 
+void RedrawInterfacesTable () {
+    list <term> table_items = [];
+    foreach (string iface, map <string, any> settings, DhcpServerUI::ifaces, {
+	table_items = add(table_items, `item(
+	    `id(iface),
+	    (settings["active"]:false ? "x":""),
+	    iface,
+	    settings["device"]:"",
+	    settings["ipaddr"]:""
+	));
+    });
+    UI::ChangeWidget(`id("nic_selection"), `Items, table_items);
+    if (current_item_iface != nil) {
+	UI::ChangeWidget(`id("nic_selection"), `CurrentItem, current_item_iface);
+    }
+}
+
 void CardSelectionInit (string key)
 {
-    list dhcp_ifaces = DhcpServer::GetAllowedInterfaces ();
+    Wizard::DisableBackButton();
+
+    foreach (string iface, NetworkDevices::List(""), {
+	if (iface != "" && !issubstring(iface, "lo") && !issubstring(iface, "sit")) {
+	    DhcpServerUI::ifaces[iface] = $[
+		"device" : NetworkDevices::GetValue(iface, "NAME"),
+		"ipaddr" : NetworkDevices::GetValue(iface, "IPADDR"),
+		"active" : false,
+	    ];
+	}
+    });
+
+    list <string> dhcp_ifaces = DhcpServer::GetAllowedInterfaces ();
     
-    if ( size(dhcp_ifaces) > 1 )
-    {
-	y2warning ("More than one interface allowed, using the first one only.");
+    // expert UI allows to set more interfaces
+    if (expert_ui) {
+	foreach (string iface, map <string, any> settings, DhcpServerUI::ifaces, {
+	    if (contains(dhcp_ifaces, iface)) DhcpServerUI::ifaces[iface,"active"] = true;
+	});
+    // simple UI allows to set only _ONE_ interface
+    // because of only one subnet in the simple UI dialogs
+    } else {
+	if ( size(dhcp_ifaces) > 1 ) {
+	    y2warning ("More than one interface allowed, using the first one only.");
+	}
+	dhcp_ifaces = [dhcp_ifaces[0]:""];
+	DhcpServerUI::ifaces[dhcp_ifaces[0]:"","active"] = true;
     }
-    
-    if ( !contains ( ifaces, dhcp_ifaces[0]:"" ) )
-    {
-	UI::ChangeWidget (`id("nic_selection"), `CurrentItem, ifaces[0]:nil);
+
+    RedrawInterfacesTable();
+}
+
+symbol CardSelectionHandle (string key, map event) {
+    string item_id = (string) UI::QueryWidget(`id("nic_selection"), `CurrentItem);
+
+    current_item_iface = item_id;
+
+    if (expert_ui) {
+	if (event["ID"]:nil == "add") {
+	    DhcpServerUI::ifaces[item_id,"active"] = true;
+	} else if (event["ID"]:nil == "remove") {
+	    DhcpServerUI::ifaces[item_id,"active"] = false;
+	}
+    } else {
+	if (event["ID"]:nil == "add") {
+	    // only one can be selected
+	    foreach (string iface, map <string, any> settings, DhcpServerUI::ifaces, {
+		DhcpServerUI::ifaces[iface,"active"] = false;
+	    });
+	    DhcpServerUI::ifaces[item_id,"active"] = true;
+	} else if (event["ID"]:nil == "remove") {
+	    DhcpServerUI::ifaces[item_id,"active"] = false;
+	}
     }
-    else
-    {
-	UI::ChangeWidget (`id("nic_selection"), `CurrentItem, dhcp_ifaces[0]:nil);
-    }
+    RedrawInterfacesTable();
+
+    return nil;
 }
 
 void CardSelectionStore (string key, map event)
 {
-    // FIXME: validation
     // FIXME: subnet handling
-    string item = (string)UI::QueryWidget (`id ("nic_selection"), `CurrentItem);
+    list <string> allowed_interfaces = [];
+    foreach (string iface, map <string, any> settings, DhcpServerUI::ifaces, {
+	if (DhcpServerUI::ifaces[iface,"active"]:false == true) {
+	    allowed_interfaces = add (allowed_interfaces, iface);
+	}
+    });
     
-    DhcpServer::SetAllowedInterfaces ([item]);
+    DhcpServer::SetAllowedInterfaces (allowed_interfaces);
     DhcpServer::SetModified ();
+}
+
+boolean CardSelectionValidate (string key, map event) {
+    if (event["ID"]:nil == `abort) {
+	return true;
+    }
+
+    list <string> allowed_interfaces = [];
+    foreach (string iface, map <string, any> settings, DhcpServerUI::ifaces, {
+	if (DhcpServerUI::ifaces[iface,"active"]:false == true) {
+	    allowed_interfaces = add (allowed_interfaces, iface);
+	    break;
+	}
+    });
+    if (size(allowed_interfaces) <= 0) {
+	// TRANSLATORS: popup error, DHCP Server needs to run on one or more interfaces,
+	//              currently no one is selected
+	Report::Error(_("At least one network interface must be selected."));
+	return false;
+    }
+
+    return true;
 }
 
 /**
@@ -175,12 +260,14 @@ term Common_GlobalSettingsDialog() {
 string xxx = _("Primary Name Server");
 // Textentry with secondary name server
 xxx = _("Secondary Name Server");
+    term ldap = `Empty();
+    if (expert_ui) ldap = `VBox(
+	// configuration will be saved in ldap?
+        `Left(`CheckBox(`id("ldap"), `opt( `notify), _("LDAP Support"), true)),
+        `VSpacing(2)
+    );
     term dialog = `VBox(
-/*            `VBox(
-		// configuration will be saved in ldap?
-                `Left(`CheckBox(`id("ldap"), `opt( `notify), _("LDAP Support"), true)),
-                `VSpacing(2)
-            ),*/
+	    ldap,
             `HBox(
                 `HWeight(43, `VBox(
 				// Textentry with name of the domain
@@ -310,21 +397,21 @@ void GlobalSettingsInit (string key)
     UI::ChangeWidget ( `id ("defaultleasetime"), `Value, tostring (value) );
     UI::ChangeWidget ( `id ("defaultleasetimeunits"), `Value, unit );
     
-//    UI::ChangeWidget ( `id ("ldap"), `Value, DhcpServer::GetUseLdap () );
+    UI::ChangeWidget ( `id ("ldap"), `Value, DhcpServer::GetUseLdap () );
 
     GlobalSettingsValidChars ();
 }
 
 symbol GlobalSettingsHandle (string key, map event)
 {
-/*    if (event ["ID"]:nil == "ldap" && event ["EventReason"]:nil == "ValueChanged")
+    if (event ["ID"]:nil == "ldap" && event ["EventReason"]:nil == "ValueChanged")
     {
 	boolean ldap = (boolean) UI::QueryWidget ( `id ("ldap"), `Value );
 	// LDAP switch
 	SetUseLdap (ldap);
 	ldap = DhcpServer::GetUseLdap ();
 	UI::ChangeWidget (`id ("ldap"), `Value, ldap);
-    }*/
+    }
     return nil;
 }
 
@@ -564,20 +651,20 @@ void DynamicDHCPInit (string key)
 {
     // find out the our subnet identification
     
-    list<string> ifaces = DhcpServer::GetAllowedInterfaces ();
+    list<string> ifaces_allowed = DhcpServer::GetAllowedInterfaces ();
     
-    if ( size(ifaces) > 1 )
+    if ( size(ifaces_allowed) > 1 )
     {
 	y2warning ("More than one interface allowed, using the first one only.");
     }
     
-    if ( size(ifaces) == 0 )
+    if ( size(ifaces_allowed) == 0 )
     {
 	y2error ("No interfaces set");
 	return;
     }
 
-    string interface = ifaces[0]:nil;
+    string interface = ifaces_allowed[0]:nil;
     map m = DhcpServer::GetInterfaceInformation (interface);
     string id = m["network"]:"" + " netmask " + m["netmask"]:"";
 
@@ -631,10 +718,10 @@ void DynamicDHCPInit (string key)
 
 void DynamicDHCPStore (string key, map event)
 {
-    list<string> ifaces = DhcpServer::GetAllowedInterfaces ();
+    list<string> ifaces_allowed = DhcpServer::GetAllowedInterfaces ();
 
     // we assume there is only a single interface at this stage        
-    string interface = ifaces[0]:nil;
+    string interface = ifaces_allowed[0]:nil;
 
     map m = DhcpServer::GetInterfaceInformation (interface);
     string id = m["network"]:"" + " netmask " + m["netmask"]:"";
@@ -836,10 +923,10 @@ void HostManagementInit (string key)
     hosts = $[];
     hosts_parent_id = "";
 
-    list<string> ifaces = DhcpServer::GetAllowedInterfaces ();
+    list<string> ifaces_allowed = DhcpServer::GetAllowedInterfaces ();
 
     // we assume there is only a single interface at this stage
-    string interface = ifaces[0]:nil;
+    string interface = ifaces_allowed[0]:nil;
 
     map m = DhcpServer::GetInterfaceInformation (interface);
     string id = m["network"]:"" + " netmask " + m["netmask"]:"";
@@ -1275,8 +1362,7 @@ map<string, map<string, any> > tabs = $[
 	    "all_settings_button",
 	    `VSpacing (1)
 	),
-	"widget_names" : ["auto_start_up", "config_summary",
-	    "all_settings_button",],
+	"widget_names" : ["auto_start_up", "config_summary", "all_settings_button"],
     ],
 ];
 
@@ -1340,7 +1426,10 @@ map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
 	"widget"	: `custom,
 	"custom_widget"	: `VBox (),
 	"init"		: CardSelectionInit,
+	"handle"	: CardSelectionHandle,
 	"store"		: CardSelectionStore,
+	"validate_type"	: `function,
+	"validate_function"	: CardSelectionValidate,
 	"help"		: HELPS["card_selection"]:"",
     ],
     "global_settings" : $[
@@ -1373,7 +1462,12 @@ map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
     "expert_settings" : $[
 	"widget"	: `custom,
 	"custom_widget"	: `VBox (),
-	"help"		: HELPS["expert_settings"]:"",
+	"help"		: HELPS["expert_settings"]:" ",
+    ],
+    "config_summary" : $[
+	"widget"	: `custom,
+	"custom_widget"	: `Empty (),
+	"help"		: HELPS["config_summary"]:" ",
     ],
 ]);
 
@@ -1382,13 +1476,13 @@ map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
  * @return symbol for the wizard sequencer
  */
 symbol CommonConfigDialog () {
-    list<string> ids_order = ["start_up", "card_selection", "global_settings",
-	"dynamic_dhcp", "host_management", "expert_settings"];
-    list<string> simple_ids_order = ["start_up", "card_selection",
-	"global_settings", "dynamic_dhcp"];
-    if (ProductFeatures::ui_mode == "simple")
-    {
-	ids_order = simple_ids_order;
+    list<string> ids_order= [];
+    if (expert_ui) {
+	ids_order = ["start_up", "card_selection", "global_settings",
+	    "dynamic_dhcp", "host_management", "expert_settings"];
+    } else {
+	ids_order = ["start_up", "card_selection",
+	    "global_settings", "dynamic_dhcp"];
     }
     return DialogTree::ShowAndRun ($[
 	"ids_order" : ids_order,
@@ -1420,7 +1514,7 @@ symbol FirstRunDialog (string current_tab, integer step_number) {
 	"next_button" : step_number == 4
 	    ? Label::FinishButton ()
 	    : Label::NextButton (),
-	"fallback_functions" : $[],
+	"fallback_functions" : $[`abort : confirmAbortIfChanged],
     ]);
 
     return ret;
