@@ -4,6 +4,7 @@ Wed Aug  4 15:58:02 CEST 2004 - jsrain@suse.cz
 - adapted to the changes in CWM
 - added 4th step of installation wizard
 - enhanced the summary
+- added default values for max-lease-time and default-lease-time
 
 -------------------------------------------------------------------
 Fri Jul 30 13:14:20 CEST 2004 - jsrain@suse.cz

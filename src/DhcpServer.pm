@@ -1786,7 +1786,7 @@ sub Summary {
 		    if ($dir{"key"} eq "range")
 		    {
 			my $range = $dir{"value"};
-			$range =~ s/([0-9])[ \t]+([0-9])/\1 - \2/;
+			$range =~ s/([0-9])[ \t]+([0-9])/$1 - $2/;
 			# summary string, %1 is IP address range
 			push (@ret, sformat (__("Dynamic Address Range: %1"),
 			    $range));

@@ -289,18 +289,20 @@ void GlobalSettingsInit (string key)
 	directives = [];
     }
 
+    integer default_lease_time = 14400;
+
     // setup the corresponding values
     foreach ( map<string,string> opt, directives, ``{
 	if ( opt["key"]:nil == "default-lease-time" )
 	{
-	    integer value = tointeger ( opt["value"]:"0" );
-	    map vu = seconds2time (value);
-	    value = vu["count"]:0;
-	    string unit = vu["unit"]:"seconds";
-	    UI::ChangeWidget ( `id ("defaultleasetime"), `Value, tostring (value) );
-	    UI::ChangeWidget ( `id ("defaultleasetimeunits"), `Value, unit );
+	    default_lease_time = tointeger ( opt["value"]:"0" );
 	}
     });
+    map vu = seconds2time (default_lease_time);
+    integer value = vu["count"]:0;
+    string unit = vu["unit"]:"seconds";
+    UI::ChangeWidget ( `id ("defaultleasetime"), `Value, tostring (value) );
+    UI::ChangeWidget ( `id ("defaultleasetimeunits"), `Value, unit );
     
 //    UI::ChangeWidget ( `id ("ldap"), `Value, DhcpServer::GetUseLdap () );
 
@@ -529,7 +531,7 @@ term Common_DynamicDHCPDialog() {
                             ),
                             `HBox(
 				//TextEntryLabel - max. time for leasing of IPs from the range
-                                `Left(`TextEntry(`id("maxleasetime"), _("Max. Lease Time (optional)"))),
+                                `Left(`TextEntry(`id("maxleasetime"), _("Max. Lease Time"))),
 				// Combobox - type of units for max lease time
                                 `Left(`ComboBox(`id("maxleasetimeunits"), "",
 				    time_combo_items
@@ -584,6 +586,9 @@ void DynamicDHCPInit (string key)
     list < map< string,string> > directives
 	= DhcpServer::GetEntryDirectives ( "subnet", id );
 
+    integer default_lease_time = 14400;
+    integer max_lease_time = 172800;
+
     if (directives != nil)
     {
 	foreach (map<string,string> opt, directives, ``{
@@ -595,24 +600,26 @@ void DynamicDHCPInit (string key)
 	    }
 	    else if ( opt["key"]:nil == "default-lease-time" )
 	    {
-		integer value = tointeger ( opt["value"]:"0" );
-		map vu = seconds2time (value);
-		value = vu["count"]:0;
-		string unit = vu["unit"]:"seconds";
-		UI::ChangeWidget ( `id ("defaultleasetime"), `Value, tostring (value) );
-		UI::ChangeWidget ( `id ("defaultleasetimeunits"), `Value, unit );
+		default_lease_time = tointeger ( opt["value"]:"0" );
 	    }
 	    else if ( opt["key"]:nil == "max-lease-time" )
 	    {
-		integer value = tointeger ( opt["value"]:"0" );
-		map vu = seconds2time (value);
-		value = vu["count"]:0;
-		string unit = vu["unit"]:"seconds";
-		UI::ChangeWidget ( `id ("maxleasetime"), `Value, tostring (value) );
-		UI::ChangeWidget ( `id ("maxleasetimeunits"), `Value, unit );
+		max_lease_time = tointeger ( opt["value"]:"0" );
 	    }
 	});
     }
+    map vu = seconds2time (default_lease_time);
+    integer value = vu["count"]:0;
+    string unit = vu["unit"]:"seconds";
+    UI::ChangeWidget ( `id ("defaultleasetime"), `Value, tostring (value) );
+    UI::ChangeWidget ( `id ("defaultleasetimeunits"), `Value, unit );
+
+    vu = seconds2time (max_lease_time);
+    value = vu["count"]:0;
+    unit = vu["unit"]:"seconds";
+    UI::ChangeWidget ( `id ("maxleasetime"), `Value, tostring (value) );
+    UI::ChangeWidget ( `id ("maxleasetimeunits"), `Value, unit );
+
     DynamicDHCPValidChars ();
 }
 
