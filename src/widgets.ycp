@@ -360,8 +360,7 @@ global define symbol configTreeHandle (string id, map event) ``{
     {
 	// popup message
 	Popup::Message (_("This function is not available during
-preparation for autoinstallation.
-"));
+preparation for autoinstallation."));
 	return nil;
     }
     boolean enabled = (boolean)UI::QueryWidget (`id ("start"), `Value);
@@ -582,8 +581,7 @@ global define symbol DynDnsButtonHandle (string id, map event) ``{
     {
 	// popup message
 	Popup::Message (_("This function is not available during
-preparation for autoinstallation.
-"));
+preparation for autoinstallation."));
 	return nil;
     }
     if (size (DhcpServer::ListTSIGKeys ()) == 0)
@@ -1135,7 +1133,8 @@ global define void InitWidgets () ``{
 	],
 	"all_settings_button" : $[
 	    "widget" : `push_button,
-	    "label" : _("&Enter DHCP Server Expert Configuration"),
+	    // push button
+	    "label" : _("DHCP Server &Expert Configuration..."),
 	    "handle_events" : ["all_settings_button"],
 	    "handle" : AllSettingsButtonHandle,
 	    "help" : HELPS["all_settings_button"]:"",
