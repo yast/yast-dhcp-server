@@ -1002,7 +1002,7 @@ global define void InitWidgets () ``{
 	    "host" : $[
 		"widget" : `textentry,
 		// text entry
-		"label" : _("Host &Name"),
+		"label" : Label::HostName (),
 		"help" : HELPS["host"]:"",
 		"init" : idInit,
 		"store" : idStore,
