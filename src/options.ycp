@@ -75,11 +75,11 @@
 	    regexpsub ((string)opt_id, "^[a-z]+ ([0-9]+)$", "\\1"));
 	if (substring (key, 0, 7) == "option ")
 	{
-	    current_entry_options[index, "value"] = value;
+	    current_entry_options[index, "value"] = (string)value;
 	}
 	else
 	{
-	    current_entry_directives[index, "value"] = value;
+	    current_entry_directives[index, "value"] = (string)value;
 	}
 
     }
