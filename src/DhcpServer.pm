@@ -134,57 +134,6 @@ sub SetKeysInfo {
 ##-------------------------------------------------------------------------
 ##----------------- various routines --------------------------------------
 
-sub AdaptFirewall {
-    my $self = shift;
-
-    if (! $adapt_firewall)
-    {
-	return 1;
-    }
-
-    my $ret = 1;
-
-    foreach my $i ("INT", "EXT", "DMZ") {
-	y2milestone ("Removing dhcpd iface $i");
-	SuSEFirewall->RemoveService ("67", "UDP", $i);
-    }
-    if ($start_service)
-    {
-	foreach my $i (@allowed_interfaces) {
-	    y2milestone ("Adding dhcpd iface %1", $i);
-	    SuSEFirewall->AddService ("67", "UDP", $i);
-	}
-    }
-    if (! Mode->test ())
-    {
-	Progress->off ();
-	$ret = SuSEFirewall->Write () && $ret;
-	Progress->on ();
-    }
-    if ($start_service)
-    {
-	$ret = SCR->Write (".sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD",
-	    SuSEFirewall->MostInsecureInterface (\@allowed_interfaces)) && $ret;
-    }
-    else
-    {
-	$ret = SCR->Write (".sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD", "no")
-	    && $ret;
-    }
-
-    $ret = SCR->Write (".sysconfig.SuSEfirewall2", undef) && $ret;
-    if (! $write_only)
-    {
-	$ret = SCR->Execute (".target.bash", "test -x /sbin/rcSuSEfirewall2 && /sbin/rcSuSEfirewall2 status && /sbin/rcSuSEfirewall2 restart") && $ret;
-    }
-    if (! $ret)
-    {
-	# error report
-	Report->Error (__("Error occurred while setting firewall settings."));
-    }
-    return $ret;
-}
-
 sub InitTSIGKeys {
     my $self = shift;
 
@@ -1354,17 +1303,21 @@ sub Read {
     # Dhcp-server read dialog caption
     my $caption = __("Initializing DHCP Server Configuration");
 
-    Progress->New( $caption, " ", 2, [
+    Progress->New( $caption, " ", 3, [
 	# progress stage
 	__("Check the environment"),
 	# progress stage
-	__("Read the settings"),
+	__("Read firewall settings"),
+	# progress stage
+	__("Read DHCP server settings"),
     ],
     [
 	# progress step
 	__("Checking the environment..."),
 	# progress step
-	__("Reading the settings..."),
+	__("Reading firewall settings..."),
+	# progress step
+	__("Reading DHCP server settings..."),
 	# progress step
 	__("Finished")
     ],
@@ -1411,6 +1364,17 @@ sub Read {
 	# error report
 	Report->Error (__("Cannot determine the host name of"));
 	return 0;
+    }
+
+# Firewall settings
+
+    Progress->NextStage ();
+
+    if (! Mode->test ())
+    {
+	Progress->off ();
+	SuSEFirewall->Read ();
+	Progress->on ();
     }
 
 # Information about the daemon
@@ -1509,12 +1473,16 @@ sub Write {
     # We do not set help text here, because it was set outside
     Progress->New($caption, " ", 2, [
 	# progress stage
-	__("Write the settings"),
+	__("Write DHCP server settings"),
+	# progress stage
+	__("Write firewall settings"),
 	# progress stage
 	__("Restart DHCP server"),
     ], [
 	# progress step
-	__("Writing the settings..."),
+	__("Writing DHCP server settings..."),
+	# progress step
+	__("Writeing firewall settings..."),
 	# progress step
 	__("Restarting DHCP server..."),
 	# progress step
@@ -1533,36 +1501,6 @@ sub Write {
     }
 
     Progress->NextStage ();
-
-    my $ifaces_changed = 0;
-    my %old_ifaces = ();
-    foreach my $i (@original_allowed_interfaces) {
-	$old_ifaces{$i} = 0;
-    }
-    foreach my $i (@allowed_interfaces) {
-	if (! exists $old_ifaces{$i})
-	{
-	    $ifaces_changed = 1;
-	}
-	else
-	{
-	    $old_ifaces{$i} = 1;
-	}
-    }
-    foreach my $v (values (%old_ifaces)) {
-	if ($v == 0)
-	{
-	    $ifaces_changed = 1;
-	}
-    }
-    if ($open_firewall
-	&& $ifaces_changed)
-    {
-	$adapt_firewall = 1;
-    }
-
-    #adapt firewall
-    $ok = $self->AdaptFirewall () && $ok;
 
     #adapt dynamic DNS settings
     $ok = $self->AdaptDDNS () && $ok;
@@ -1604,9 +1542,46 @@ sub Write {
 
     $ok = LdapStore () && $ok;
 
+# Firewall settings
+
     Progress->NextStage ();
 
-    #set daemon starting
+    if (scalar (@original_allowed_interfaces) != scalar (@allowed_interfaces)
+	&& $open_firewall)
+    {
+	$adapt_firewall = 1;
+    }
+
+    my %old_ifaces = ();
+    foreach my $i (@original_allowed_interfaces) {
+	$old_ifaces{$i} = 0;
+    }
+    foreach my $i (@allowed_interfaces) {
+	if (! exists $old_ifaces{$i})
+	{
+	    if ($open_firewall)
+	    {
+		$adapt_firewall = 1;
+	    }	
+	}
+    }
+
+    if ($adapt_firewall)
+    {
+	SuSEFirewall->SetServices (["dhcp-server"], [], 0);
+	SuSEFirewall->SetServices (["dhcp-server"], \@allowed_interfaces, 0);
+    }
+
+    if (! Mode->test ())
+    {
+	Progress->off ();
+	SuSEFirewall->Write ();
+	Progress->on ();
+    }
+
+# Set daemon starting
+    Progress->NextStage ();
+
     SCR->Write (".sysconfig.dhcpd.DHCPD_RUN_CHROOTED", $chroot ? "yes" : "no");
     my $ifaces_list = join (" ", @allowed_interfaces);
     SCR->Write (".sysconfig.dhcpd.DHCPD_INTERFACE", $ifaces_list);
