@@ -20,6 +20,7 @@ import "IP";
 import "Hostname";
 import "Progress";
 import "DialogTree";
+import "CWMServiceStart";
 
 
 include "dhcp-server/helps.ycp";
@@ -80,45 +81,6 @@ define map<string,any> seconds2time (integer seconds) {
 	"count" : seconds,
     ];
 
-}
-
-/**
- * Common Config Dialog - Start Up
- * @return term for Get_CommonDialog()
- */
-term Common_StartUpDialog() {
-
-    term dialog = 
-	`VBox(
-	    `VSpacing (1),
-            `RadioButtonGroup( `id ("dhcp_server_type"),
-                `VBox(
-		    // Radiobutton label
-                    `Left(`RadioButton(`id("serveron"), _("O&n  -- Start DHCP Server during Boot") ) ),
-		    // Radiobutton label
-                    `Left(`RadioButton(`id("serveroff"), _("O&ff -- Start Server Manually") ) )
-                )
-            ),
-	    `VStretch ()//,
-	    // push button
-//	    `Right (`PushButton (`id (`expert), _("&Expert settings...") ) ),
-//	    `VSpacing (1)
-	);
-
-    return dialog;
-}
-
-void StartUpInit (string key)
-{
-    boolean enabled = DhcpServer::GetStartService ();
-    
-    UI::ChangeWidget ( `id ("serveron"), `Value, enabled );
-    UI::ChangeWidget ( `id ("serveroff"), `Value, ! enabled );
-}
-
-void StartUpStore (string key, map event)
-{
-    DhcpServer::SetStartService ( (boolean)UI::QueryWidget ( `id ("serveron"), `Value ) );
 }
 
 boolean quit = false;
@@ -1143,9 +1105,9 @@ Continue?
 
 map<string, map<string, any> > tabs = $[
     "start_up" : $[
-	"contents"	: Common_StartUpDialog(),
+	"contents"	: `VBox ("start_up", `VStretch ()),
 	// dialog caption
-	"caption"	: _("DNS Server -- Start-Up"),
+	"caption"	: _("DHCP Server -- Start-Up"),
 	// tree item
 	"tree_item_label"	: _("Start-Up"),
 	"widget_names"	: ["start_up", "expert_settings"],
@@ -1153,7 +1115,7 @@ map<string, map<string, any> > tabs = $[
     "card_selection" : $[
 	"contents"	: Common_CardSelectionDialog(),
 	// dialog caption
-	"caption"	: _("DNS Server -- Card Selection"),
+	"caption"	: _("DHCP Server -- Card Selection"),
 	// tree item
 	"tree_item_label"	: _("Card Selection"),
 	"widget_names"	: ["card_selection", "expert_settings"],
@@ -1161,7 +1123,7 @@ map<string, map<string, any> > tabs = $[
     "global_settings" : $[
 	"contents"	: Common_GlobalSettingsDialog(),
 	// dialog caption
-	"caption"	: _("DNS Server -- Global Settings"),
+	"caption"	: _("DHCP Server -- Global Settings"),
 	// tree item
 	"tree_item_label"	: _("Global Settings"),
 	"widget_names"	: ["global_settings", "expert_settings"],
@@ -1169,7 +1131,7 @@ map<string, map<string, any> > tabs = $[
     "dynamic_dhcp" : $[
 	"contents"	: Common_DynamicDHCPDialog(),
 	// dialog caption
-	"caption"	: _("DNS Server -- Dynamic DHCP"),
+	"caption"	: _("DHCP Server -- Dynamic DHCP"),
 	// tree item
 	"tree_item_label"	: _("Dynamic DHCP"),
 	"widget_names"	: ["dynamic_dhcp", "expert_settings"],
@@ -1177,14 +1139,14 @@ map<string, map<string, any> > tabs = $[
     "host_management" : $[
 	"contents"	: Common_HostManagementDialog(),
 	// dialog caption
-	"caption"	: _("DNS Server -- Host Management"),
+	"caption"	: _("DHCP Server -- Host Management"),
 	// tree item
 	"tree_item_label"	: _("Host Management"),
 	"widget_names"	: ["host_management", "expert_settings"],
     ],
     "expert_settings" : $[
 	// dialog caption
-	"caption"	: _("DNS Server -- Expert Settings"),
+	"caption"	: _("DHCP Server -- Expert Settings"),
 	// tree item
 	"tree_item_label"	: _("Expert Settings"),
 	"init"		: ExpertSettingsTabInit,
@@ -1192,13 +1154,27 @@ map<string, map<string, any> > tabs = $[
 ];
 
 map<string,map<string,any> > new_widgets = $[
-    "start_up" : $[
-	"widget"	: `custom,
-	"custom_widget"	: `VBox (),
-	"init"		: StartUpInit,
-	"store"		: StartUpStore,
-	"help"		: HELPS["start_up"]:"",
-    ],
+    "start_up" : CWMServiceStart::CreateWidget ($[
+	"get_service_auto_start" : DhcpServer::GetStartService,
+	"set_service_auto_start" : DhcpServer::SetStartService,
+	// push button
+	"start_auto_button" : _("Start DHCP Server when &Booting"),
+	// push button
+	"start_manual_button" : _("Start DHCP Server &Manually"),
+
+	"service_id" : "dhcpd",
+	// label - service status
+	"service_running_label" : _("DHCP Server is running"),
+	// label - service status
+	"service_not_running_label" : _("DHCP Server is not running"),
+	// push button
+	"start_now_button" : _("&Start DHCP Server Now"),
+	// push button
+	"stop_now_button" : _("S&top DHCP Server Now"),
+	"save_now_action" : DhcpServer::Write,
+	// push button
+	"save_now_button" : _("Save Settings and Restart DHCP Server &Now"),
+    ]),
     "card_selection" : $[
 	"widget"	: `custom,
 	"custom_widget"	: `VBox (),
@@ -1245,18 +1221,15 @@ map<string,map<string,any> > new_widgets = $[
  * @return symbol for the wizard sequencer
  */
 symbol CommonConfigDialog () {
-    map<any,any> functions = $[
-	`abort : confirmAbort,
-    ];
-
     return DialogTree::ShowAndRun ($[
-	"ids_order" : ["start_up", "card_selection", "global_settings", "dynamic_dhcp", "host_management", "expert_settings"],
+	"ids_order" : ["start_up", "card_selection", "global_settings",
+	    "dynamic_dhcp", "host_management", "expert_settings"],
 	"initial_screen" : "start_up",
 	"screens" :  tabs,
 	"widget_descr" : new_widgets,
 	"back_button" : "",
 	"abort_button" :  Label::CancelButton (),
-	"nect_button" : Label::FinishButton (),
+	"next_button" : Label::FinishButton (),
 	"functions" : functions,
     ]);
 }
