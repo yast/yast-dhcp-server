@@ -3,6 +3,7 @@ Mon Mar  1 11:08:31 CET 2004 - jsrain@suse.de
 
 - fixed creating of TSIG keys
 - merged texts from proofread
+- fixed lists of offered options for subnet and host declarations
 
 -------------------------------------------------------------------
 Tue Feb 24 08:04:54 CET 2004 - jsrain@suse.de
