@@ -1749,7 +1749,7 @@ sub Summary {
 	push (@ret, sformat (__("Listen on: %1"), $allowed_str));
 
 	#FIXME multiple interfaces
-	my $interface = @allowed_interfaces[0];
+	my $interface = $allowed_interfaces[0];
 	my $info = $self->GetInterfaceInformation ($interface);
 	my $id = $info->{"network"} . " netmask " . $info->{"netmask"};
 	if ($self->EntryExists ("subnet", $id))
