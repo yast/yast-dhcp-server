@@ -32,14 +32,14 @@
 	}
 	integer index = tointeger (
 	    regexpsub ((string)opt_id, "^[a-z]+ ([0-9]+)$", "\\1"));
-	any value = "";
+	string value = "";
 	if (substring (key, 0, 7) == "option ")
 	{
-	    value = current_entry_options[index, "value"]:(any)"";
+	    value = current_entry_options[index, "value"]:"";
 	}
 	else
 	{
-	    value = current_entry_directives[index, "value"]:(any)"";
+	    value = current_entry_directives[index, "value"]:"";
 	}
 	return value;
     }
@@ -118,9 +118,9 @@
 	integer index = tointeger (
 	    regexpsub ((string)opt_id, "^[a-z]+ ([0-9]+)$", "\\1"));
 	if (substring (key, 0, 7) == "option ")
-	    return sformat ("%1", current_entry_options[index, "value"]:(any)"");
+	    return sformat ("%1", current_entry_options[index, "value"]:"");
 	else
-	    return sformat ("%1", current_entry_directives[index, "value"]:(any)"");
+	    return sformat ("%1", current_entry_directives[index, "value"]:"");
     }
 
     /**
@@ -373,7 +373,7 @@
 	return _("Off");
     }
 
-    map option_types = $[
+    map<string,string> option_types = $[
 "option all-subnets-local" :  "flag",
 "option arp-cache-timeout" :  "uint32",
 "option bootfile-name" :  "text",

@@ -26,8 +26,8 @@
 
     global string current_entry_type = "";
     global string current_entry_id = "";
-    global list<any> current_entry_options = [];
-    global list<any> current_entry_directives = [];
+    global list<map<string,string> > current_entry_options = [];
+    global list<map<string,string> > current_entry_directives = [];
     global string original_entry_type = "";
     global string original_entry_id = "";
     global string parent_type = "";
