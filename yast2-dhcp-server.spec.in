@@ -2,7 +2,7 @@
 # neededforbuild yast2-devel-packages yast2-packager
 
 @HEADER@
-Requires:	yast2
+Requires:	yast2 yast2-packager
 
 BuildArchitectures:	noarch
 

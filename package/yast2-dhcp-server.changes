@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Wed Sep 17 10:22:43 CEST 2003 - jsrain@suse.de
+
+- fixed requires (added yast2-packager)
+
+-------------------------------------------------------------------
 Mon Sep 15 10:09:25 CEST 2003 - jsrain@suse.de
 
 - fixed managing of multiple hosts (#30781)
