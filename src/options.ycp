@@ -493,7 +493,7 @@ all clients*/
 "dynamic-bootp-lease-cutoff" : "date",
 "dynamic-bootp-lease-length" : "length",
 "filename" : "text",
-"fixed-address" : "array_ip-address",
+"fixed-address" : "ip-address",
 "get-lease-hostnames" : "flag",
 "hardware" : "hardware",
 "lease-file-name" : "name",
