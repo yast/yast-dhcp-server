@@ -1381,6 +1381,26 @@ sub Read {
 	return Boolean (0);
     }
 
+    # Reading current network configuration
+    NetworkDevices->Read();
+    my $ifaces_found = 0;
+    foreach my $iface (@{ NetworkDevices->List("") }) {
+    	next if ($iface =~ /^lo/i);
+	next if ($iface =~ /^sit/i);
+	$ifaces_found = 1;
+	last;
+    }
+    if (!$ifaces_found) {
+	# TRANSLATORS: error report popup
+	Report->Error (_("This server needs at least one
+configured network device (besides loopback) for its
+proper function.
+Configure one.
+
+YaST will quit now."));
+	return Boolean(0);
+    }
+
     # initialize the host name of the LDAP server
     $dhcp_server = undef;
     my $out = SCR->Execute (".target.bash_output", "/bin/hostname --short");
@@ -1434,6 +1454,23 @@ sub Read {
     y2milestone ("Chroot: $chroot");
     my $ifaces_list = SCR->Read (".sysconfig.dhcpd.DHCPD_INTERFACE") || "";
     @allowed_interfaces = split (/ /, $ifaces_list);
+
+    # if firewall is enabled
+    if (SuSEFirewall->GetEnableService()) {
+	foreach my $iface (@allowed_interfaces) {
+	    my $iface_zone = SuSEFirewall->GetZoneOfInterface($iface);
+	    if (defined $iface_zone) {
+		$open_firewall = SuSEFirewall->IsServiceSupportedInZone("dhcp-server", $iface_zone);
+	    } else {
+		$open_firewall = 0;
+	    }
+
+	    if (!$open_firewall) {
+		# fist unsupported iface in firewall means - no support
+		last;
+	    }
+	}
+    }
 
     @settings = ();
     my $ag_settings_ref = SCR->Read (".etc.dhcpd_conf");
@@ -1593,30 +1630,17 @@ sub Write {
 
     Progress->NextStage ();
 
-    if (scalar (@original_allowed_interfaces) != scalar (@allowed_interfaces)
-	&& $open_firewall)
-    {
-	$adapt_firewall = 1;
-    }
-
-    my %old_ifaces = ();
-    foreach my $i (@original_allowed_interfaces) {
-	$old_ifaces{$i} = 0;
-    }
-    foreach my $i (@allowed_interfaces) {
-	if (! exists $old_ifaces{$i})
-	{
-	    if ($open_firewall)
-	    {
-		$adapt_firewall = 1;
-	    }	
+    if (\@original_allowed_interfaces != \@allowed_interfaces) {
+	# disabling on all interfaces
+	my @all_ifaces;
+	foreach my $iface (@{SuSEFirewall->GetAllKnownInterfaces()}) {
+	    push @all_ifaces, $iface->{'id'};
 	}
-    }
-
-    if ($adapt_firewall)
-    {
-	SuSEFirewall->SetServices (["dhcp-server"], [], 0);
-	SuSEFirewall->SetServices (["dhcp-server"], \@allowed_interfaces, 0);
+	SuSEFirewall->SetServices (["dhcp-server"], \@all_ifaces, 0);
+	if ($open_firewall) {
+	    # allowing on selected interfaces
+	    SuSEFirewall->SetServices (["dhcp-server"], \@allowed_interfaces, 1);
+	}
     }
 
     if (! Mode->test ())

@@ -535,8 +535,8 @@ global define symbol SectionStore () ``{
   * @return symbol for wizard sequencer
   */
 global define symbol CheckConfiguredInterfaces () ``{
-    list ifaces = DhcpServer::GetAllowedInterfaces ();
-    if (size (ifaces) == 0)
+    list ifaces_allowed = DhcpServer::GetAllowedInterfaces ();
+    if (size (ifaces_allowed) == 0)
 	return `ifaces;
     return `main;
 }
