@@ -24,6 +24,7 @@
     import "Require";
     import "Mode";
     import "SuSEFirewall";
+    import "DhcpServer";
 
     include "dhcp-server/routines.ycp";
     include "dhcp-server/helps.ycp";
@@ -277,75 +278,8 @@ Display the log and continue with configuration?
       * Adjust the firewall settings if wanted
       */
     global define void adaptFirewall () ``{
-	list(string) interfaces_list = splitstring (settings["__dhcpd_interface"]:"", " ");
-	interfaces_list = filter (string i, interfaces_list, ``(i != ""));
-	if (adapt_firewall)
-	{
-	    foreach (string i, ["INT", "EXT", "DMZ"], ``{
-		y2milestone ("Removing dhcpd iface %1", i);
-		SuSEFirewall::RemoveService ("67", "UDP", i);
-	    });
-	    if (settings["__run_dhcp_server"]:false)
-	    {
-		foreach (string i, interfaces_list, ``{
-		    y2milestone ("Adding dhcpd iface %1", i);
-		    SuSEFirewall::AddService ("67", "UDP", i);
-		});
-	    }
-	    if (! Mode::test)
-	    {
-		Progress::off ();
-		SuSEFirewall::Write ();
-		Progress::on ();
-	    }
-	    if (settings["__run_dhcp_server"]:false)
-	    {
-		SCR::Write (.sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD,
-		    SuSEFirewall::MostInsecureInterface (interfaces_list));
-	    }
-	    else
-	    {
-		SCR::Write (.sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD, "no");
-	    }
-
-	    SCR::Write (.sysconfig.SuSEfirewall2, nil);
-	    if (! write_only)
-		SCR::Execute (.target.bash, "test -x /sbin/rcSuSEfirewall2 && /sbin/rcSuSEfirewall2 status && /sbin/rcSuSEfirewall2 restart");
-	}
     }
 
-    /**
-      * Get all dhcp-server settings from the first parameter
-      * (For use by autoinstallation.)
-      * @param import_settings The YCP structure to be imported.
-      * @return boolean True on success
-      */
-    global define boolean Import (map import_settings) ``{
-	settings = import_settings;
-	return true;
-    }
-
-    /**
-      * Dump the dhcp-server settings to a single map
-      * (For use by autoinstallation.)
-      * @return map Dumped settings (later acceptable by Import ())
-      */
-    global define map Export () ``{
-	return settings;
-    }
-
-    /**
-      * Create a textual summary and a list of unconfigured cards
-      * @return summary of the current configuration
-      */
-    global define list Summary() ``{
-	string status = settings["__run_dhcp_server"]:false
-		// summary text
-	    ? _("The DHCP server is started at boot time")
-		// summary text
-	    : _("The DHCP server is not started at boot time");
-	return [ status ];
-    }
 
 /* EOF */
 }
