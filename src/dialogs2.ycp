@@ -937,32 +937,105 @@ list< map<string,string> > PrepareDirectives ()
     return directives;
 }
 
+boolean CheckMacAddrFormat () {
+    string hosthwaddress = (string)
+	UI::QueryWidget ( `id ("hosthwaddress"), `Value );
+    string addr_type
+	= (string) UI::QueryWidget ( `id ("network_type"), `CurrentButton );
+    string regexp = nil;
+    if (addr_type == "ethernet" || addr_type == "token-ring")
+    {
+	regexp = "[0-9a-fA-F]{2,2}";
+	regexp = sformat ("(%1:){5,5}%1", regexp);
+    }
+    if (regexp != nil && ! regexpmatch (hosthwaddress, regexp))
+    {
+	UI::SetFocus (`id ("hosthwaddress"));
+	Report::Error (
+	    // error popup
+	    _("The format of the hardware address is incorrect."));
+	return false;
+    }
+    return true;
+}
+
+boolean CheckMacAddrUnique (string original) {
+    list<map<string,string> > existing
+	= DhcpServer::GetChildrenOfEntry ("subnet", hosts_parent_id );
+    list<string> addresses = maplist (map<string,string> h, existing, {
+	if (h["id"]:"" != original)
+	{
+	    list<map<string,string> > directives
+		= DhcpServer::GetEntryDirectives (h["type"]:"", h["id"]:"");
+	    string addr = nil;
+	    find (map<string,string> d, directives, {
+		if (d["key"]:"" == "hardware")
+		{
+		    addr = d["value"]:"";
+		    return true;
+		}
+		return false;
+	    });
+	    return addr;
+	}
+	else
+	{
+	    return nil;
+	}
+    });
+    addresses = filter (string a, addresses, {return a != nil;});
+    boolean address_unique = true;
+    find (map<string,string> d, PrepareDirectives (), {
+	if (d["key"]:"" == "hardware")
+	{
+	    if (contains (addresses, d["value"]:""))
+		address_unique = false;
+	    return true;
+	}
+	return false;
+    });
+
+    if (! address_unique)
+    {
+	UI::SetFocus (`id ("hosthwaddress"));
+	// error popup
+	Popup::Error (_("The hardware address must be unique."));
+	return false;
+    }
+    return true;
+}
+
+boolean CheckHostId (string name) {
+    if (size (name) == 0 )
+    {
+	    UI::SetFocus (`id("hostname"));
+	    // error popup
+	    Popup::Error (_("Host name cannot be empty."));
+	    return false;
+    }
+    else if (! Hostname::Check(name))
+    {
+	    UI::SetFocus (`id("hostname"));
+	    Popup::Error (Hostname::ValidFQ());
+	    return false;
+    }
+    else if ( haskey (hosts, name) )
+    {
+	    UI::SetFocus (`id("hostname"));
+	    // error popup, %1 is host name
+	    Popup::Error (sformat (_("Host named '%1' already exists."), name));
+	    return false;
+    }
+    return true;
+}
+
 symbol HostManagementHandle (string key, map event_descr)
 {
     if ( event_descr["ID"]:"" == "addhost" )
     {
 	string name = (string) UI::QueryWidget ( `id ("hostname"), `Value );
-	if (size (name) == 0 )
-	{
-	    UI::SetFocus (`id("hostname"));
-	    // error popup
-	    Popup::Error (_("Host name cannot be empty."));
+	if (! CheckHostId (name))
 	    return nil;
-	}
-	else if (! Hostname::Check(name))
-	{
-	    UI::SetFocus (`id("hostname"));
-	    Popup::Error (Hostname::ValidFQ());
-	    return nil;
-	}
-	else if ( haskey (hosts, name) )
-	{
-	    UI::SetFocus (`id("hostname"));
-	    // error popup, %1 is host name
-	    Popup::Error ( sformat (_("Host named '%1' already exists.
-Use Change instead."), name ) );
-	    return nil;
-	}
 
 	// checking new IP
 	string hostip = (string) UI::QueryWidget ( `id ("hostip"), `Value );
@@ -986,11 +1059,18 @@ Use Change instead."), name ) );
 	{
 	    UI::SetFocus ( `id ( "hosthwaddress" ) );
 	    // error popup
-	    Popup::Error ( _("The input value must be defined.") );
+	    Report::Error ( _("The hardware addrress must be defined.") );
 	    return nil;
 	}
-	// FIXME: control HW address ... in future
-	
+	// check the syntax
+	if (! CheckMacAddrFormat ())
+	    return nil;
+
+	// check if MAC address is unique
+	if (! CheckMacAddrUnique (nil))
+	    return nil;
+
+	// finally create the entry
 	DhcpServer::CreateEntry ( "host", name, "subnet", hosts_parent_id );
 	DhcpServer::SetEntryDirectives ( "host", name, PrepareDirectives () );
 
@@ -1028,6 +1108,13 @@ Use Change instead."), name ) );
 	    return nil;
 	}
 
+	// check the new ID
+	string new_id = (string)UI::QueryWidget (`id ("hostname"), `Value);
+	if (new_id != id && ! CheckHostId (new_id))
+	{
+	    return nil;
+	}
+
 	// checking new IP
 	string hostip = (string) UI::QueryWidget ( `id ("hostip"), `Value );
 	if ( size ( hostip ) == 0 )
@@ -1052,9 +1139,22 @@ Use Change instead."), name ) );
 	    Popup::Error ( _("The input value must be defined.") );
 	    return nil;
 	}
-	// FIXME: control HW address ... in future
-	
-	DhcpServer::SetEntryDirectives ( "host", id, PrepareDirectives () );
+
+	// check the syntax
+	if (! CheckMacAddrFormat ())
+	    return nil;
+
+	// check if MAC address is unique
+	if (! CheckMacAddrUnique (id))
+	    return nil;
+
+	if (id != new_id)
+	{
+	    DhcpServer::DeleteEntry ("host", id);
+	    id = new_id;
+	    DhcpServer::CreateEntry ("host", id, "subnet", hosts_parent_id);
+	}
+	DhcpServer::SetEntryDirectives ("host", id, PrepareDirectives ());
 
 	HostManagementInit (key);
     }

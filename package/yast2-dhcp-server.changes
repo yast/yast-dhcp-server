@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Tue Nov  9 14:10:22 CET 2004 - jsrain@suse.cz
+
+- fixed checks of hosts with static addresses (#40319)
+
+-------------------------------------------------------------------
 Mon Nov  8 13:03:32 CET 2004 - jsrain@suse.cz
 
 - prevent used TSIG keys from being removed
