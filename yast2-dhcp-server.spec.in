@@ -1,8 +1,8 @@
 @HEADER-COMMENT@
-# neededforbuild yast2-devel-packages yast2-packager yast2-firewall yast2-perl-bindings
+# neededforbuild yast2-devel-packages yast2-packager yast2-firewall yast2-perl-bindings perl-gettext
 
 @HEADER@
-Requires:	yast2 yast2-packager yast2-firewall
+Requires:	yast2 yast2-packager yast2-firewall perl-gettext
 
 BuildArchitectures:	noarch
 
