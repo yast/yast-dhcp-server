@@ -1482,7 +1482,7 @@ sub Write {
 	# progress step
 	__("Writing DHCP server settings..."),
 	# progress step
-	__("Writeing firewall settings..."),
+	__("Writing firewall settings..."),
 	# progress step
 	__("Restarting DHCP server..."),
 	# progress step
