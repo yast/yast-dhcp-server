@@ -57,10 +57,10 @@ sub _ {
 
 YaST::YCP::Import ("SCR");
 YaST::YCP::Import ("Mode");
+YaST::YCP::Import ("Package");
 YaST::YCP::Import ("Service");
 YaST::YCP::Import ("Progress");
 YaST::YCP::Import ("Report");
-YaST::YCP::Import ("Require");
 YaST::YCP::Import ("SuSEFirewall");
 YaST::YCP::Import ("DhcpTsigKeys");
 
@@ -676,6 +676,15 @@ sub SetAdaptDdnsSettings {
 }
 
 ##------------------------------------
+
+BEGIN { $TYPEINFO{AutoPackages} = ["function", ["map","any","any"]];}
+sub AutoPackages {
+    return {
+	"install" => ["dhcp-server"],
+	"remote" => [],
+    }
+}
+
 BEGIN { $TYPEINFO{Read} = ["function", "boolean"]; }
 sub Read {
 
@@ -704,14 +713,10 @@ sub Read {
 
     Progress::NextStage ();
 
-    if (! (Mode::config () || Require::AreAllPackagesInstalled (["dhcp-server"])))
+    if (! (Mode::config () || Package::Installed ("dhcp-server")))
     {
-	my $installed = Require::RequireAndConflictTarget (["dhcp-server"], [],
-	# richtext, %1 is name of package
-	    _("For running DHCP server, a DHCP daemon is required.
-YaST2 will install package %1.
-"));
-	if (! $installed && ! Require::LastOperationCanceled ())
+	my $installed = Package::Install ("dhcp-server");
+	if (! $installed && ! Package::LastOperationCanceled ())
 	{
 	    # error popup
 	    Report::Error (_("Installing required packages failed."));
