@@ -21,6 +21,7 @@ import "Sequencer";
 global define symbol MainSequence () ``{
 
     map aliases = $[
+	"ifaces_switch"		:[``(CheckConfiguredInterfaces ()), true ],
 	"main"			: ``(MainDialog ()),
 	"globals"		: ``(GlobalsDialog ()),
 	"subnet"		: ``(SubnetDialog ()),
@@ -30,7 +31,8 @@ global define symbol MainSequence () ``{
 	"group"			: ``(Groupdialog ()),
 	"class"			: ``(ClassDialog ()),
 	"section_type_choose"	: ``(SectionTypeChoose ()),
-	"interfaces"		: ``(IfacesDialog ()),
+	"interfaces"		: ``(IfacesDialog (false)),
+	"interfaces_initial"	: ``(IfacesDialog (true)),
 	"dyn_dns"		: ``(DynDnsDialog ()),
 	"section_type_select"	:[``(SelectEditationDialog ()), true ],
 	"store"			:[``(SectionStore ()), true ],
@@ -39,7 +41,15 @@ global define symbol MainSequence () ``{
     ];
 
     map sequence = $[
-	"ws_start" : "main",
+	"ws_start" : "ifaces_switch",
+	"ifaces_switch" : $[
+	    `main		: "main",
+	    `ifaces		: "interfaces_initial",
+	],
+	"interfaces_initial" : $[
+	    `abort		: `abort,
+	    `next		: "main",
+	],
 	"main" : $[
 	    `next		: `next,
 	    `abort		: `abort,
