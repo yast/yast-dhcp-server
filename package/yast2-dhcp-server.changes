@@ -4,6 +4,7 @@ Mon Aug 16 08:08:06 CEST 2004 - jsrain@suse.cz
 - fixed handling of some DHCP statements and options (eg.
   update-static-leases) (#42778)
 - check also if firewall was modified
+- 2.10.3
 
 -------------------------------------------------------------------
 Tue Aug 10 09:33:01 CEST 2004 - jsrain@suse.cz
