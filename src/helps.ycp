@@ -38,10 +38,11 @@ If you want to run DHCP server every time your computer is started, set
 <b>Start DHCP Server</b>.</p>"),
 
 	// help text 2/3
-	"configtree" : _("<p><b><big>Configured entries</big></b><br>
-FIXME Really is this called entries? <br>
-TODO this help
-	</p>")
+	"configtree" : _("<p><b><big>Configured declarations</big></b><br>
+To modify an existing declaration, select it, and click <b>Edit</b>.
+To add a new declaration, select a declaration, that should include
+the new declaration, and click <b>Add</b>.
+To delete a declaration, select it, and click <b>Delete</b>.</p>")
 
 	// help text 3/3
 	+ _("<p><b><big>Advanced functions</big></b><br>
@@ -57,15 +58,23 @@ Set the <b>Network Address</b> and <b>Network Mask</b> of the subnet.</p>"),
 Set the name of the host to set the fixed address or other special options
 for.</p>"),
 
-	// help text 1/2, alt. 3 // FIXME group
-	"host" : _("<p><b><big>Host Name</big></b><br>
-Set the name of the host to set the fixed address or other special options
-for.</p>"),
+	// help text 1/2, alt. 3
+	"host" : _("<p><b><big>Group Name</big></b><br>
+Set the name of the group of declatations.  It is just for your identification,
+the name does not affect behavior of the DHCP server.</p>"),
 
 	// help text 1/2, alt. 4
 	"pool" : _("<p><b><big>Pool Name</big></b><br>
-Set the name of the pool of addresses.</p>"),
+Set the name of the pool of addresses. It is just for your identification,
+the name does not affect behavior of the DHCP server.</p>"),
 
+	// help text 1/2, alt. 5
+	"pool" : _("<p><b><big>Shared Network</big></b><br>
+Set the name of the shared network. It is just for your identification,
+the name does not affect behavior of the DHCP server.</p>"),
+	// help text 1/2, alt. 6
+	"pool" : _("<p><b><big>Pool Name</big></b><br>
+Set the name of the class of hosts.</p>"),
 
 	// help text 2/2
 	"options_table" : _("<p><b><big>Options</big></b><br>
@@ -74,7 +83,63 @@ entry of the table then click <b>Edit</b>.
 To add a new option, use <b>Add</b>. To remove
 an option, select it and click <b>Delete</b>.</p>"),
 
+	"enable_ddns" : _("<p><b><big>Enabling Dynamic DNS</big></b><br>
+For enabling Dynamic DNS updates for this subnet, set
+<b>Enable Dynamic DNS for this subnet</b>.</p>"),
+
+
+
+	"update_global_ddns" : _(
+"<p><b><big>Updating Global Dynamic DNS settings</big></b><br>
+To make necessary updates to local Dynamic DNS settings, set
+<b>Update global DHCP server settings</b>.</p>"),
+
     ];
+
+    global define string getSelectDeclarationTypeHelp (list possible) ``{
+	// help text 1/7
+	string ret = _("<p>Select the type of the declaration to add.</p>");
+
+	if (contains (possible, "subnet"))
+	{
+	    // help text 2/7, optional
+	    ret = ret + _("<p>To add a network declaration,
+select <b>Subnet</b>.</p>");
+	}
+	if (contains (possible, "host"))
+	{
+	    // help text 3/7, optional
+	   ret = ret + _("<p>To add a host that needs special parameters
+(usually fixed address), select <b>Host</b>.</p>");
+	}
+	if (contains (possible, "shared-network"))
+	{
+	    // help text 4/7, optional
+	    ret = ret + _("<p>To add a shared network (physical network with
+multiple logical networks), select <b>Shared Network</b>.</p>");
+	}
+	if (contains (possible, "group"))
+	{
+	    // help text 5/7, optional
+	    ret = ret + _("<p>To add a group of other declarations (usually
+if they should share some settings), select <b>Group</b>.</p>");
+	}
+	if (contains (possible, "pool"))
+	{
+	    // help text 6/7, optional
+	    ret = ret + _("<p>To add a pool of addresses, that will be treated
+differently than other pool of addresses, although they are in the same
+subnet, select <b>Pool of addresses</b>.</p>");
+	}
+	if (contains (possible, "class"))
+	{
+	    // help text 7/7, optional
+	    ret = ret + _("<p>To create condition class, that can be used for
+handling clients defferntly depending on which class they belong to,
+select <b>Class</b>.</p>");
+	}
+	return ret;
+    }
 
 
 /* EOF */

@@ -61,7 +61,8 @@ sub get_lines {
  	    }
 	    elsif ($char eq "{")
 	    {
-		if (substr ($line, 0, 7) eq "option ")
+		if (substr ($line, 0, 7) eq "option "
+		    || $line =~ /^[ \t]*zone[ \t]+/)
 		{
 		    $braces = $braces + 1;
 		}
@@ -70,8 +71,8 @@ sub get_lines {
 	    {
 	    }
 
-	    if ($char eq ";" || ($char eq "{" && $braces == 0)
-		|| ($char eq "}" && $braces == -1))
+	    if (($char eq ";" && $braces == 0) || ($char eq "{" && $braces == 0)
+		|| ($char eq "}" && $braces <= 0))
 	    {
 		my $tmp_line = substr ($orig_line, 1);
 		if ($tmp_line =~ /^[ \t]*(#.*)$/)
@@ -79,6 +80,7 @@ sub get_lines {
 		    $comment_after = "$comment_after $1";
 		    $orig_line = "";
 		}
+y2error ("Pushing line >>$line<<");
 		$line =~ s/^[ \t]*([^ \t]+)[ \t]*$/$1/;
 		my %next_line = (
 		    "line" => $line,
@@ -116,6 +118,7 @@ sub parse_section {
 	my $type;
 	if ($line =~ /^[ \t]*([^ \t]+.*[^ \t]+)[ \t]*{[ \t]*$/)
 	{
+y2error ("Section line $line");
 	    $type = "section";
 	    $key = $1;
 	    $value = parse_section ();
@@ -150,14 +153,16 @@ sub parse_section {
 		($type, $key) = split (/ /, $key, 2);
 	    }
 	}
-	elsif ($line =~ /^[ \t]*option[ \t]+([^ \t]+)[ \t]+([^ \t].*);[ \t]*$/)
+	elsif ($line =~ /^[ \t]*option[ \t]+([^ \t]+)[ \t]+([^ \t].*);?[ \t]*$/)
 	{
+y2error ("Option line $line");
 	    $type = "option";
 	    $key = $1;
 	    $value = $2;
 	}
-	elsif ($line =~ /^[ \t]*([^ \t]+)[ \t]+([^ \t].*);[ \t]*$/)
+	elsif ($line =~ /^[ \t]*([^ \t]+)[ \t]+([^ \t].*);?[ \t]*$/)
 	{
+y2error ("Directive line $line");
 	    $type = "directive";
 	    $key = $1;
 	    $value = $2;

@@ -11,10 +11,21 @@
 
 textdomain "dhcp-server";
 
+    /**
+     * Merge section id and key together to one identifier
+     * @param type string section type
+     * @param id string section identifier
+     * @return merged section type and id to one string
+     */
     global define string typeid2key (string type, string id) ``{
 	return sformat ("%1 %2", type, id);
     }
 
+    /**
+     * Split section type and id to two separate strings
+     * @param key string section type and id merged into one string
+     * @return a map with keys "type" and "id"
+     */
     global define map<string,string> key2typeid (string key) ``{
 	if (key == " ")
 	{
@@ -33,6 +44,12 @@ textdomain "dhcp-server";
 	];
     }
 
+    /**
+     * Get children declarations of a declaration
+     * @param type strign declaration type
+     * @param id string declaration id
+     * @return list of items for the tree widget
+     */
     global define list getItems (string type, string id) ``{
 	list<map> entries = DhcpServer::GetChildrenOfEntry (type, id);
 	if (entries == nil)
