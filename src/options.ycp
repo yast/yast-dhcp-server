@@ -373,8 +373,45 @@
 	return _("Off");
     }
 
+    /**
+      * Initialize the settings in the popup
+      * @param opt_id any option id
+      * @param key string option key
+      */
+    global define void onoffInit (any opt_id, string key) ``{
+	any value = fetchValue (opt_id, key);
+	UI::ChangeWidget ( `id (key), `Value, tolower ((string)value) == "on");
+    }
+
+    /**
+      * Store function of a table entry / popup
+      * @param opt_id any option id
+      * @param key any option key
+      */
+    global define void onoffStore (any opt_id, string key) ``{
+	boolean value = (boolean)UI::QueryWidget ( `id (key), `Value);
+	storeValue (opt_id, key, value ? "on" : "off");
+    }
+
+    /**
+      * Summary function of a table entry / popup
+      * @param opt_id any option id
+      * @param key any option key
+      * @return string value to be displayed in the table
+      */
+    global define string onoffSummary (any opt_id, string key) ``{
+	any value = fetchValue (opt_id, key);
+	if (tolower ((string)value) == "on")
+	{
+	    // table item, means switched on
+	    return _("On");
+	}
+	// table item, means switched off
+	return _("Off");
+    }
+
     map<string,string> option_types = $[
-"option all-subnets-local" :  "flag",
+"option all-subnets-local" :  "onoff",
 "option arp-cache-timeout" :  "uint32",
 "option bootfile-name" :  "text",
 "option boot-size" :  "uint16",
@@ -390,15 +427,15 @@
 "option finger-server" :  "array_ip-address",
 "option font-servers" :  "array_ip-address",
 "option host-name" :  "string",
-"option ieee802-3-encapsulation" :  "flag",
+"option ieee802-3-encapsulation" :  "onoff",
 "option ien116-name-servers" :  "array_ip-address",
 "option impress-servers" :  "array_ip-address",
 "option interface-mtu" :  "uint16",
-"option ip-forwarding" :  "flag",
+"option ip-forwarding" :  "onoff",
 "option irc-server" :  "array_ip-address",
 "option log-servers" :  "array_ip-address",
 "option lpr-servers" :  "array_ip-address",
-"option mask-supplier" :  "flag",
+"option mask-supplier" :  "onoff",
 "option max-dgram-reassembly" :  "uint16",
 "option merit-dump" :  "text",
 "option mobile-ip-home-agent" :  "array_ip-address",
@@ -414,18 +451,18 @@
 "option nisplus-domain" :  "text",
 "option nisplus-servers" :  "array_ip-address",
 "option nntp-server" :  "array_ip-address",
-"option non-local-source-routing" :  "flag",
+"option non-local-source-routing" :  "onoff",
 "option ntp-servers" :  "array_ip-address",
 "option nwip-domain" :  "string",
 "option nwip-suboptions" :  "string",
 "option path-mtu-aging-timeout" :  "uint32",
 "option path-mtu-plateau-table" :  "array_uint16",
-"option perform-mask-discovery" :  "flag",
+"option perform-mask-discovery" :  "onoff",
 "option policy-filter" :  "array_ip-address_pair",
 "option pop-server" :  "array_ip-address",
 "option resource-location-servers" :  "array_ip-address",
 "option root-path" :  "text",
-"option router-discovery" :  "flag",
+"option router-discovery" :  "onoff",
 "option router-solicitation-address" :  "ip-address",
 "option routers" :  "array_ip-address",
 "option slp-directory-agent" :   "slp-discovery-agent",
@@ -436,16 +473,22 @@
 "option streettalk-server" :  "array_ip-address",
 "option subnet-mask" :  "ip-address",
 "option swap-server" :  "ip-address",
-"option tcp-keepalive-garbage" :  "flag",
+"option tcp-keepalive-garbage" :  "onoff",
 "option tcp-keepalive-interval" :  "uint32",
 "option tftp-server-name" :  "text",
 "option time-offset" :  "int32",
 "option time-servers" :  "array_ip-address",
-"option trailer-encapsulation" :  "flag",
+"option trailer-encapsulation" :  "onoff",
 "option uap-servers" :  "text",
 "option www-server" :  "array_ip-address",
 "option x-display-manager" :   "array_ip-address",
-"option nwip.nsq-broadcast" :  "flag",
+"option fqdn.no-client-update" : "onoff",
+"option fqdn.server-update" : "onoff",
+"option fqdn.encoded" : "onoff",
+"option fqdn.rcode1" : "onoff",
+"option fqdn.rcode2" : "onoff",
+"option fqdn.fqdn" : "text",
+"option nwip.nsq-broadcast" :  "onoff",
 "option nwip.preferred-dss" :  "array_ip-address",
 "option nwip.nearest-nwip-server" :  "array_ip-address",
 "option nwip.autoretries" :  "uint8",
@@ -477,23 +520,23 @@ authenticated clients
 unauthenticated clients
 all clients*/
 
-"always-broadcast" : "flag",
-"always-reply-rfc1048" : "flag",
+"always-broadcast" : "onoff",
+"always-reply-rfc1048" : "onoff",
 "authoritative" : "flag",
 "not authoritative" : "flag",
-"boot-unknown-clients" : "flag",
+"boot-unknown-clients" : "onoff",
 "ddns-hostname" : "name",
 "ddns-domainname" : "name",
 "ddns-rev-domainname"  : "name",
 "ddns-update-style" : "style",
-"ddns-updates" : "string",
+"ddns-updates" : "onoff",
 "default-lease-time" : "time",
-"do-forward-updates" : "flag",
+"do-forward-updates" : "onoff",
 "dynamic-bootp-lease-cutoff" : "date",
 "dynamic-bootp-lease-length" : "length",
 "filename" : "text",
 "fixed-address" : "ip-address",
-"get-lease-hostnames" : "flag",
+"get-lease-hostnames" : "onoff",
 "hardware" : "hardware",
 "lease-file-name" : "name",
 "local-port" : "port",
@@ -503,19 +546,19 @@ all clients*/
 "min-secs" : "seconds",
 "next-server" : "server-name",
 "omapi-port" : "port",
-"one-lease-per-client" : "flag",
+"one-lease-per-client" : "onoff",
 "pid-file-name" : "name",
-"ping-check" : "flag",
+"ping-check" : "onoff",
 "ping-timeout" : "seconds",
 "ping-timeout" : "seconds",
 "server-identifier" : "hostname",
 "server-name" : "name",
 "site-option-space" : "name",
-"stash-agent-options" : "flag",
-"update-optimization" : "flag",
-"update-static-leases" : "flag",
-"use-host-decl-names" : "flag",
-"use-lease-addr-for-default-route" : "flag",
+"stash-agent-options" : "onoff",
+"update-optimization" : "onoff",
+"update-static-leases" : "onoff",
+"use-host-decl-names" : "onoff",
+"use-lease-addr-for-default-route" : "onoff",
 "vendor-option-space" : "string",
 
     ];
@@ -847,6 +890,16 @@ all clients*/
 		    "widget" : `checkbox,
 		    "init" : flagInit,
 		    "store" : flagStore,
+		],
+	    ],
+	    "onoff" : $[
+		"table" : $[
+		    "summary" : onoffSummary,
+		],
+		"popup" : $[
+		    "widget" : `checkbox,
+		    "init" : onoffInit,
+		    "store" : onoffStore,
 		],
 	    ],
 	    "range" : $[
