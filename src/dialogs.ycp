@@ -546,7 +546,7 @@ global define symbol CheckConfiguredInterfaces () ``{
  * @return symbol for wizard sequencer
  */
 global define symbol ConfigTypeSwitch () {
-    if (Mode::config)
+    if (Mode::config ())
 	return `expert;
     return DhcpServer::IsConfigurationSimple ()
 	? `simple

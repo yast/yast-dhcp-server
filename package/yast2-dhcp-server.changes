@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Tue Nov  2 13:48:50 CET 2004 - jsrain@suse.cz
+
+- adapted to new Mode.ycp
+
+-------------------------------------------------------------------
 Tue Oct 19 14:02:02 CEST 2004 - jsrain@suse.cz
 
 - use unified messages from Label.ycp and Confirm.ycp

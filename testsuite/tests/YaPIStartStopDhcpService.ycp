@@ -6,7 +6,7 @@
     import "YaPI::DHCPD";
     import "Mode";
 
-    Mode::test = true;
+    Mode::SetTest ("testsuite");
 
     DUMP ("==========================================================");
     TEST (``(YaPI::DHCPD::StartDhcpService ($[])), [], nil);
