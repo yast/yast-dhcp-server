@@ -159,6 +159,14 @@ Continue?
 		return false;
 	}
 
+	settings["__dhcpd_interface"]
+	    = SCR::Read (.sysconfig.dhcpd.DHCPD_INTERFACE);
+	if (settings["__dhcpd_interface"]:"" == ""
+	    || settings["__dhcpd_interface"]:"" == nil)
+	{
+	    settings["__dhcpd_interface"] = "eth0";
+	}
+
 	if(UI::PollInput() == `abort) return false;
 	modified = false;
 	return true;
@@ -199,6 +207,11 @@ Continue?
 
 	if(UI::PollInput() == `abort) return false;
 	Progress::NextStage();
+
+	// write DHCPD_INTERFACE variable
+	SCR::Write (.sysconfig.dhcpd.DHCPD_INTERFACE,
+	    settings["__dhcpd_interface"]:"");
+	SCR::Write (.sysconfig.dhcpd, nil);
 
 	if (settings["__run_dhcp_server"]:false)
 	{

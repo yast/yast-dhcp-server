@@ -2,6 +2,8 @@
 Fri Sep  5 08:53:33 CEST 2003 - jsrain@suse.de
 
 - merged texts from proofread
+- added possiblity to specify interfaces to listen to (#30119)
+- 2.8.4
 
 -------------------------------------------------------------------
 Fri Aug 29 08:20:53 CEST 2003 - jsrain@suse.de

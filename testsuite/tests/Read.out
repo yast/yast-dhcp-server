@@ -4,5 +4,6 @@ Execute	.target.bash_output "date --date='' +\"%s\"" $[]
 Read	.target.stat "/etc/dhcpd.conf" $[]
 Read	.target.size "/var/lib/YaST2/dhcp_server.ycp" 5
 Read	.target.ycp "/var/lib/YaST2/dhcp_server.ycp" $["__run_dhcp_server":true, "globals":$["authoritative":"", "ddns-update-style":"none", "ddns-updates":"off", "default-lease-time":600, "log-facility":"local7", "max-lease-time":7200], "hosts":$["host":$["fixed-address":"10.20.1.50", "hardware":"ethernet 11:22:33:44:55:66", "host":"zealot"]], "subnets":$["subnet10.20.0.0netmask255.255.240.0":$["netmask":"255.255.240.0", "range":"10.20.5.1 10.20.5.10", "subnet":"10.20.0.0"]]]
+Read	.sysconfig.dhcpd.DHCPD_INTERFACE 0
 Return	true
-Return	$["__run_dhcp_server":true, "globals":$["authoritative":"", "ddns-update-style":"none", "ddns-updates":"off", "default-lease-time":600, "log-facility":"local7", "max-lease-time":7200], "hosts":$["host":$["fixed-address":"10.20.1.50", "hardware":"ethernet 11:22:33:44:55:66", "host":"zealot"]], "subnets":$["subnet10.20.0.0netmask255.255.240.0":$["netmask":"255.255.240.0", "range":"10.20.5.1 10.20.5.10", "subnet":"10.20.0.0"]]]
+Return	$["__dhcpd_interface":0, "__run_dhcp_server":true, "globals":$["authoritative":"", "ddns-update-style":"none", "ddns-updates":"off", "default-lease-time":600, "log-facility":"local7", "max-lease-time":7200], "hosts":$["host":$["fixed-address":"10.20.1.50", "hardware":"ethernet 11:22:33:44:55:66", "host":"zealot"]], "subnets":$["subnet10.20.0.0netmask255.255.240.0":$["netmask":"255.255.240.0", "range":"10.20.5.1 10.20.5.10", "subnet":"10.20.0.0"]]]

@@ -28,4 +28,5 @@ Summary:	Configuration of dhcp-server
 @moduledir@/DhcpServer.ycp
 @desktopdir@/dhcp-server.desktop
 @configdir@/dhcp-server.y2cc
+@scrconfdir@/cfg_dhcpd.scr
 %doc @docdir@

@@ -23,6 +23,21 @@
       */
     global define void InitPopups () ``{
 	map p = $[
+	    "__interfaces" : $[
+		"table" : $[
+		   // table cell, label
+		    "label" : _("Network Interfaces"),
+		    "summary" : ``(DhcpServer::networkInterfaceSummary ()),
+		    "optional" : false,
+		],
+		"popup" : $[
+		    "widget" : `textentry,
+		    "init" : ``(DhcpServer::networkInterfaceInit ()),
+		    "store" : ``(DhcpServer::networkInterfaceSave ()),
+		    // label -- help text
+		    "help" : _("If multiple interfaces are needed, separate them with spaces."),
+		],
+	    ],
 	    "__enable_service" : $[
 		"table" : $[
 		   // table cell, label
@@ -75,13 +90,13 @@
 	    "range" : $[
 		"popup" : $[
 		    // label -- help text
-		    "help" : _("If multiple ranges are needed, separate them with commas"),
+		    "help" : _("If multiple ranges are needed, separate them with commas."),
 		],
 	    ],
 	    "log-facility" : $[
 		"popup" : $[
 		    // label -- help text
-		    "help" : _("If you change this, also update the syslog configuration"),
+		    "help" : _("If you change this, also update the syslog configuration."),
 		],
 	    ],
 	    "hardware" : $[
@@ -128,6 +143,36 @@
 	    UI::QueryWidget (`id (`hw), `Value),
 	    UI::QueryWidget (`id (`addr), `Value));
     }
+
+    /**
+      * Summary function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      * @return string table entry summary
+      */
+    global define string networkInterfaceSummary (any opt_id, any opt_key) ``{
+	return settings["__dhcpd_interface"]:false;
+    }
+
+    /**
+      * Initialization function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void networkInterfaceInit (any opt_id, any opt_key) ``{
+	UI::ChangeWidget (`id (opt_key), `Value,
+	    settings["__dhcpd_interface"]:false);
+    }
+
+    /**
+      * Summary function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void networkInterfaceSave (any opt_id, any opt_key)``{
+	settings["__dhcpd_interface"] = UI::QueryWidget (`id (opt_key), `Value);
+    }
+
 
     /**
       * Summary function of a table entry / popup
