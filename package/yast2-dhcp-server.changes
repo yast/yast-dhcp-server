@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Thu Jun 17 13:10:50 CEST 2004 - jsrain@suse.cz
+
+- using common implementation of the navigation tree
+
+-------------------------------------------------------------------
 Tue Jun  8 12:38:05 CEST 2004 - jsrain@suse.cz
 
 - fixed examples in YaPI documentation (#41651)

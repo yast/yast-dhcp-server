@@ -19,6 +19,7 @@ import "Address";
 import "IP";
 import "Hostname";
 import "Progress";
+import "DialogTree";
 
 
 include "dhcp-server/helps.ycp";
@@ -107,7 +108,7 @@ term Common_StartUpDialog() {
     return dialog;
 }
 
-void StartUpInit ()
+void StartUpInit (string key)
 {
     boolean enabled = DhcpServer::GetStartService ();
     
@@ -115,7 +116,7 @@ void StartUpInit ()
     UI::ChangeWidget ( `id ("serveroff"), `Value, ! enabled );
 }
 
-void StartUpStore ()
+void StartUpStore (string key, map event)
 {
     DhcpServer::SetStartService ( (boolean)UI::QueryWidget ( `id ("serveron"), `Value ) );
 }
@@ -170,7 +171,7 @@ YaST will quit now."));
     return dialog;
 }
 
-void CardSelectionInit ()
+void CardSelectionInit (string key)
 {
     list dhcp_ifaces = DhcpServer::GetAllowedInterfaces ();
     
@@ -189,7 +190,7 @@ void CardSelectionInit ()
     }
 }
 
-void CardSelectionStore ()
+void CardSelectionStore (string key, map event)
 {
     // FIXME: validation
     string item = (string)UI::QueryWidget (`id ("nic_selection"), `CurrentItem);
@@ -270,7 +271,7 @@ void GlobalSettingsValidChars ()
     UI::ChangeWidget(`id( "defaultleasetime" ),	`ValidChars, "0123456789");
 }
 
-void GlobalSettingsInit ()
+void GlobalSettingsInit (string key)
 {
     // get the global options
     list< map<string,string> > options = DhcpServer::GetEntryOptions ("","");
@@ -341,9 +342,11 @@ void GlobalSettingsInit ()
     });
     
     UI::ChangeWidget ( `id ("ldap"), `Value, DhcpServer::GetUseLdap () );
+
+    GlobalSettingsValidChars ();
 }
 
-void GlobalSettingsHandle (map event)
+void GlobalSettingsHandle (string key, map event)
 {
     if (event ["ID"]:nil == "ldap" && event ["EventReason"]:nil == "ValueChanged")
     {
@@ -364,7 +367,7 @@ All your previous settings will be lost.");// ))
     }
 }
 
-void GlobalSettingsStore ()
+void GlobalSettingsStore (string key, map event)
 {
     list< map<string,string> > directives = [];
     
@@ -459,7 +462,7 @@ void GlobalSettingsStore ()
     DhcpServer::SetModified ();
 }
 
-boolean GlobalSettingsValidate ()
+boolean GlobalSettingsValidate (string key)
 {
     string domainname =		(string) UI::QueryWidget ( `id ("domainname"),		`Value );
     string primarydnsip =	(string) UI::QueryWidget ( `id ("primarydnsip"),	`Value );
@@ -596,7 +599,7 @@ void DynamicDHCPValidChars ()
     UI::ChangeWidget(`id( "maxleasetime" ),	`ValidChars, "0123456789");
 }
 
-void DynamicDHCPInit ()
+void DynamicDHCPInit (string key)
 {
     // find out the our subnet identification
     
@@ -657,9 +660,10 @@ void DynamicDHCPInit ()
 	    }
 	});
     }
+    DynamicDHCPValidChars ();
 }
 
-void DynamicDHCPStore ()
+void DynamicDHCPStore (string key, map event)
 {
     list<string> ifaces = DhcpServer::GetAllowedInterfaces ();
 
@@ -723,7 +727,7 @@ void DynamicDHCPStore ()
     DhcpServer::SetEntryDirectives ( "subnet", id, directives );    
 }
 
-boolean DynamicDHCPValidate ()
+boolean DynamicDHCPValidate (string key)
 {
     string from_ip		= (string) UI::QueryWidget ( `id ("from_ip"),		`Value );
     string to_ip		= (string) UI::QueryWidget ( `id ("to_ip"),		`Value );
@@ -861,7 +865,7 @@ void SelectItem (string id)
     UI::ChangeWidget ( `id ("network_type"), `CurrentButton, opts["type"]:"ethernet" ); 
 }
 
-void HostManagementInit ()
+void HostManagementInit (string key)
 {
     hosts = $[];
     hosts_parent_id = "";
@@ -945,6 +949,7 @@ void HostManagementInit ()
 	    break;
 	}
     });
+    HostManagementValidChars ();
 }
 
 list< map<string,string> > PrepareDirectives ()
@@ -971,7 +976,7 @@ list< map<string,string> > PrepareDirectives ()
     return directives;
 }
 
-void HostManagementHandle (map event_descr)
+void HostManagementHandle (string key, map event_descr)
 {
     if ( event_descr["ID"]:"" == "addhost" )
     {
@@ -1029,7 +1034,7 @@ Use Change instead.
 	DhcpServer::CreateEntry ( "host", name, "subnet", hosts_parent_id );
 	DhcpServer::SetEntryDirectives ( "host", name, PrepareDirectives () );
 
-	HostManagementInit ();
+	HostManagementInit (key);
     }
     else if ( event_descr["ID"]:"" == "deletehost" )
     {
@@ -1050,7 +1055,7 @@ Use Change instead.
 	
 	DhcpServer::DeleteEntry ( "host", id );
 
-	HostManagementInit ();
+	HostManagementInit (key);
     }
     else if ( event_descr["ID"]:"" == "edithost" )
     {
@@ -1091,7 +1096,7 @@ Use Change instead.
 	
 	DhcpServer::SetEntryDirectives ( "host", id, PrepareDirectives () );
 
-	HostManagementInit ();
+	HostManagementInit (key);
     }
     else if ( event_descr["ID"]:"" == "registered_hosts_table" 
 	&& event_descr["EventReason"]:"" == "SelectionChanged" )
@@ -1106,152 +1111,17 @@ Use Change instead.
     }
 }
 
-void HostManagementStore ()
+void HostManagementStore (string key, map event)
 {
     return;
 }
 
-map<string, map<string, any> > tabs = $[
-    "start_up" : $[
-	"contents"	: Common_StartUpDialog(),
-	// dialog caption
-	"caption"	: _("Start-Up"),
-	"init"		: StartUpInit,
-	"store"		: StartUpStore,
-    ],
-    "card_selection" : $[
-	"contents"	: Common_CardSelectionDialog(),
-	// dialog caption
-	"caption"	: _("Card Selection"),
-	"init"		: CardSelectionInit,
-	"store"		: CardSelectionStore,
-    ],
-    "global_settings" : $[
-	"contents"	: Common_GlobalSettingsDialog(),
-	// dialog caption
-	"caption"	: _("Global Settings"),
-	"validchars"	: GlobalSettingsValidChars,
-	"init"		: GlobalSettingsInit,
-	"handle"	: GlobalSettingsHandle,
-	"validate"	: GlobalSettingsValidate,
-	"store"		: GlobalSettingsStore,
-    ],
-    "dynamic_dhcp" : $[
-	"contents"	: Common_DynamicDHCPDialog(),
-	// dialog caption
-	"caption"	: _("Dynamic DHCP"),
-	"validchars"	: DynamicDHCPValidChars,
-	"init"		: DynamicDHCPInit,
-	"validate"	: DynamicDHCPValidate,
-	"store"		: DynamicDHCPStore,
-    ],
-    "host_management" : $[
-	"contents"	: Common_HostManagementDialog(),
-	// dialog caption
-	"caption"	: _("Host Management"),
-	"validchars"	: HostManagementValidChars,
-	"init"		: HostManagementInit,
-	"handle"	: HostManagementHandle,
-	"store"		: HostManagementStore,
-    ],
-    "expert_settings" : $[
-	// dialog caption
-	"caption"	: _("Expert Settings")
-    ],
-];
-
-/**
- * Common Config Dialog 
- * @return any dialog return for treewizard
- */
-any CommonConfigDialog () {
-
-    Wizard::OpenTreeNextBackDialog();
-
-    // Tree (left menu) definiton
-    list<map> Tree = [];
-    Tree = Wizard::AddTreeItem( Tree, "", tabs [ "start_up", "caption"]: "", "start_up");
-    Tree = Wizard::AddTreeItem( Tree, "", tabs [ "card_selection", "caption"]: "", "card_selection");
-    Tree = Wizard::AddTreeItem( Tree, "", tabs [ "global_settings", "caption"]: "", "global_settings" );
-    Tree = Wizard::AddTreeItem( Tree, "", tabs [ "dynamic_dhcp", "caption"]: "",  "dynamic_dhcp" );
-    Tree = Wizard::AddTreeItem( Tree, "", tabs [ "host_management", "caption"]: "", "host_management" );
-    Tree = Wizard::AddTreeItem( Tree, "", tabs [ "expert_settings", "caption"]: "", "expert_settings" );
-
-    Wizard::CreateTree(Tree, ""); // FIXME shouldn't there be a label here?
-
-
-    // first dialog definition - according Mike Host Management will be the initial
-    // Merging common dialog title with title of every single dialog
-
-    string current_tab = "start_up";
-
-    string caption = _("DHCP Server") + " : " + tabs[current_tab, "caption"]: "";
-    string help = HELPS[current_tab]:"";
-    term dialog = tabs[current_tab, "contents" ]: `VSpacing (1);
-
-    Wizard::SetContentsButtons (caption, dialog, help,
-	Label::CancelButton(), Label::FinishButton());
-
-//    UI::WizardCommand(`SetNextButtonLabel( Label::OKButton() ) );
-//    UI::WizardCommand(`SetAbortButtonLabel( Label::CancelButton() ) );
-    if (UI::WidgetExists(`id(`wizardTree)))
+symbol ExpertSettingsTabInit (string tab) {
+    y2error ("Tab: %1", tab);
+    if (tab == "expert_settings")
     {
-	Wizard::ReplaceBackButton (`PushButton (`id(`help), `opt(`key_F1), Label::HelpButton()));
-    }
-    else
-    {
-	Wizard::HideBackButton();
-    }
-
-
-    // initialize contents
-    void () func = (void ())tabs [current_tab, "init"]:nil;
-    if (func != nil)
-	func ();
-
-    if (UI::WidgetExists(`id(`wizardTree)))
-    {
-	UI::ChangeWidget(`id(`wizardTree), `CurrentItem, current_tab);
-	UI::SetFocus (`id (`wizardTree));
-    }
-    else
-    {
-	UI::WizardCommand(`SelectTreeItem(current_tab));
-    }
-
-    any ret = nil;
-    while(true) {
-
-	map event = UI::WaitForEvent ();
-	ret = event["ID"]:nil;
-	if (ret == `wizardTree)
-	{
-	    ret = (string)UI::QueryWidget (`id (`wizardTree), `CurrentItem);
-	}
-
-	if (ret == `abort || ret == `cancel) {
-	    if(confirmAbort()) break;
-	    else continue;
-	}
-	else if (ret == `back)
-	{
-	    break;
-	}
-	else if (ret == `next || ret == "expert_settings") {
-	    DhcpServer::SetModified ();
-	    // validate the settings before storing them
-	    boolean () runfunc = (boolean ())tabs [current_tab, "validate"]:nil;
-
-	    if (runfunc != nil)
-	    {
-		boolean validated = runfunc ();
-		if (validated == false) continue;
-		// else store them
-	    }
-	    if (ret == "expert_settings")
-	    {
-		// yes-no popup
-		if (! Popup::YesNo (_(
+	// yes-no popup
+	if (! Popup::YesNo (_(
 "If you enter the expert settings, you cannot return 
 to this dialog. To display this dialog, save the changes
 and restart the module. If a too complex configuration
@@ -1260,108 +1130,138 @@ start the DHCP server module.
 
 Continue?
 ")))
-		{
-		    Wizard::SelectTreeItem (current_tab);
-		    continue;
-		}
-		else
-		{
-		    ret = `expert;
-		}
-	    }
-
-	    // store the settings first
-	    func = (void ())tabs [current_tab, "store"]:nil;
-	    func ();
-	    break;
-	}
-	else if (ret == `help)
 	{
-
-	    UI::OpenDialog( `opt(`decorated ),
-		`HBox( `VSpacing(16),
-		    `VBox(
-			`HSpacing(60),
-// FIXME add heading for next version
-			// popup window header
-//			`Heading(_("Help")),
-			`VSpacing(0.5),
-			`RichText(help),
-			`VSpacing(1.5),
-			`PushButton(`id(`ok), `opt(`default, `key_F10), Label::OKButton())
-		    )
-		)
-	    );
-
-	    UI::SetFocus(`id(`ok));
-	    UI::UserInput();
-	    UI::CloseDialog();
+	    return `refuse_display;
 	}
-	else if ( ret == "start_up" || ret == "card_selection"  || ret == "global_settings" 
-                || ret == "dynamic_dhcp" || ret == "host_management" )
-        {
-	    if (current_tab == ret)
-	    {
-		// nothing to be changed
-		continue;
-	    }
-
-	    // validate the settings before storing them
-	    boolean () runfunc = (boolean ())tabs [current_tab, "validate"]:nil;
-	    
-	    if (runfunc != nil)
-	    {
-		boolean validated = runfunc ();
-		if (validated == false) continue;
-		// else store them
-	    }
-	    
-	    // store the settings first
-	    func = (void ())tabs [current_tab, "store"]:nil;
-	    func ();
-	    
-	    current_tab = (string) ret;
-            // Changing dialogs depending on tree item
-            caption = _("DHCP Server") + " - " + tabs [ current_tab, "caption"]: "";
-            help = HELPS[current_tab]:"";
-            dialog = tabs [current_tab, "contents"]:`VSpacing (1);
-            Wizard::SetContents( caption, dialog, help, true, true);
-
-	    // setting ValidChars for dialog
-	    func = (void ())tabs [current_tab, "validchars"]:nil;
-	    func ();
-
-	    // initialize the contents
-	    func = (void ())tabs [current_tab, "init"]:nil;
-	    func ();
-
-	    if (UI::WidgetExists(`id(`wizardTree)))
-	    {
-		UI::SetFocus (`id (`wizardTree));
-	    }
-        }
-
-	else{
-	    void (map) handler = (void (map))tabs[current_tab, "handle"]: nil;
-	    if ( handler != nil )
-	    {
-		handler (event);
-	    }
-	    else
-	    {
-		y2error("unexpected retcode: %1", ret);
-		continue;
-	    }
+	else
+	{
+	    return `expert;
 	}
     }
-
-    Wizard::RestoreBackButton();
-    UI::CloseDialog ();
-
-    return ret;
-
-
+    return nil;
 }
+
+map<string, map<string, any> > tabs = $[
+    "start_up" : $[
+	"contents"	: Common_StartUpDialog(),
+	// dialog caption
+	"caption"	: _("DNS Server -- Start-Up"),
+	// tree item
+	"tree_item_label"	: _("Start-Up"),
+	"widget_names"	: ["start_up", "expert_settings"],
+    ],
+    "card_selection" : $[
+	"contents"	: Common_CardSelectionDialog(),
+	// dialog caption
+	"caption"	: _("DNS Server -- Card Selection"),
+	// tree item
+	"tree_item_label"	: _("Card Selection"),
+	"widget_names"	: ["card_selection", "expert_settings"],
+    ],
+    "global_settings" : $[
+	"contents"	: Common_GlobalSettingsDialog(),
+	// dialog caption
+	"caption"	: _("DNS Server -- Global Settings"),
+	// tree item
+	"tree_item_label"	: _("Global Settings"),
+	"widget_names"	: ["global_settings", "expert_settings"],
+    ],
+    "dynamic_dhcp" : $[
+	"contents"	: Common_DynamicDHCPDialog(),
+	// dialog caption
+	"caption"	: _("DNS Server -- Dynamic DHCP"),
+	// tree item
+	"tree_item_label"	: _("Dynamic DHCP"),
+	"widget_names"	: ["dynamic_dhcp", "expert_settings"],
+    ],
+    "host_management" : $[
+	"contents"	: Common_HostManagementDialog(),
+	// dialog caption
+	"caption"	: _("DNS Server -- Host Management"),
+	// tree item
+	"tree_item_label"	: _("Host Management"),
+	"widget_names"	: ["host_management", "expert_settings"],
+    ],
+    "expert_settings" : $[
+	// dialog caption
+	"caption"	: _("DNS Server -- Expert Settings"),
+	// tree item
+	"tree_item_label"	: _("Expert Settings"),
+	"init"		: ExpertSettingsTabInit,
+    ],
+];
+
+map<string,map<string,any> > new_widgets = $[
+    "start_up" : $[
+	"widget"	: `custom,
+	"custom_widget"	: `VBox (),
+	"init"		: StartUpInit,
+	"store"		: StartUpStore,
+	"help"		: HELPS["start_up"]:"",
+    ],
+    "card_selection" : $[
+	"widget"	: `custom,
+	"custom_widget"	: `VBox (),
+	"init"		: CardSelectionInit,
+	"store"		: CardSelectionStore,
+	"help"		: HELPS["card_selection"]:"",
+    ],
+    "global_settings" : $[
+	"widget"	: `custom,
+	"custom_widget"	: `VBox (),
+	"init"		: GlobalSettingsInit,
+	"handle"	: GlobalSettingsHandle,
+	"validate_type"	: `function,
+	"validate_function" : GlobalSettingsValidate,
+	"store"		: GlobalSettingsStore,
+	"help"		: HELPS["global_settings"]:"",
+    ],
+    "dynamic_dhcp" : $[
+	"widget"	: `custom,
+	"custom_widget"	: `VBox (),
+	"init"		: DynamicDHCPInit,
+	"validate_type"	: `function,
+	"validate_function"	: DynamicDHCPValidate,
+	"store"		: DynamicDHCPStore,
+	"help"		: HELPS["dynamic_dhcp"]:"",
+    ],
+    "host_management" : $[
+	"widget"	: `custom,
+	"custom_widget"	: `VBox (),
+	"init"		: HostManagementInit,
+	"handle"	: HostManagementHandle,
+	"store"		: HostManagementStore,
+	"help"		: HELPS["host_management"]:"",
+    ],
+    "expert_settings" : $[
+	"widget"	: `custom,
+	"custom_widget"	: `VBox (),
+	"help"		: HELPS["expert_settings"]:"",
+    ],
+];
+
+/**
+ * Common Config Dialog
+ * @return symbol for the wizard sequencer
+ */
+symbol CommonConfigDialog () {
+    map<any,any> functions = $[
+	`abort : confirmAbort,
+    ];
+
+    return DialogTree::ShowAndRun ($[
+	"ids_order" : ["start_up", "card_selection", "global_settings", "dynamic_dhcp", "host_management", "expert_settings"],
+	"initial_screen" : "start_up",
+	"screens" :  tabs,
+	"widget_descr" : new_widgets,
+	"back_button" : "",
+	"abort_button" :  Label::CancelButton (),
+	"nect_button" : Label::FinishButton (),
+	"functions" : functions,
+    ]);
+}
+
+
 
 any FirstRunDialog (string current_tab, integer step_number) {
 // error report
