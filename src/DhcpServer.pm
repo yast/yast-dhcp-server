@@ -128,6 +128,7 @@ sub SetKeysInfo {
     @tsig_keys = @{$info->{"tsig_keys"} };
     @new_include_files = @{$info->{"new_files"} };
     @deleted_include_files = @{$info->{"removed_files"} };
+    $self->SetModified ();
 }
 
 
@@ -1167,6 +1168,7 @@ sub ChangeEntry {
 	$entry{"children"} = \@children;
 	\%entry;
     } @settings;
+    $modified = 1;
     return 1;
 }
 
@@ -1186,6 +1188,8 @@ BEGIN{$TYPEINFO{SetStartService} = ["function", "void", "boolean"];}
 sub SetStartService {
     my $self = shift;
     $start_service = shift;
+
+    $self->SetModified ();
 }
 
 BEGIN { $TYPEINFO{SetChrootJail} = [ "function", "void", "boolean" ];}
@@ -1237,6 +1241,7 @@ sub SetAllowedInterfaces {
     my $allowed_interfaces_ref = shift;
 
     @allowed_interfaces = @{$allowed_interfaces_ref};
+    $self->SetModified ();
 }
 
 BEGIN{$TYPEINFO{GetOpenFirewall} = ["function", "boolean"];}
@@ -1256,6 +1261,7 @@ sub SetOpenFirewall {
 	$adapt_firewall = 1;
 	$open_firewall = $new_open_firewall;
     }
+    $self->SetModified ();
 }
 
 BEGIN{$TYPEINFO{GetAdaptDdnsSettings} = ["function", "boolean"];}
@@ -1268,6 +1274,7 @@ BEGIN{$TYPEINFO{SetAdaptDdnsSettings} = ["function", "void", "boolean"];}
 sub SetAdaptDdnsSettings {
     my $self = shift;
     $adapt_ddns_settings = shift;
+    $self->SetModified ();
 }
 
 BEGIN{$TYPEINFO{GetUseLdap} = ["function", "boolean"];}
