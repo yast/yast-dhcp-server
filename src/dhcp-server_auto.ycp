@@ -49,6 +49,7 @@ define map KillComments (map exported) ``{
 		    m = remove (m, "comment_before");
 		if (haskey (m, "comment_after"))
 		    m = remove (m, "comment_after");
+		return m;
 	    });
 	    decl["options"] = options;
 	}
@@ -60,10 +61,10 @@ define map KillComments (map exported) ``{
 		    m = remove (m, "comment_before");
 		if (haskey (m, "comment_after"))
 		    m = remove (m, "comment_after");
+		return m;
 	    });
 	    decl["directives"] = directives;
 	}
-
 	return decl;
     });
     exported["settings"] = settings;

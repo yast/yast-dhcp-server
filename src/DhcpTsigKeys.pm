@@ -7,15 +7,11 @@ package DhcpTsigKeys;
 
 use strict;
 
-use ycp;
-use YaST::YCP qw(Boolean);
+use YaST::YCP qw(:LOGGING Boolean);
 use Data::Dumper;
 use Time::localtime;
 
-use Locale::gettext;
-use POSIX ();     # Needed for setlocale()
-
-POSIX::setlocale(LC_MESSAGES, "");
+use YaPI;
 textdomain("dhcp-server");
 
 our %TYPEINFO;
@@ -27,12 +23,6 @@ my @tsig_keys = ();
 my @new_tsig_keys = ();
 
 my @deleted_tsig_keys = ();
-
-# FIXME this should be defined only once for all modules
-#sub _ {
-#    return gettext ($_[0]);
-#}
-
 
 YaST::YCP::Import ("SCR");
 
@@ -91,6 +81,9 @@ sub AddTSIGKey {
     my @new_keys = @{$self->AnalyzeTSIGKeyFile ($filename)};
     y2milestone ("Reading TSIG file $filename");
     $filename = $self->NormalizeFilename ($filename);
+    @tsig_keys = grep {
+	$_->{"filename"} ne $filename;
+    } @tsig_keys;
     my $contents = SCR->Read (".target.string", $filename);
     if (0 != @new_keys)
     {

@@ -1,0 +1,19 @@
+{
+    // testedfiles: DnsServer.pm DNSD.pm
+
+    include "testsuite.ycp";
+
+    import "YaPI::DHCPD";
+    import "Mode";
+
+    Mode::test = true;
+
+    DUMP ("==========================================================");
+    TEST (``(YaPI::DHCPD::StartDhcpService ($[])), [], nil);
+    DUMP ("==========================================================");
+    TEST (``(YaPI::DHCPD::StopDhcpService ($[])), [], nil);
+    DUMP ("==========================================================");
+    TEST (``(YaPI::DHCPD::GetDhcpServiceStatus ($[])), [], nil);
+    DUMP ("==========================================================");
+
+}

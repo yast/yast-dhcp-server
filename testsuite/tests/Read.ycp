@@ -78,7 +78,12 @@
     map WRITE = $[];
     map EXEC = $[
 	"target" : $[
-	    "bash_output" : $[],
+	    "bash_output" : $[
+		"exit" : 0,
+		"stdout" : "localhost",
+		"stderr" : "localhost",
+	    ],
+	    "bash" : 1,
 	],
     ];
 
