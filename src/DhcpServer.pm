@@ -12,6 +12,12 @@ use YaST::YCP qw(Boolean);
 use Data::Dumper;
 use Time::localtime;
 
+use Locale::gettext;
+use POSIX;     # Needed for setlocale()
+
+setlocale(LC_MESSAGES, "");
+textdomain("dhcp-server");
+
 #use io_routines;
 #use check_routines;
 
