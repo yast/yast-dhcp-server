@@ -1127,8 +1127,8 @@ map<string, map<string, any> > tabs = $[
 	"caption"	: _("DHCP Server -- Card Selection"),
 	// tree item
 	"tree_item_label"	: _("Card Selection"),
-	"widget_names"	: ["card_selection", "expert_settings",
-	    "open_firewall"],
+	"widget_names"	: ["card_selection", "open_firewall",
+	    "expert_settings", ],
     ],
     "global_settings" : $[
 	"contents"	: Common_GlobalSettingsDialog(),
@@ -1176,12 +1176,24 @@ map<string, map<string, any> > tabs = $[
     ],
 ];
 
+boolean GetStartService () {
+    return DhcpServer::GetStartService ();
+}
+
+void SetStartService (boolean start) {
+    DhcpServer::SetStartService (start);
+}
+
+void SaveAndRestart () {
+    DhcpServer::Write ();
+}
+
 map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
   widgets,
   $[
     "auto_start_up" : CWMServiceStart::CreateAutoStartWidget ($[
-	"get_service_auto_start" : DhcpServer::GetStartService,
-	"set_service_auto_start" : DhcpServer::SetStartService,
+	"get_service_auto_start" : GetStartService,
+	"set_service_auto_start" : SetStartService,
 	// radio button
 	"start_auto_button" : _("Start DHCP Server when &Booting"),
 	// radio button
@@ -1202,7 +1214,7 @@ map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
 	"start_now_button" : _("&Start DHCP Server Now"),
 	// push button
 	"stop_now_button" : _("S&top DHCP Server Now"),
-	"save_now_action" : DhcpServer::Write,
+	"save_now_action" : SaveAndRestart,
 	// push button
 	"save_now_button" : _("Save Settings and Restart DHCP Server &Now"),
 	"help" : sformat (CWMServiceStart::StartStopHelpTemplate (true),
@@ -1217,10 +1229,6 @@ map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
 	"get_use_ldap" : DhcpServer::GetUseLdap,
 	"set_use_ldap" : SetUseLdap,
     ]),
-/*    "firewall" : CWMFirewallInterfaces::CreateOpenFirewallWidget ($[
-"services" : [],
-"display_details" : true,
-    ]),*/
     "card_selection" : $[
 	"widget"	: `custom,
 	"custom_widget"	: `VBox (),

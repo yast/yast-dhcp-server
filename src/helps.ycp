@@ -26,11 +26,12 @@ Select the network interfaces to which the DHCP server should listen from
 <b>Available Interfaces</b>.</p>"),
 
 	// help text 2/2
-	"adapt_firewall" : _("<p><b><big>Adapting Firewall Settings</big></b>
-<br>
-To adapt the firewall settings so the DHCP server can be accessed
-through all network interfaces to which it listens, check
-<b>Adapt Firewall Settings</b>.</p>"),
+	"open_firewall" : _("<p><b><big>Firewall Settings</big></b><br>
+To open the firewall to allow access the service from remote computers
+through the selected interface, set
+<b>Open Firewall for Selected Interface</b>.<br>
+This option is available only if the firewall
+is enabled.</p>"),
 
 	// help text 1/5
 	"start" : _("<p><b><big>Start DHCP Server</big></b><br>

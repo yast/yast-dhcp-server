@@ -314,8 +314,10 @@ global define symbol ldapHandle (string id, map event) ``{
  * Initialize the widget
  * @param id any widget id
  */
-global define void FirewallInit (string id) ``{
+global define void OpenFirewallInit (string id) ``{
+    boolean enabled = Service::Enabled("SuSEfirewall2_init");
     boolean open = DhcpServer::GetOpenFirewall ();
+    UI::ChangeWidget (`id (id), `Enabled, enabled);
     UI::ChangeWidget (`id (id), `Value, open);
 }
 
@@ -324,10 +326,24 @@ global define void FirewallInit (string id) ``{
  * @param id string widget id
  * @param event map event that caused storing process
  */
-global define void FirewallStore (string id, map event) ``{
+global define void OpenFirewallStore (string id, map event) ``{
     boolean open = (boolean)UI::QueryWidget (`id (id), `Value);
     DhcpServer::SetOpenFirewall (open);
     DhcpServer::SetModified ();
+}
+
+global boolean OpenFirewallValidate (string id, map event) {
+    boolean open = (boolean)UI::QueryWidget (`id (id), `Value);
+    boolean enabled = Service::Enabled("SuSEfirewall2_init");
+    if (enabled && ! open)
+    {
+	if (! Popup::YesNo (_("The port in firewall is not open. DHCP server
+will not be able to serve your network.
+Continue?")))
+	{
+	    return false;
+	}
+    }
 }
 
 
@@ -1047,9 +1063,11 @@ global define void InitWidgets () ``{
 	    "widget" : `checkbox,
 	    // check box
 	    "label" : _("Open &Firewall for Selected Interface"),
-	    "init" : FirewallInit,
-	    "store" : FirewallStore,
-	    "help" : HELPS["adapt_firewall"]:"",
+	    "init" : OpenFirewallInit,
+	    "store" : OpenFirewallStore,
+	    "validate_type" : `function,
+	    "validate_function" : OpenFirewallValidate,
+	    "help" : HELPS["open_firewall"]:"",
 	],
 	"ddns_enable" : $[
 	    "widget" : `custom,
