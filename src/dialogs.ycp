@@ -72,8 +72,7 @@ global define symbol MainDialog () ``{
     Wizard::SetContentsButtons (caption, contents, help,
 	Label::BackButton (), Label::FinishButton ());
     Wizard::HideBackButton();
-
-UI::DumpWidgetTree ();
+    Wizard::SetAbortButton(`abort, Label::CancelButton() );
 
     return CWM::Run (w, $[`abort : confirmAbortIfChanged]);
 }
@@ -96,6 +95,7 @@ global define symbol GlobalsDialog () ``{
 
     Wizard::SetContentsButtons (caption, contents, help,
 	Label::BackButton (), Label::OKButton ());
+    Wizard::RestoreAbortButton ();
 
     return CWM::Run (w, functions);
 }
@@ -121,6 +121,7 @@ global define symbol SubnetDialog () ``{
 
     Wizard::SetContentsButtons (caption, contents, help,
 	Label::BackButton (), Label::OKButton ());
+    Wizard::RestoreAbortButton ();
 
     return CWM::Run (w, functions);
 }
@@ -147,6 +148,7 @@ global define symbol HostDialog () ``{
 
     Wizard::SetContentsButtons (caption, contents, help,
 	Label::BackButton (), Label::OKButton ());
+    Wizard::RestoreAbortButton ();
 
     return CWM::Run (w, functions);
 }
@@ -174,6 +176,7 @@ global define symbol SharedNetworkDialog () ``{
 
     Wizard::SetContentsButtons (caption, contents, help,
 	Label::BackButton (), Label::OKButton ());
+    Wizard::RestoreAbortButton ();
 
     return CWM::Run (w, functions);
 }
@@ -200,6 +203,7 @@ global define symbol PoolDialog () ``{
 
     Wizard::SetContentsButtons (caption, contents, help,
 	Label::BackButton (), Label::OKButton ());
+    Wizard::RestoreAbortButton ();
 
     return CWM::Run (w, functions);
     return `back;
@@ -227,6 +231,7 @@ global define symbol Groupdialog () ``{
 
     Wizard::SetContentsButtons (caption, contents, help,
 	Label::BackButton (), Label::OKButton ());
+    Wizard::RestoreAbortButton ();
 
     return CWM::Run (w, functions);
 }
@@ -253,6 +258,7 @@ global define symbol ClassDialog () ``{
 
     Wizard::SetContentsButtons (caption, contents, help,
 	Label::BackButton (), Label::OKButton ());
+    Wizard::RestoreAbortButton ();
 
     return CWM::Run (w, functions);
     return `back;
@@ -331,6 +337,7 @@ global define symbol SectionTypeChoose () ``{
 
     Wizard::SetContentsButtons (caption, contents, help,
 	Label::BackButton (), Label::NextButton ());
+    Wizard::RestoreAbortButton ();
 
     symbol ret = nil;
     while (ret == nil)
@@ -371,6 +378,7 @@ global define symbol IfacesDialog () ``{
 
     Wizard::SetContentsButtons (caption, contents, help,
 	Label::BackButton (), Label::OKButton ());
+    Wizard::RestoreAbortButton ();
 
     return CWM::Run (w, functions);
 }
