@@ -180,6 +180,7 @@ which sets the optimal IP refreshing time for clients.<br></p>") +
 	_("<b>Max. Lease Time</b> (optional value) sets the maximum time period
 for which this IP is blocked for the client on the DHCP server.</p>"),
 
+	// Help text
 	"all_settings_button" : _("<p><b><big>Expert configuration</big></b><br>
 To enter complete configuration of the DHCP server, click
 <b>Enter DHCP Server Expert Configuration</b>.</p>"),

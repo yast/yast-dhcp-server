@@ -15,26 +15,34 @@
  * <h3>Configuration of the dhcp-server</h3>
  */
 
-    textdomain "dhcp-server";
+textdomain "dhcp-server";
 
-    /* The main () */
-    y2milestone ("----------------------------------------");
-    y2milestone ("Dhcp-server module started");
+/* The main () */
+y2milestone ("----------------------------------------");
+y2milestone ("Dhcp-server module started");
 
-    import "DhcpServer";
-    import "DhcpServerUI";
-    import "Wizard";
+import "DhcpServerUI";
 
-    any ret = nil;
+/**
+  * CommandLine handler for running GUI
+  * @return boolean true if settings were saved
+  */
+define boolean GuiHandler () {
+    symbol ret = DhcpServerUI::DhcpSequence ();
+    if (ret == `abort || ret == `back || ret == `nil)
+	return false;
+    return true;
+}
 
-    ret = DhcpServerUI::DhcpSequence ();
-    y2debug("ret=%1", ret);
+include "dhcp-server/commandline.ycp";
+any ret = CommandLine::Run(cmdline);
+y2debug("ret=%1", ret);
 
-    /* Finish */
-    y2milestone("Dhcp-server module finished");
-    y2milestone("----------------------------------------");
+/* Finish */
+y2milestone("Dhcp-server module finished");
+y2milestone("----------------------------------------");
 
-    return ret;
+return ret;
 
 /* EOF */
 }

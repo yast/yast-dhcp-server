@@ -32,9 +32,13 @@ include "dhcp-server/helps.ycp";
 
 
 define list time_combo_items = [
+    // combo box item
     `item(`id("days"), _("Days")),
+    // combo box item
     `item(`id("hours"), _("Hours")),
+    // combo box item
     `item(`id("minutes"), _("Minutes")),
+    // combo box item
     `item(`id("seconds"), _("Seconds"))
 ];
 
@@ -155,6 +159,7 @@ void CardSelectionInit (string key)
 void CardSelectionStore (string key, map event)
 {
     // FIXME: validation
+    // FIXME: subnet handling
     string item = (string)UI::QueryWidget (`id ("nic_selection"), `CurrentItem);
     
     DhcpServer::SetAllowedInterfaces ([item]);

@@ -2383,6 +2383,7 @@ sub LdapInit {
 	    my %server_entry = %{ $servers{$dhcp_server_dn} };
 	    if (scalar (@{$server_entry{"dhcpservicedn"}}) > 1)
 	    {
+		# error report
 		Report->Error (__("Support for multiple dhcpServiceDN not implemented."));
 	    }
 	    $ldap_dhcp_config_dn = $server_entry{"dhcpservicedn"}[0];
@@ -2423,6 +2424,7 @@ sub LdapInit {
 	    y2milestone ("Primary DN: $pri_dn");
 	    if ($dhcp_server_dn ne $pri_dn)
 	    {
+		# error report
 		Report->Error (__("Support for multiple dhcpServiceDN not implemented."));
 	    }
 	}

@@ -17,7 +17,9 @@ ynclude_DATA =			\
 	wizards.ycp		\
 	routines.ycp		\
 	widgets.ycp		\
-	options.ycp
+	options.ycp		\
+	commandline.ycp		\
+	misc.ycp
 
 desktop_DATA =                  \
 	dhcp-server.desktop
