@@ -157,7 +157,6 @@ sub AdaptDDNS {
 	return 1;
     }
     my @directives = @{$self->GetEntryDirectives ("", "") || []};
-    my %includes = ();
 
     my @current_keys = @{DhcpTsigKeys->ListTSIGKeys () || []};
     my @deleted_keys = @{DhcpTsigKeys->ListDeletedKeyIncludes () || []};
@@ -206,6 +205,19 @@ sub AdaptDDNS {
 	    "value" => "\"$new_inc\"",
 	};
     }
+    my %includes = ();
+    foreach my $include (@includes) {
+	$includes{$include} = 1;
+    }
+    foreach my $tsig_key (@current_keys) {
+	my $k_fn = $tsig_key->{"filename"};
+	if (exists ($includes{$k_fn}))
+	{
+	    $includes{$k_fn} = 1;
+	    push @includes, $k_fn;
+	}
+    }
+
     $includes = join (" ", @includes);
     SCR->Write (".sysconfig.dhcpd.DHCPD_CONF_INCLUDE_FILES", $includes);
     SCR->Write (".sysconfig.dhcpd", undef);
