@@ -2,6 +2,7 @@
 Thu Feb 24 15:36:05 CET 2005 - jsrain@suse.cz
 
 - fixed completely broken behavior in Mode::config () (#66422)
+- 2.11.5
 
 -------------------------------------------------------------------
 Wed Feb 23 12:49:11 CET 2005 - jsrain@suse.cz
