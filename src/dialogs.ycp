@@ -55,7 +55,7 @@ global define symbol WriteDialog() ``{
   */
 global define symbol MainDialog () ``{
     y2milestone ("Running main dialog");
-    list<map> w = CWM::CreateWidgets (["start", "configtree"], widgets);
+    list<map<string,any> > w = CWM::CreateWidgets (["start", "configtree"], widgets);
     term contents = `HBox (`HSpacing (2), `VBox (
 	`VSpacing (1),
 	`Left (w[0, "widget"]:`VSpacing (0)),
@@ -79,7 +79,7 @@ global define symbol MainDialog () ``{
   */
 global define symbol GlobalsDialog () ``{
     y2milestone ("Running global options dialog");
-    list<map> w = CWM::CreateWidgets (["global_table"], widgets);
+    list<map<string,any> > w = CWM::CreateWidgets (["global_table"], widgets);
     term contents = `HBox (`HSpacing (2), `VBox (
 	`VSpacing (1),
 	w[0, "widget"]:`VSpacing (0),
@@ -101,7 +101,7 @@ global define symbol GlobalsDialog () ``{
   */
 global define symbol SubnetDialog () ``{
     y2milestone ("Running subnet dialog");
-    list<map> w = CWM::CreateWidgets (["subnet", "subnet_table",
+    list<map<string,any> > w = CWM::CreateWidgets (["subnet", "subnet_table",
 	"dyn_dns_button"], widgets);
     term contents = `HBox (`HSpacing (2), `VBox (
 	`VSpacing (1),
@@ -126,7 +126,7 @@ global define symbol SubnetDialog () ``{
   */
 global define symbol HostDialog () ``{
     y2milestone ("Running host dialog");
-    list<map> w = CWM::CreateWidgets (["host", "host_table"], widgets);
+    list<map<string,any> > w = CWM::CreateWidgets (["host", "host_table"], widgets);
     term contents = `HBox (`HSpacing (2), `VBox (
 	`VSpacing (1),
 	`HBox (`HSpacing (2),
@@ -152,7 +152,7 @@ global define symbol HostDialog () ``{
   */
 global define symbol SharedNetworkDialog () ``{
     y2milestone ("Running shared network dialog");
-    list<map> w = CWM::CreateWidgets (
+    list<map<string,any> > w = CWM::CreateWidgets (
 	["shared-network", "shared-network_table"], widgets);
     term contents = `HBox (`HSpacing (2), `VBox (
 	`VSpacing (1),
@@ -179,7 +179,7 @@ global define symbol SharedNetworkDialog () ``{
   */
 global define symbol PoolDialog () ``{
     y2milestone ("Running pool dialog");
-    list<map> w = CWM::CreateWidgets (["pool", "pool_table"], widgets);
+    list<map<string,any> > w = CWM::CreateWidgets (["pool", "pool_table"], widgets);
     term contents = `HBox (`HSpacing (2), `VBox (
 	`VSpacing (1),
 	`HBox (`HSpacing (2),
@@ -206,7 +206,7 @@ global define symbol PoolDialog () ``{
   */
 global define symbol Groupdialog () ``{
     y2milestone ("Running group dialog");
-    list<map> w = CWM::CreateWidgets (["group", "group_table"], widgets);
+    list<map<string,any> > w = CWM::CreateWidgets (["group", "group_table"], widgets);
     term contents = `HBox (`HSpacing (2), `VBox (
 	`VSpacing (1),
 	`HBox (`HSpacing (2),
@@ -232,7 +232,7 @@ global define symbol Groupdialog () ``{
   */
 global define symbol ClassDialog () ``{
     y2milestone ("Running class dialog");
-    list<map> w = CWM::CreateWidgets (["class", "class_table"], widgets);
+    list<map<string,any> > w = CWM::CreateWidgets (["class", "class_table"], widgets);
     term contents = `HBox (`HSpacing (2), `VBox (
 	`VSpacing (1),
 	`HBox (`HSpacing (2),
@@ -350,7 +350,7 @@ global define symbol SectionTypeChoose () ``{
   */
 global define symbol IfacesDialog () ``{
     y2milestone ("Running interfaces dialog");
-    list<map> w = CWM::CreateWidgets (["interfaces", "adapt_firewall"],widgets);
+    list<map<string,any> > w = CWM::CreateWidgets (["interfaces", "adapt_firewall"],widgets);
     term contents = `HBox (`HStretch (), `VBox (
 	`VStretch (),
 	w[0, "widget"]:`VSpacing (0),
