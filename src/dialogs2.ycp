@@ -603,6 +603,12 @@ term Common_DynamicDHCPDialog() {
 		// frame
                 `Frame (_("IP Address Range") ,
 		    `VBox(
+		    `HBox (
+			// TRANSLATORS: informative text entry (filled up, disabled)
+			`TextEntry( `id("current_network"), _("Current &Network") ),
+			// TRANSLATORS: informative text entry (filled up, disabled)
+			`TextEntry( `id("current_netmask"), _("Current Net&mask") )
+		    ),
 			// text entry
 		    `Left( `TextEntry ( `id ("from_ip"), _("&First IP Address:") ) ),
 			// text entry
@@ -647,6 +653,8 @@ void DynamicDHCPValidChars ()
     UI::ChangeWidget(`id( "maxleasetime" ),	`ValidChars, "0123456789");
 }
 
+map <string, string> current_dynamic_dhcp = $[];
+
 void DynamicDHCPInit (string key)
 {
     // find out the our subnet identification
@@ -667,6 +675,16 @@ void DynamicDHCPInit (string key)
     string interface = ifaces_allowed[0]:nil;
     map m = DhcpServer::GetInterfaceInformation (interface);
     string id = m["network"]:"" + " netmask " + m["netmask"]:"";
+
+    current_dynamic_dhcp = $[
+	"network" : m["network"]:"",
+	"netmask" : m["netmask"]:"",
+    ];
+
+    UI::ChangeWidget( `id("current_network"), `Value, m["network"]:"");
+    UI::ChangeWidget( `id("current_network"), `Enabled, false);
+    UI::ChangeWidget( `id("current_netmask"), `Value, m["netmask"]:"");
+    UI::ChangeWidget( `id("current_netmask"), `Enabled, false);
 
     y2milestone ("Id to lookup: %1", id );
 
@@ -819,7 +837,36 @@ boolean DynamicDHCPValidate (string key, map event)
 
     // FIXME: Lease Time should NOT be zero or means zero NO expiration?
 
-    // FIXME: from_ip and to_ip must have the same netmask
+    // network of the current network interface
+    string current_network = IP::ComputeNetwork(current_dynamic_dhcp["network"]:"", current_dynamic_dhcp["netmask"]:"");
+
+    // checking from_ip network with the current network
+    string from_ip_network = IP::ComputeNetwork(from_ip, current_dynamic_dhcp["netmask"]:"");
+    if (current_network != nil && current_network != "" && current_network != from_ip_network) {
+	UI::SetFocus(`id ( "from_ip" ));
+	Report::Error(
+	    // TRANSLATORS: popup error message
+	    //              %1 is the tested IP which should match network %2 and netmask %3
+	    sformat(_("Dynamic DHCP address range is needed to match the same network as the DHCP server runs.
+IP '%1' does not match the network '%2/%3'"),
+	    from_ip, current_dynamic_dhcp["network"]:"", current_dynamic_dhcp["netmask"]:"")
+	);
+	return false;
+    }
+
+    // checking to_ip network with the current network
+    string to_ip_network   = IP::ComputeNetwork(to_ip, current_dynamic_dhcp["netmask"]:"");
+    if (current_network != nil && current_network != "" && current_network != to_ip_network) {
+	UI::SetFocus(`id ( "to_ip" ));
+	Report::Error(
+	    // TRANSLATORS: popup error message
+	    //              %1 is the tested IP which should match network %2 and netmask %3
+	    sformat(_("Dynamic DHCP address range is needed to match the same network as the DHCP server runs.
+IP '%1' does not match the network '%2/%3'"),
+	    to_ip, current_dynamic_dhcp["network"]:"", current_dynamic_dhcp["netmask"]:"")
+	);
+	return false;
+    }
 
     return true;
 }
