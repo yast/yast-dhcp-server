@@ -14,7 +14,7 @@ X-SuSE-YaST-RootOnly=true
 X-SuSE-YaST-AutoInst=all
 X-SuSE-YaST-Geometry=
 X-SuSE-YaST-SortKey=
-X-SuSE-YaST-AutoinstResource=dhcp-server
+X-SuSE-YaST-AutoInstResource=dhcp-server
 
 Icon=dhcp-server
 Exec=/sbin/yast2 dhcp-server 
