@@ -131,24 +131,20 @@ Select one of listed network cards to configure the DHCP to run on it.</p>"),
 
 	// Wizard Installation - Step 2 1/9
 	"global_settings" : _("<p><b><big>Global Settings</big></b><br>
-Here, make several DHCP settings.</p>
-") +
+Here, make several DHCP settings.</p>") +
 
 	// Wizard Installation - Step 2 2/9
 /*_("<p><b>LDAP Support</b><br>To store the DHCP configuration in LDAP,
-enable this check box.</p>
-") +*/
+enable this check box.</p>") +*/
 
 	// Wizard Installation - Step 2 3/9 (2 is removed)
 _("<p><b>Domain Name</b> sets for which domain the DHCP server
-is leasing IPs to clients.</p>
-") +
+is leasing IPs to clients.</p>") +
 
 	// Wizard Installation - Step 2 4/9
 _("<p><b>Primary Name Server IP</b> and <b>Secondary Name Server IP</b> 
 offers these name servers for the DHCP clients.
-These values must be IP addresses.</p>
-") +
+These values must be IP addresses.</p>") +
 
 	// Wizard Installation - Step 2 5/9
 _("<p><b>Default Gateway</b> sets the client's routing table with this
@@ -156,8 +152,7 @@ value as the default route.</p>") +
 
 	// Wizard Installation - Step 2 6/9
 _("<p><b>Time Server</b> tells clients to use this server
-for the time synchronizations.</p>
-") +
+for the time synchronizations.</p>") +
 
 	// Wizard Installation - Step 2 7/9
 _("<p><b>Print Server</b> offers this server as the default print server.</p>") +
@@ -168,27 +163,22 @@ _("<p><b>WINS Server</b> offers this server as the WINS server
 
 	// Wizard Installation - Step 2 9/9
 _("<p><b>Default Lease Time</b> sets the time after which the leased IP expires
-and the client must ask for an IP again.</p>
-"),
+and the client must ask for an IP again.</p>"),
 
 	// Wizard Installation - Step 3 1/3
 	"dynamic_dhcp" : _("<p><b><big>IP Address Range</big></b><br>
 Here, set the <b>First IP Address</b> and the <b>Last IP Address</b>
 that should leased to the clients.<br>These addresses must match the same netmask.
-For instance, 192.168.1.1 and 192.168.1.64</p>
-") +
+For instance, 192.168.1.1 and 192.168.1.64</p>") +
 
 	// Wizard Installation - Step 3 2/3
 	_("<p><b><big>Lease</big></b><br>
 Here, set the default <b>Lease Time</b> for the current IP address range,
-which sets the optimal IP refreshing time for clients.<br>
-</p>
-") +
+which sets the optimal IP refreshing time for clients.<br></p>") +
 
 	// Wizard Installation - Step 3 3/3
 	_("<b>Max. Lease Time</b> (optional value) sets the maximum time period
-for which this IP is blocked for the client on the DHCP server.</p>
-"),
+for which this IP is blocked for the client on the DHCP server.</p>"),
 
 	"all_settings_button" : _("<p><b><big>Expert configuration</big></b><br>
 To enter complete configuration of the DHCP server, click
@@ -202,16 +192,14 @@ Select the network interfaces to which the DHCP server should listen from
 
 	// host management help 1/3
 "host_management" : _("<p><b><big>Host Management</big></b><br>
-Use this dialog to edit hosts with static address binding.</p>
-") +
+Use this dialog to edit hosts with static address binding.</p>") +
 
 	// host management help 1/3
 _("<p>To add a new new host, set its <b>Name</b>,
 <b>Hardware Address</b>, and <b>IP Address</b>
 then click <b>Add</b>.</p>
 <p>To modify a configured host, select it in the table,
-change all values, and click <b>Change in List</b>.</p>
-") +
+change all values, and click <b>Change in List</b>.</p>") +
 
 	// host management help 1/3
 _("<p>To remove a host, select it and click <b>Delete from List</b>.</p>"),

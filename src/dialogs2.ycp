@@ -959,8 +959,7 @@ void HostManagementHandle (string key, map event_descr)
 	    UI::SetFocus (`id("hostname"));
 	    // error popup, %1 is host name
 	    Popup::Error ( sformat (_("Host named '%1' already exists.
-Use Change instead.
-"), name ) );
+Use Change instead."), name ) );
 	    return;
 	}
 
@@ -1081,15 +1080,13 @@ symbol ExpertSettingsTabInit (string tab) {
     if (tab == "expert_settings")
     {
 	// yes-no popup
-	if (! Popup::YesNo (_(
-"If you enter the expert settings, you cannot return 
+	if (! Popup::YesNo (_("If you enter the expert settings, you cannot return 
 to this dialog. To display this dialog, save the changes
-and restart the module. If a too complex configuration
+and restart the module. If too complex a configuration
 is set, the expert settings dialog is displayed when you
 start the DHCP server module.
 
-Continue?
-")))
+Continue?")))
 	{
 	    return `refuse_display;
 	}
@@ -1195,21 +1192,21 @@ map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
 	"get_service_auto_start" : GetStartService,
 	"set_service_auto_start" : SetStartService,
 	// radio button
-	"start_auto_button" : _("Start DHCP Server when &Booting"),
+	"start_auto_button" : _("Start DHCP Server When &Booting"),
 	// radio button
 	"start_manual_button" : _("Start DHCP Server &Manually"),
 	"help" : sformat (CWMServiceStart::AutoStartHelpTemplate (),
 	    // part of help text - radio button label, NO SHORTCUT!!!
-	    _("Start DHCP Server when Booting"),
+	    _("Start DHCP Server When Booting"),
 	    // part of help text - radio button label, NO SHORTCUT!!!
 	    _("Start DHCP Server Manually")),
     ]),
     "start_stop" : CWMServiceStart::CreateStartStopWidget ($[
 	"service_id" : "dhcpd",
 	// label - service status
-	"service_running_label" : _("DHCP Server is running"),
+	"service_running_label" : _("DHCP server is running"),
 	// label - service status
-	"service_not_running_label" : _("DHCP Server is not running"),
+	"service_not_running_label" : _("DHCP server is not running"),
 	// push button
 	"start_now_button" : _("&Start DHCP Server Now"),
 	// push button
