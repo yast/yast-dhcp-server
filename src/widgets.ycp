@@ -1085,7 +1085,7 @@ global define void InitWidgets () ``{
                         `ComboBox (`id("rev_ddns_key"), _("Reverse Zone TSIG &Key")))),
 		`Left (`CheckBox (`id (`update_ddns_glob),
 		    // check box
-		    _("Update Global Dynamic DNS Settings")))
+		    _("&Update Global Dynamic DNS Settings")))
 	    ),
 	    // check box
 	    "help" : HELPS["enable_ddns"]:"",

@@ -127,7 +127,7 @@ YaST will quit now."));
 
             `VBox(
 		// Selectionbox - listing available network cards
-                `SelectionBox(`id("nic_selection"), `opt(`hstretch), _("Network Card Selection"), 
+                `SelectionBox(`id("nic_selection"), `opt(`hstretch), _("&Network Card Selection"), 
 		    maplist (string s, ifaces, 
                     ``(`item (`id (s), s)))
 		)
@@ -184,32 +184,32 @@ xxx = _("Secondary Name Server");
             `HBox(
                 `HWeight(43, `VBox(
 				// Textentry with name of the domain
-                    `Left(`TextEntry(`id("domainname"), _("Domain Name"))),
+                    `Left(`TextEntry(`id("domainname"), _("&Domain Name"))),
 
 				// Textentry with IP address of primary name server
-                    `Left(`TextEntry(`id("primarydnsip"), _("Primary Name Server IP"))),
+                    `Left(`TextEntry(`id("primarydnsip"), _("&Primary Name Server IP"))),
 
 				// Textentry with IP address of secondary name server
-                    `Left(`TextEntry(`id("secondarydnsip"), _("Secondary Name Server IP"))),
+                    `Left(`TextEntry(`id("secondarydnsip"), _("&Secondary Name Server IP"))),
 
 				// Textentry with IP address of default router
-                    `Left(`TextEntry(`id("defaultgw"), _("Default Gateway (Router) ")))
+                    `Left(`TextEntry(`id("defaultgw"), _("Default &Gateway (Router) ")))
                 )),
                 `HWeight(14, `VBox(
                     `HStretch()
                 )),
                 `HWeight(43, `VBox(
 			// Textentry with IP address of time server
-                    `Left(`TextEntry(`id("timeserver"), _("NTP Time Server"))),
+                    `Left(`TextEntry(`id("timeserver"), _("NTP &Time Server"))),
 
 			// Textentry with IP address of print server
-                    `Left(`TextEntry(`id("printserver"), _("Print Server"))),
+                    `Left(`TextEntry(`id("printserver"), _("&Print Server"))),
 
 			// Textentry with IP address of WINS (Windows Internet Naming Service) server
-                    `Left(`TextEntry(`id("winsserver"), _("WINS Server"))),
+                    `Left(`TextEntry(`id("winsserver"), _("&WINS Server"))),
                     `HBox(
 			// Textentry with default lease time of IP address from dhcp server    
-                        `Left(`TextEntry(`id("defaultleasetime"), _("Default Lease Time"))),
+                        `Left(`TextEntry(`id("defaultleasetime"), _("Default &Lease Time"))),
                         `HSpacing(1),
 			// Units for defaultleasetime
                         `Right(`ComboBox(`id("defaultleasetimeunits"), `opt( `hstretch), "", time_combo_items))
@@ -517,9 +517,9 @@ term Common_DynamicDHCPDialog() {
                 `Frame (_("IP Address Range") ,
 		    `VBox(
 			// text entry
-		    `Left( `TextEntry ( `id ("from_ip"), _("First IP Address:") ) ),
+		    `Left( `TextEntry ( `id ("from_ip"), _("&First IP Address:") ) ),
 			// text entry
-		    `Left( `TextEntry ( `id ("to_ip"), _("Last IP Address:") ) )
+		    `Left( `TextEntry ( `id ("to_ip"), _("&Last IP Address:") ) )
 		) ) 
             ),
 	    `VSpacing (1),
@@ -529,7 +529,7 @@ term Common_DynamicDHCPDialog() {
                     `HBox(
                             `HBox(
 					// Textentry label - lease time for IPs in the range
-                                `Left(`TextEntry(`id("defaultleasetime"), _("Lease Time"))),
+                                `Left(`TextEntry(`id("defaultleasetime"), _("Lease &Time"))),
                         		// Combobox - type of units for lease time
 			        `Left(`ComboBox(`id("defaultleasetimeunits"), "",
 				time_combo_items
@@ -537,7 +537,7 @@ term Common_DynamicDHCPDialog() {
                             ),
                             `HBox(
 				//TextEntryLabel - max. time for leasing of IPs from the range
-                                `Left(`TextEntry(`id("maxleasetime"), _("Max. Lease Time"))),
+                                `Left(`TextEntry(`id("maxleasetime"), _("&Max. Lease Time"))),
 				// Combobox - type of units for max lease time
                                 `Left(`ComboBox(`id("maxleasetimeunits"), "",
 				    time_combo_items
@@ -767,25 +767,25 @@ term Common_HostManagementDialog() {
                         `HWeight(45,`VBox(
                             `HBox(
 				// Textentry label - name of the host
-                                `Left(`TextEntry(`id("hostname"), _("Name"))),
+                                `Left(`TextEntry(`id("hostname"), _("&Name"))),
 				// noneditable textentry
 				// FIXME - fill in real domain, default is just an example
                                 `Left(`TextEntry(`id("domain"), `opt(`disabled), "  "))
                             ),
 				// Textentry label - IP address of the host
-                            `Left(`TextEntry(`id("hostip"), _("IP Address or Host Name")))
+                            `Left(`TextEntry(`id("hostip"), _("&IP Address or Host Name")))
                         )),
                         `HWeight(10, `VBox(
                             `HStretch()
                         )),
                         `HWeight(45, `VBox(
 				// Textentry label - hardware (mac) address of the host
-                            `Left(`TextEntry(`id("hosthwaddress"), _("Hardware Address"))),
+                            `Left(`TextEntry(`id("hosthwaddress"), _("&Hardware Address"))),
 				// Radiobutton label - network type of the host
                             `RadioButtonGroup(`id("network_type"), 
                                 `HBox(
-                                    `Left(`RadioButton(`id("ethernet"), _("Ethernet"), true)),
-                                    `Left(`RadioButton(`id("token-ring"), _("Token Ring")))
+                                    `Left(`RadioButton(`id("ethernet"), _("&Ethernet"), true)),
+                                    `Left(`RadioButton(`id("token-ring"), _("&Token Ring")))
                                 )
                             )
                         ))
@@ -793,13 +793,13 @@ term Common_HostManagementDialog() {
                     `VSpacing(1),
                     `HBox(
 				// Pushbutton label - add host into list
-                        `HSquash(`Left(`PushButton(`id("addhost"), _("Add")))),
+                        `HSquash(`Left(`PushButton(`id("addhost"), Label::AddButton ()))),
                         `HSpacing(1),
 				// Pushbutton label - change host in list
-                        `HSquash(`Left(`PushButton(`id("edithost"), _("Change in List")))),
+                        `HSquash(`Left(`PushButton(`id("edithost"), _("C&hange in List")))),
                         `HSpacing(1),
 				// Pushbutton label - delete host from list
-                        `Left(`PushButton(`id("deletehost"), _("Delete from List"))),
+                        `Left(`PushButton(`id("deletehost"), _("Dele&te from List"))),
                         `HStretch()
                     )
                 )
