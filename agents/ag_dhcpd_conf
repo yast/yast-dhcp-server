@@ -170,6 +170,18 @@ sub parse_section {
 	    $key = $1;
 	    $value = $2;
 	}
+	elsif ($line =~ /^[ \t]*option[ \t]+([^ \t]+)[ \t]*;?[ \t]*$/)
+	{
+	    $type = "option";
+	    $key = $1;
+	    $value = "__true"
+	}
+	elsif ($line =~ /^[ \t]*([^ \t]+)[ \t]*;?[ \t]*$/)
+	{
+	    $type = "directive";
+	    $key = $1;
+	    $value = "__true";
+	}
 	if ($type ne "")
 	{
 	    my %value = (
@@ -208,6 +220,15 @@ sub store_section {
 	my $type = $record{"type"};
 	my $key = $record{"key"};
 	my $value = $record{"value"};
+	my $do_write = 1;
+	if ($value eq "__false")
+	{
+	    $do_write = 0;
+	}
+	elsif ($value eq "__true")
+	{
+	    $value = "";
+	}
 	print OUTFILE "$indent$cb\n" if ($cb ne "");
 	my $suffix = ";";
 	if ($type eq "directive" || $type eq "option")
@@ -219,12 +240,18 @@ sub store_section {
 	}
 	if ($type eq "directive")
 	{
-	    print OUTFILE "$indent$key $value$suffix";
+	    if ($do_write)
+	    {
+		print OUTFILE "$indent$key $value$suffix";
+	    }
 	}
 	elsif ($type eq "option")
 	{
-	    my $tmp = "option";
-	    print OUTFILE "$indent$tmp $key $value$suffix";
+	    if ($do_write)
+	    {
+		my $tmp = "option";
+		print OUTFILE "$indent$tmp $key $value$suffix";
+	    }
 	}
 	else
 	{ #section
