@@ -278,7 +278,7 @@ global define void ldapInit (string id) ``{
  */
 global define void SetUseLdap (boolean use_ldap) {
     DhcpServer::SetUseLdap (use_ldap);
-    if (! Mode::config)
+    if (! Mode::config ())
     {
 	DhcpServer::InitYapiConfigOptions ($["use_ldap" : use_ldap]);
 	DhcpServer::LdapInit ([], true);
@@ -355,7 +355,7 @@ Continue?")))
  * @return symbol always nil
  */
 global define symbol configTreeHandle (string id, map event) ``{
-    if (Mode::config && (
+    if (Mode::config () && (
 	event["ID"]:nil == `log || event["ID"]:nil == `interfaces
 	|| event["ID"]:nil == `tsig_keys))
     {
@@ -578,7 +578,7 @@ global define void DynDnsButtonInit (string id) ``{
  * @return symbol for WS
  */
 global define symbol DynDnsButtonHandle (string id, map event) ``{
-    if (Mode::config)
+    if (Mode::config ())
     {
 	// popup message
 	Popup::Message (_("This function is not available during

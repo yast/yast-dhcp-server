@@ -25,7 +25,7 @@
     import "DhcpServer";
     import "Mode";
 
-    Mode::test = true;
+    Mode::SetTest ("testsuite");
 
     Progress::off ();
 
