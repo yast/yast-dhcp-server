@@ -50,6 +50,8 @@ my @tsig_keys = ();
 
 my $modified = 0;
 
+my $open_firewall = 0;
+
 my $adapt_firewall = 0;
 
 my $write_only = 0;
@@ -76,6 +78,7 @@ my @new_include_files = ();
 
 my @deleted_include_files = ();
 
+my @original_allowed_interfaces = ();
 
 
 YaST::YCP::Import ("SCR");
@@ -84,10 +87,12 @@ YaST::YCP::Import ("DNS");
 YaST::YCP::Import ("Directory");
 YaST::YCP::Import ("IP");
 YaST::YCP::Import ("Ldap");
+YaST::YCP::Import ("LdapServerAccess");
 YaST::YCP::Import ("Mode");
 YaST::YCP::Import ("NetworkDevices");
 YaST::YCP::Import ("Netmask");
 YaST::YCP::Import ("PackageSystem");
+YaST::YCP::Import ("ProductFeatures");
 YaST::YCP::Import ("Service");
 YaST::YCP::Import ("Popup");
 YaST::YCP::Import ("Progress");
@@ -1285,17 +1290,23 @@ sub SetAllowedInterfaces {
     @allowed_interfaces = @{$allowed_interfaces_ref};
 }
 
-BEGIN{$TYPEINFO{GetAdaptFirewall} = ["function", "boolean"];}
-sub GetAdaptFirewall {
+BEGIN{$TYPEINFO{GetOpenFirewall} = ["function", "boolean"];}
+sub GetOpenFirewall {
     my $self = shift;
 
-    return Boolean($adapt_firewall);
+    return Boolean($open_firewall);
 }
 
-BEGIN{$TYPEINFO{SetAdaptFirewall} = ["function", "void", "boolean"];}
-sub SetAdaptFirewall {
+BEGIN{$TYPEINFO{SetOpenFirewall} = ["function", "void", "boolean"];}
+sub SetOpenFirewall {
     my $self = shift;
-    $adapt_firewall = shift;
+    my $new_open_firewall = shift;
+
+    if ($new_open_firewall != $open_firewall)
+    {
+	$adapt_firewall = 1;
+	$open_firewall = $new_open_firewall;
+    }
 }
 
 BEGIN{$TYPEINFO{GetAdaptDdnsSettings} = ["function", "boolean"];}
@@ -1481,6 +1492,8 @@ configured yet. Create a new configuration?");
     
     $self->InitTSIGKeys ();
 
+    @original_allowed_interfaces = @allowed_interfaces;
+
     Progress->NextStage ();
 
     return "true";
@@ -1520,6 +1533,33 @@ sub Write {
     }
 
     Progress->NextStage ();
+
+    my $ifaces_changed = 0;
+    my %old_ifaces = ();
+    foreach my $i (@original_allowed_interfaces) {
+	$old_ifaces{$i} = 0;
+    }
+    foreach my $i (@allowed_interfaces) {
+	if (! exists $old_ifaces{$i})
+	{
+	    $ifaces_changed = 1;
+	}
+	else
+	{
+	    $old_ifaces{$i} = 1;
+	}
+    }
+    foreach my $v (values (%old_ifaces)) {
+	if ($v == 0)
+	{
+	    $ifaces_changed = 1;
+	}
+    }
+    if ($open_firewall
+	&& $ifaces_changed)
+    {
+	$adapt_firewall = 1;
+    }
 
     #adapt firewall
     $ok = $self->AdaptFirewall () && $ok;
@@ -1691,11 +1731,15 @@ sub Import {
 	    $ifaces{$i} = 1;
 	}
 	@allowed_interfaces = sort (keys (%ifaces));
+	@original_allowed_interfaces = @allowed_interfaces;
 
 	# Initialize LDAP if needed
-	$self->InitYapiConfigOptions ({"use_ldap" => $use_ldap});
-	$self->LdapInit ([], 1);
-	$self->CleanYapiConfigOptions ();
+	if (ProductFeatures->ui_mode () ne "simple")
+	{
+	    $self->InitYapiConfigOptions ({"use_ldap" => $use_ldap});
+	    $self->LdapInit ([], 1);
+	    $self->CleanYapiConfigOptions ();
+	}
     }
 }
 
@@ -1723,6 +1767,10 @@ BEGIN { $TYPEINFO{IsConfigurationSimple} = ["function", "boolean"];}
 sub IsConfigurationSimple {
     my $self = shift;
 
+    if (ProductFeatures->ui_mode () eq "simple")
+    {
+	return Boolean (1);
+    }
     y2milestone ("Checking how complex configuration is set");
 
     if (scalar (@allowed_interfaces) > 1)
@@ -2080,6 +2128,11 @@ sub LdapInit {
     $use_ldap = 0;
     my $configured_ldap = 0;
 
+    if (ProductFeatures->ui_mode () eq "simple")
+    {
+	return;
+    }
+
     #error message
     my $ldap_error_msg = __("Invalid LDAP configuration. Cannot use LDAP.");
 
@@ -2333,38 +2386,18 @@ BEGIN { $TYPEINFO{LdapPrepareToWrite} = ["function", "boolean"];}
 sub LdapPrepareToWrite {
     my $self = shift;
 
+    if (ProductFeatures->ui_mode () eq "simple")
+    {
+	return;
+    }
+
     my $ldap_data_ref = Ldap->Export ();
 
     # check if the schema is properly included
-    NetworkDevices->Read ();
-    DNS->Read ();
-    if ($ldap_server eq "127.0.0.1" || $ldap_server eq "localhost"
-        || -1 != index (lc ($ldap_server), lc (DNS->hostname ()))
-	|| 0 != scalar (@{NetworkDevices->Locate ("IPADDR", $ldap_server)}))
+    if (DNS->IsHostLocal ($ldap_server))
     {
 	y2milestone ("LDAP server is local, checking included schemas");
-	require YaPI::LdapServer;
-	my @new_schemas = ("/etc/openldap/schema/dhcp.schema");
-	my $schema_added = 0;
-	my @schemas = @{YaPI::LdapServer->ReadSchemaIncludeList ()};
-	foreach my $schema (@new_schemas) {
-	    my @current_schema = grep /$schema/, @schemas;
-	    if (0 == scalar (@current_schema))
-	    {
-		y2milestone ("Including schema $schema");
-		push @schemas, $schema;
-		$schema_added = 1;
-	    }
-	    else
-	    {
-		y2milestone ("Schema $schema is already included");
-	    }
-	}
-	if ($schema_added)
-	{
-	    YaPI::LdapServer->WriteSchemaIncludeList (\@schemas);
-	    YaPI::LdapServer->SwitchService(1);
-	}
+	LdapServerAccess->AddLdapSchemas (["/etc/openldap/schema/dhcp.schema"]);
     }
     else
     {
@@ -2597,6 +2630,11 @@ y included");
 BEGIN { $TYPEINFO{LdapStore} = ["function", "void" ]; }
 sub LdapStore {
     my $self = shift;
+
+    if (ProductFeatures->ui_mode () eq "simple")
+    {
+	return;
+    }
 
     my $ret = 1;
 

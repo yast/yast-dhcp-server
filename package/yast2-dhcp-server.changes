@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Fri Jul 30 13:14:20 CEST 2004 - jsrain@suse.cz
+
+- adapted functionality for 9.2 box
+
+-------------------------------------------------------------------
 Mon Jul 19 12:27:53 CEST 2004 - jsrain@suse.cz
 
 - use common function for checking installed packages (#30872)
