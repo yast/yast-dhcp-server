@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Thu Mar 31 16:56:16 CEST 2005 - locilka@suse.cz
+
+- Added checking for Dynamic DHCP addresses to match the current
+  network/netmask
+- Added information abour current network/netmask into the Dynamic
+  DHCP dialog
+
+-------------------------------------------------------------------
 Wed Mar 30 10:42:49 CEST 2005 - locilka@suse.cz
 
 - Presenting network interfaces with their device names and IP
