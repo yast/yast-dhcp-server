@@ -98,7 +98,7 @@ else if (func == "GetModified") {
     ret = DhcpServer::GetModified ();
 }
 /* Mark settings as modified */
-else if (func == "GetModified") {
+else if (func == "SetModified") {
     DhcpServer::SetModified ();
     ret = true;
 }
