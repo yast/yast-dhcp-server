@@ -21,8 +21,8 @@
     y2milestone ("----------------------------------------");
     y2milestone ("Dhcp-server module started");
 
-    include "dhcp-server/ui.ycp";
     import "DhcpServer";
+    import "DhcpServerUI";
     import "Wizard";
 
     Wizard::CreateDialog ();
@@ -36,16 +36,16 @@
     symbol ret = nil;
     while (! exit)
     {
-	ret = runWizard ();
+	ret = DhcpServerUI::runWizard ();
 	y2debug("ret=%1", ret);
-	if (ret == `next)
-	{
-	    DhcpServer::cfg_restart_wanted = false;
-	    DhcpServer::Write ();
-	    exit = ! DhcpServer::cfg_restart_wanted;
-	}
-	else
-	    exit = true;
+//	if (ret == `next)
+//	{
+//	    DhcpServer::cfg_restart_wanted = false;
+//	    DhcpServer::Write ();
+//	    exit = ! DhcpServer::cfg_restart_wanted;
+//	}
+//	else
+//	    exit = true;
     }
     UI::CloseDialog ();
 
@@ -53,7 +53,7 @@
     y2milestone("Dhcp-server module finished");
     y2milestone("----------------------------------------");
 
-    return ret;
+//    return ret;
 
 /* EOF */
 }

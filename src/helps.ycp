@@ -11,6 +11,10 @@
 
     textdomain "dhcp-server";
 
+    map<string,string> HELPS = $[
+
+    ];
+
     /**
       * Get help text
       * @return string help text

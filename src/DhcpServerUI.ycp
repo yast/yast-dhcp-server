@@ -13,7 +13,7 @@
 
 {
 
-    module "DhcpServer";
+    module "DhcpServerUI";
     textdomain "dhcp-server";
 
     import "Progress";
@@ -26,259 +26,30 @@
     import "SuSEFirewall";
     import "DhcpServer";
 
+    global map widgets = $[];
+
+    global map popups = $[];
+
     include "dhcp-server/routines.ycp";
     include "dhcp-server/helps.ycp";
     include "dhcp-server/widgets.ycp";
-    include "dhcp-server/options.ycp";
+    include "dhcp-server/ui.ycp";
+//    include "dhcp-server/options.ycp";
 
     /**
       * Abort function
       * return boolean return true if abort
       */
-    global block AbortFunction = nil;
-
-    /**
-      * Data was modified?
-      */
-    global boolean modified = false;
-
-    global boolean proposal_valid = false;
-
-    /**
-      * Write only, used during autoinstallation.
-      * Don't run services and SuSEconfig, it's all done at one place.
-      */
-    global boolean write_only = false;
-
-    global map settings = $[];
-
-    global map widgets = $[];
-
-    global map popups = $[];
-
-    global map current_section = $[];
-
-    global map current_list = $[];
-
-    global string current_identifier = "";
-
-    global boolean cfg_restart_wanted = false;
-
-    global boolean adapt_firewall = true;
+    global boolean() AbortFunction = nil;
 
     /**
       * Constructor
       */
-    global define void DhcpServer () ``{
-	InitPopups ();
+    global define void DhcpServerUI () ``{
+//	InitPopups ();
 	InitWidgets ();
     }
 
-    /**
-      * Read all dhcp-server settings
-      * @return true on success
-      */
-    global define boolean Read() ``{
-
-	/* Dhcp-server read dialog caption */
-	string caption = _("Initializing DHCP Server Configuration");
-
-	Progress::New( caption, " ", 1, [
-	    // progress stage
-	    _("Read DHCP server settings"),
-	    // progress stage
-	    _("Read firewall settings"),
-	],
-	[
-	    // progress step
-	    _("Reading DHCP server settings..."),
-	    // progress step
-	    _("Reading firewall settings..."),
-	    // progress step
-	    _("Finished")
-	],
-	getInitReadHelp ()
-	);
-
-	// read database
-	if(UI::PollInput() == `abort) return false;
-	Progress::NextStage();
-
-	if (! Require::AreAllPackagesInstalled (["dhcp-server"]) || Mode::config)
-	{
-            boolean install_ok = Require::RequireAndConflictTarget (["dhcp-server"], [],
-		// richtext, %1 is name of package
-		_("For running DHCP server, a DHCP daemon is required.
-YaST2 will install package %1.
-"));
-	    if (! install_ok && ! Require::LastOperationCanceled ())
-	    {
-		// error popup
-		Report::Error (_("Installing required packages failed."));
-	    }
-	}
-
-	map bash_out = SCR::Execute (.target.bash_output,
-"/usr/bin/grep '^# Creation time:' /etc/dhcpd.conf |head -n 1 |sed 's/# Creation time: \\([^$]*\\)/\\1/'");
-
-	bash_out = SCR::Execute (.target.bash_output, sformat ("date --date='%1' +\"%%s\"", bash_out["stdout"]:""));
-
-	map stat = SCR::Read (.target.stat, "/etc/dhcpd.conf");
-
-	integer inode_time = stat["mtime"]:0;
-	integer file_time = tointeger (bash_out["stdout"]:"0");
-
-	integer difference = inode_time - file_time;
-	y2milestone ("Difference between last modification time and value stored in file is %1 seconds", difference);
-
-	if (0 < SCR::Read (.target.size, "/var/lib/YaST2/dhcp_server.ycp"))
-	    settings = SCR::Read (.target.ycp, "/var/lib/YaST2/dhcp_server.ycp");
-	else
-	    settings = nil;
-
-        if (settings == nil)
-        {
-	    // yes-no popup
-	    // is not able means the feature is missing
-	    if (! Popup::ContinueCancel (_("Warning!
-
-You have not yet used YaST for configuring DHCP server.
-Creating initial settings.  Add at least one subnet
-to make the DHCP server work.
-
-/etc/dhcpd.conf is rewritten when saving the
-configuration.
-")))
-		return false;
-            settings = createSettings ();
-        }
-
-	else if (difference > 3)
-	{
-	    // yes-no popup
-	    if (! Popup::YesNo (_("Warning!
-
-/etc/dhcpd.conf was created or modified manually or using
-a tool other than YaST2. YaST2 will rewrite the changes
-when saving the configuration.
-
-Continue?
-")))
-		return false;
-	}
-
-	settings["__dhcpd_interface"]
-	    = SCR::Read (.sysconfig.dhcpd.DHCPD_INTERFACE);
-	if (settings["__dhcpd_interface"]:"" == ""
-	    || settings["__dhcpd_interface"]:"" == nil)
-	{
-	    settings["__dhcpd_interface"] = "eth0";
-	}
-
-	// read firewall
-	if(UI::PollInput() == `abort) return false;
-	Progress::NextStage();
-
-	if (! Mode::test)
-	{
-	    Progress::off ();
-	    SuSEFirewall::Read ();
-	    Progress::on ();
-	}
-	if (! Runlevel::ServiceEnabled("SuSEfirewall2_init"))
-	    adapt_firewall = false;
-
-	if(UI::PollInput() == `abort) return false;
-	modified = false;
-	return true;
-    }
-
-    /**
-      * Write all dhcp-server settings
-      * @return true on success
-      */
-    global define boolean Write() ``{
-
-	/* Dhcp-server read dialog caption */
-	string caption = _("Saving DHCP Server Configuration");
-
-	// We do not set help text here, because it was set outside
-	Progress::New(caption, " ", 2, [
-	    // progress stage
-	    _("Write DHCP server settings"),
-	    // progress stage
-	    _("Write firewall settings"),
-	    // progress stage
-	    _("Restart DHCP server"),
-	], [
-	    // progress step
-	    _("Writing DHCP server settings..."),
-	    // progress step
-	    _("Writing firewall settings..."),
-	    // progress step
-	    _("Restarting DHCP server..."),
-	    // progress step
-	    _("Finished")
-	],
-	getWriteHelp ()
-	);
-
-	// write settings
-	if(UI::PollInput() == `abort) return false;
-	Progress::NextStage();
-
-	createDhcpdConf ();
-	SCR::Write (.target.ycp, "/var/lib/YaST2/dhcp_server.ycp", settings);
-
-	// write DHCPD_INTERFACE variable
-	SCR::Write (.sysconfig.dhcpd.DHCPD_INTERFACE,
-	    settings["__dhcpd_interface"]:"");
-	SCR::Write (.sysconfig.dhcpd, nil);
-
-	// write firewall settings
-	if(UI::PollInput() == `abort) return false;
-	Progress::NextStage();
-
-	adaptFirewall ();
-
-	if(UI::PollInput() == `abort) return false;
-	Progress::NextStage();
-
-	if (settings["__run_dhcp_server"]:false)
-	{
-	    integer ret
-		= SCR::Execute (.target.bash, "/etc/init.d/dhcpd restart");
-	    Runlevel::ServiceAdjust ("dhcpd", "enable");
-	    if (0 != ret)
-	    {
-		// yes-no popup
-		if (Popup::YesNo (_("Warning!
-
-An error occurred while starting the DHCP server.
-Display the log and continue with configuration?
-")))
-		{
-		    DhcpServer::showLogPopup ("", $[]);
-		    cfg_restart_wanted = true;
-		}
-		return false;
-	    }
-	}
-	else
-	{
-	    SCR::Execute (.target.bash, "/etc/init.d/dhcpd stop");
-	    Runlevel::ServiceAdjust ("dhcpd", "disable");
-	}
-
-	if(UI::PollInput() == `abort) return false;
-	return true;
-    }
-
-    /**
-      * Adjust the firewall settings if wanted
-      */
-    global define void adaptFirewall () ``{
-    }
 
 
 /* EOF */

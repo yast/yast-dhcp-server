@@ -19,8 +19,8 @@
     import "Label";
     include "wizard/sequencer.ycp";
 
-    global map functions = $[
-	`abort : ``(DhcpServer::confirmAbort ()),
+    global map<symbol,any> functions = $[
+	`abort : confirmAbort,
     ];
 
     /**
@@ -28,23 +28,27 @@
       * @return symbol for wizard sequencer
       */
     global define symbol runMainDialog () ``{
-        list widgets = CWM::CreateWidgets (["global_table", "log_button", ],
-	    DhcpServer::widgets);
+        list<map> w = CWM::CreateWidgets (["start", "configtree", "optlist"],
+	    widgets);
         term contents = `HBox (`HSpacing (2), `VBox (
                 `VSpacing (1),
-		widgets[0, "widget"]:`VSpacing (0),
+		w[0, "widget"]:`VSpacing (0),
 		`VSpacing (1),
-		widgets[1, "widget"]:`VSpacing (0),
+		`HBox (
+		    w[1, "widget"]:`VSpacing (0),
+		    `HSpacing (1),
+		    w[2, "widget"]:`VSpacing (0)
+		),
                 `VSpacing (1)
                 ), `HSpacing (2));
         // dialog caption
         string caption = _("DHCP Server Configuration");
-        string help = CWM::MergeHelps (widgets);
+        string help = CWM::MergeHelps (w);
 
         Wizard::SetContentsButtons (caption, contents, help,
             Label::BackButton (), Label::FinishButton ());
 
-        return CWM::Run (widgets, functions);
+        return CWM::Run (w, functions);
     }
 
     /**
@@ -52,7 +56,7 @@
       * @return symbol for wizard sequencer
       */
     global define symbol runSubnetDialog () ``{
-        list widgets = CWM::CreateWidgets (["subnet_table"], DhcpServer::widgets);
+/*        list widgets = CWM::CreateWidgets (["subnet_table"], DhcpServerUI::widgets);
         term contents = `HBox (`HSpacing (2), `VBox (
                 `VSpacing (1),
 		widgets[0, "widget"]:`VSpacing (0),
@@ -65,7 +69,8 @@
         Wizard::SetContentsButtons (caption, contents, help,
             Label::BackButton (), Label::OKButton ());
 
-        return CWM::Run (widgets, functions);
+        return CWM::Run (widgets, functions);*/
+	return nil;
     }
 
     /**
@@ -73,7 +78,7 @@
       * @return symbol for wizard sequencer
       */
     global define symbol runHostDialog () ``{
-        list widgets = CWM::CreateWidgets (["host_table"], DhcpServer::widgets);
+/*        list widgets = CWM::CreateWidgets (["host_table"], DhcpServerUI::widgets);
         term contents = `HBox (`HSpacing (2), `VBox (
                 `VSpacing (1),
 		widgets[0, "widget"]:`VSpacing (0),
@@ -86,7 +91,8 @@
         Wizard::SetContentsButtons (caption, contents, help,
             Label::BackButton (), Label::OKButton ());
 
-        return CWM::Run (widgets, functions);
+        return CWM::Run (widgets, functions);*/
+	return nil;
     }
 
     /**
@@ -94,7 +100,7 @@
       * @return symbol for wizard sequencer
       */
     global define symbol runSubnetSelectDialog () ``{
-        list widgets = CWM::CreateWidgets (["subnets"], DhcpServer::widgets);
+/*        list widgets = CWM::CreateWidgets (["subnets"], DhcpServerUI::widgets);
         term contents = `HBox (`HSpacing (2), `VBox (
                 `VSpacing (1),
 		widgets[0, "widget"]:`VSpacing (0),
@@ -107,7 +113,8 @@
         Wizard::SetContentsButtons (caption, contents, help,
             Label::BackButton (), Label::OKButton ());
 
-        return CWM::Run (widgets, functions);
+        return CWM::Run (widgets, functions);*/
+	return nil;
     }
 
     /**
@@ -115,7 +122,7 @@
       * @return symbol for wizard sequencer
       */
     global define symbol runHostSelectDialog () ``{
-        list widgets = CWM::CreateWidgets (["hosts"], DhcpServer::widgets);
+/*        list widgets = CWM::CreateWidgets (["hosts"], DhcpServerUI::widgets);
         term contents = `HBox (`HSpacing (2), `VBox (
                 `VSpacing (1),
 		widgets[0, "widget"]:`VSpacing (0),
@@ -128,7 +135,8 @@
         Wizard::SetContentsButtons (caption, contents, help,
             Label::BackButton (), Label::OKButton ());
 
-        return CWM::Run (widgets, functions);
+        return CWM::Run (widgets, functions);*/
+	return nil;
     }
 
 
