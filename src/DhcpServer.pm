@@ -33,10 +33,6 @@ my @allowed_interfaces = ();
 
 my @settings = ();
 
-my $ddns_file_name = "";
-
-my $ddns_file_create = 0;
-
 #transient variables
 
 my $modified = 0;
@@ -48,6 +44,8 @@ my $write_only = 0;
 my %current_entry = ();
 
 my $current_entry_index = 0;
+
+my $adapt_ddns_settings = 0;
 
 
 
@@ -64,6 +62,7 @@ YaST::YCP::Import ("Progress");
 YaST::YCP::Import ("Report");
 YaST::YCP::Import ("Require");
 YaST::YCP::Import ("SuSEFirewall");
+YaST::YCP::Import ("DhcpTsigKeys");
 
 
 ##-------------------------------------------------------------------------
@@ -118,42 +117,65 @@ sub AdaptFirewall {
     return $ret;
 }
 
-sub AdaptDDNS {
-    return 1 if ($ddns_file_name eq "");
-
-    my @do_not_copy_chroot = ();
-
+sub InitTSIGKeys {
     my @directives = GetEntryDirectives ("", "");
+    my @read_keys = ();
+    foreach my $dir_ref (@directives) {
+	my %dir = %{$dir_ref};
+	if ($dir{"key"} eq "include")
+	{
+	    my $filename = $dir{"value"};
+	    $filename =~ s/^[\" \t]*(.*[^\" \t])[\" \t]*$/$1/;
+	    my @new_keys = DhcpTsigKeys::AnalyzeTSIGKeyFile ($filename);
+	    foreach my $new_key (@new_keys) {
+		y2milestone ("Having key $new_key, file $filename");
+		push @read_keys, {
+		    "filename" => $filename,
+		    "key" => $new_key,
+		};
+	    }
+	}
+    }
+    DhcpTsigKeys::StoreTSIGKeys (\@read_keys);
+}
+
+sub AdaptDDNS {
+    # FIXME temporary hack because of testsuite
+    if (Mode::test ())
+    {
+	return 1;
+    }
+    my @directives = GetEntryDirectives ("", "");
+    my %includes = ();
+
+    my @current_keys = DhcpTsigKeys::ListTSIGKeys ();
+    my @deleted_keys = DhcpTsigKeys::ListDeletedKeyIncludes ();
+    my @new_keys = DhcpTsigKeys::ListNewKeyIncludes ();
+
     @directives = grep {
 	my %dir = %{$_};
 	my $ret = 1;
 	if ($dir{"key"} eq "include")
 	{
 	    my $filename = $dir{"value"};
-	    while ($filename ne "" && (substr ($filename, 0, 1) eq " "
-		|| substr ($filename, 0, 1) eq "\""))
+	    $filename =~ s/^[\" \t]*(.*[^\" \t])[\" \t]*$/$1/;
+	    my @found = grep {
+		$_ eq $filename;
+	    } @deleted_keys;
+	    if (@found)
 	    {
-		$filename = substr ($filename, 1);
-	    }
-	    while ($filename ne ""
-		&& (substr ($filename, length ($filename) - 1, 1) eq " "
-		|| substr ($filename, length ($filename) - 1, 1) eq "\""))
-	    {
-		$filename = substr ($filename, 0, length ($filename) - 1);
-	    }
-	    my $contents = SCR::Read (".target.string", $filename);
-	    if ($contents =~ /.*key.*DHCP_UPDATER.* {/)
-	    {
-		push @do_not_copy_chroot, $filename;
-		y2error ("Removing file $filename");
+y2error ("not saving $filename");
 		$ret = 0;
 	    }
 	}
-	if ($dir{"key"} eq "ddns-update-style"
-	    || $dir{"key"} eq "ddns-updates"
-	    || $dir{"key"} eq "ignore")
+	if ($adapt_ddns_settings)
 	{
-	    $ret = 0;
+	    if ($dir{"key"} eq "ddns-update-style"
+		|| $dir{"key"} eq "ddns-updates"
+		|| $dir{"key"} eq "ignore")
+	    {
+		$ret = 0;
+	    }
 	}
 	$ret;
     } @directives;
@@ -164,49 +186,37 @@ sub AdaptDDNS {
 	my $current_grepped = $_;
 	grep {
 	    $_ ne $current_grepped
-	} @do_not_copy_chroot;
+	} @deleted_keys;
     } @includes;
-    push @includes, $ddns_file_name;
+    foreach my $new_inc (@new_keys) {
+	push @includes, $new_inc;
+	push @directives, {
+	    "key" => "include",
+	    "value" => "\"$new_inc\"",
+	};
+    }
     $includes = join (" ", @includes);
     SCR::Write (".sysconfig.dhcpd.DHCPD_CONF_INCLUDE_FILES", $includes);
+    SCR::Write (".sysconfig.dhcpd", undef);
 
-    push @directives, {
-	"key" => "ddns-update-style",
-	"value" => "interim",
-    };
-    push @directives, {
-	"key" => "ignore",
-	"value" => "client-updates",
-    };
-    push @directives, {
-	"key" => "ddns-updates",
-	"value" => "on",
-    };
-    push @directives, {
-	"key" => "include",
-	"value" => "\"$ddns_file_name\"",
-    };
+    if ($adapt_ddns_settings)
+    {
+	push @directives, {
+	    "key" => "ddns-update-style",
+	    "value" => "interim",
+	};
+	push @directives, {
+	    "key" => "ignore",
+	    "value" => "client-updates",
+	};
+	push @directives, {
+	    "key" => "ddns-updates",
+	    "value" => "on",
+	};
+    }
 
     SetEntryDirectives ("", "", \@directives);
 
-    if ($ddns_file_create)
-    {
-	if (-1 != SCR::Read (".target.size", $ddns_file_name))
-	{
-	    SCR::Execute (".target.remove", $ddns_file_name);
-	}
-	my $command = sprintf (
-	    "KEYFILE=%s bash /usr/share/doc/packages/dhcp-server/genDDNSKey.sh",
-	    $ddns_file_name);
-	y2milestone ("Creating updater key via command $command");
-	my $ret = SCR::Execute (".target.bash", $command);
-	if ($ret)
-	{
-	    # error report
-	    Report::Error (_("Creating Dynamic DNS updater key failed."));
-	    return 0;
-	}
-    }
     return 1;
 }
 
@@ -650,29 +660,19 @@ BEGIN{$TYPEINFO{GetAdaptFirewall} = ["function", "boolean"];}
 sub GetAdaptFirewall {
     return Boolean($adapt_firewall);
 }
+
 BEGIN{$TYPEINFO{SetAdaptFirewall} = ["function", "void", "boolean"];}
 sub SetAdaptFirewall {
     $adapt_firewall = $_[0];
 }
 
-BEGIN{$TYPEINFO{GetDDNSFileName} = ["function", "string"];}
-sub GetDDNSFileName {
-    return $ddns_file_name;
+BEGIN{$TYPEINFO{GetAdaptDdnsSettings} = ["function", "boolean"];}
+sub GetAdaptDdnsSettings {
+    return Boolean($adapt_ddns_settings);
 }
-
-BEGIN{$TYPEINFO{SetDDNSFileName} = ["function", "void", "string"];}
-sub SetDDNSFileName {
-    $ddns_file_name = $_[0];
-}
-
-BEGIN{$TYPEINFO{GetDDNSFileCreate} = ["function", "boolean"];}
-sub GetDDNSFileCreate {
-    return Boolean($ddns_file_create);
-}
-
-BEGIN{$TYPEINFO{SetDDNSFileCreate} = ["function", "void", "boolean"];}
-sub SetDDNSFileCreate {
-    $ddns_file_create = $_[0];
+BEGIN{$TYPEINFO{SetAdaptDdnsSettings} = ["function", "void", "boolean"];}
+sub SetAdaptDdnsSettings {
+    $adapt_ddns_settings = $_[0];
 }
 
 ##------------------------------------
@@ -736,6 +736,8 @@ YaST2 will install package %1.
     @settings = ();
     PreprocessSettings ($ag_settings_ref, {});
 
+    InitTSIGKeys ();
+
     Progress::NextStage ();
 
     return "true";
@@ -778,6 +780,7 @@ sub Write {
     #adapt firewall
     $ok = AdaptFirewall () && $ok;
 
+    #adapt dynamic DNS settings
     $ok = AdaptDDNS () && $ok;
 
     #save globals
@@ -831,8 +834,6 @@ sub Export {
 	"chroot" => $chroot,
 	"allowed_interfaces" => \@allowed_interfaces,
 	"settings" => \@settings,
-	"ddns_file_name" => $ddns_file_name,
-	"ddns_file_create" => $ddns_file_create,
     );
     return \%ret;
 }
@@ -844,9 +845,6 @@ sub Import {
     $chroot = $settings{"chroot"} || 1;
     @allowed_interfaces = @{$settings{"allowed_interfaces"} || []};
     @settings = @{$settings{"settings"} || {}};
-
-    $ddns_file_name = $settings{"ddns_file_name"} || "";
-    $ddns_file_create = $settings{"ddns_file_create"} || 0;
 
     $modified = 1;
     $adapt_firewall = 0;

@@ -11,6 +11,13 @@
 
 textdomain "dhcp-server";
 
+/**
+ * Restart the DHCP daemon
+ */
+define void RestartDhcpDaemon () ``{
+    Service::RunInitScript("dhcpd", "restart");
+}
+
     /**
      * Merge section id and key together to one identifier
      * @param type string section type

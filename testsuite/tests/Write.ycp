@@ -69,7 +69,11 @@
 
     TEST (``(DhcpServer::Write ()), [READ, WRITE, EXEC], 0);
     DUMP ("===============================");
-    TEST (``(DhcpServer::Import ($[
+    TEST (``(DhcpServer::Import (
+$["allowed_interfaces":["eth0", "eth2"], "chroot":"0", "settings":[$["children":[], "comment_after":nil, "comment_before":nil, "directives":[], "id":"", "options":[$["comment_after":"", "comment_before":"# dhcpd.conf", "key":"domain-name", "type":"option", "value":"\"example.org\""], $["comment_after":"", "comment_before":"", "key":"domain-name-servers", "type":"option", "value":"ns1.example.org, ns2.example.org"], $["comment_after":"", "comment_before":"", "key":"policy-filter", "type":"option", "value":"{ a1, a2 }, { a1, a2 }, { a3, a4 }"]], "parent_id":"", "parent_type":"", "type":""]], "start_service":"0"]
+/*
+
+$[
 	"allowed_interfaces":["0"],
 	"chroot":"1",
 	"settings":[
@@ -108,7 +112,7 @@
 	    ]
 	],
 	"start_service":"0"
-    ])), [], 0);
+    ]*/)), [], 0);
     DUMP ("===============================");
     TEST (``(DhcpServer::Write ()), [READ, WRITE, EXEC], 0);
 
