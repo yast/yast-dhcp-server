@@ -17,6 +17,9 @@
 
 {
     include "testsuite.ycp";
+
+// testedfiles: DhcpServer.ycp
+
     TESTSUITE_INIT ([], nil);
     import "Progress";
     import "DhcpServer";
@@ -57,6 +60,15 @@
                 "FW_SERVICE_SAMBA" : "no",
             ],
         ],
+	"product" : $[
+	    "features" : $[
+		"USE_DESKTOP_SCHEDULER" : "0",
+		"ENABLE_AUTOLOGIN" : "0",
+		"EVMS_CONFIG" : "0",
+		"IO_SCHEDULER" : "cfg",
+		"UI_MODE" : "expert",
+	    ]
+	],
     ];
     map WRITE = $[];
     map EXEC = $[

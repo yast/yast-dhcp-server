@@ -1,22 +1,5 @@
-Read	.target.size "/etc/install.inf" nil
-Read	.etc.install_inf.Sourcemounted nil
-Read	.etc.install_inf.AutoYaST nil
-Read	.etc.install_inf.Repair nil
-Read	.etc.install_inf.Demo nil
-Read	.etc.install_inf.Textmode nil
-Read	.etc.install_inf.Manual nil
-Read	.target.string "/proc/cmdline" nil
-Read	.etc.install_inf.Console nil
-Read	.etc.install_inf.Braille nil
-Read	.etc.install_inf.VNC nil
-Read	.etc.install_inf.UseSSH nil
-Read	.etc.install_inf.InstMode nil
-Read	.target.tmpdir nil
-Log	Failed to set temporary directory: nil
 Execute	.target.bash_output "/bin/hostname --short" $["exit":0, "stderr":"localhost", "stdout":"localhost"]
 Execute	.target.bash_output "/bin/hostname --fqdn" $["exit":0, "stderr":"localhost", "stdout":"localhost"]
-Read	.init.scripts.exists "dhcpd" true
-Read	.init.scripts.runlevel "dhcpd" $["dhcpd":$["start":[], "stop":[]]]
 Read	.sysconfig.dhcpd.DHCPD_RUN_CHROOTED "no"
 Read	.sysconfig.dhcpd.DHCPD_INTERFACE "eth0 eth2"
 Read	.etc.dhcpd_conf [$["comment_after":"", "comment_before":"# dhcpd.conf", "key":"domain-name", "type":"option", "value":"\"example.org\""], $["comment_after":"", "comment_before":"", "key":"domain-name-servers", "type":"option", "value":"ns1.example.org, ns2.example.org"], $["comment_after":"", "comment_before":"", "key":"policy-filter", "type":"option", "value":"{ a1, a2 }, { a1, a2 }, { a3, a4 }"]]

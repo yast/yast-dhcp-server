@@ -1,28 +1,8 @@
-Read	.target.size "/etc/install.inf" nil
-Read	.etc.install_inf.Sourcemounted nil
-Read	.etc.install_inf.AutoYaST nil
-Read	.etc.install_inf.Repair nil
-Read	.etc.install_inf.Demo nil
-Read	.etc.install_inf.Textmode nil
-Read	.etc.install_inf.Manual nil
-Read	.target.string "/proc/cmdline" nil
-Read	.etc.install_inf.Console nil
-Read	.etc.install_inf.Braille nil
-Read	.etc.install_inf.VNC nil
-Read	.etc.install_inf.UseSSH nil
-Read	.etc.install_inf.InstMode nil
-Read	.target.tmpdir nil
-Log	Failed to set temporary directory: nil
 Write	.etc.dhcpd_conf [] true
 Write	.sysconfig.dhcpd.DHCPD_RUN_CHROOTED "no" true
 Write	.sysconfig.dhcpd.DHCPD_INTERFACE "" true
 Write	.sysconfig.dhcpd nil true
 Execute	.target.bash "/etc/init.d/dhcpd stop" 0
-Read	.init.scripts.exists "dhcpd" true
-Read	.init.scripts.exists "dhcpd" true
-Read	.init.scripts.exists "dhcpd" true
-Read	.init.scripts.runlevel "dhcpd" $["dhcpd":$["start":[], "stop":[]]]
-Read	.init.scripts.comment "dhcpd" $["dhcpd":$[]]
 Return	true
 Dump	===============================
 Return	nil
@@ -32,9 +12,4 @@ Write	.sysconfig.dhcpd.DHCPD_RUN_CHROOTED "yes" true
 Write	.sysconfig.dhcpd.DHCPD_INTERFACE "eth0 eth2" true
 Write	.sysconfig.dhcpd nil true
 Execute	.target.bash "/etc/init.d/dhcpd stop" 0
-Read	.init.scripts.exists "dhcpd" true
-Read	.init.scripts.exists "dhcpd" true
-Read	.init.scripts.exists "dhcpd" true
-Read	.init.scripts.runlevel "dhcpd" $["dhcpd":$["start":[], "stop":[]]]
-Read	.init.scripts.comment "dhcpd" $["dhcpd":$[]]
 Return	true
