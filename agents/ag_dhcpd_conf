@@ -2,7 +2,8 @@
 
 use ycp;
 
-$filename = "/etc/dhcpd.conf";
+$default_filename = "/etc/dhcpd.conf";
+$filename = $default_filename;
 
 @lines = ();
 $group_counter = 0;
@@ -129,7 +130,7 @@ sub parse_section {
 	    }
 	    else
 	    {
-		($type, $key) = split (/ /, $key, 3);
+		($type, $key) = split (/ /, $key, 2);
 	    }
 	}
 	elsif ($line =~ /^[ \t]*option[ \t]+([^ \t]+)[ \t]+([^ \t].*);[ \t]*$/)
@@ -175,7 +176,6 @@ sub store_section {
     my $sect_ref = $_[1];
 
     my @sect = @{$sect_ref};
-
     foreach my $record_ref (@sect) {
 	my %record = %{$record_ref};
 	my $cb = $record{"comment_before"} || "";
@@ -241,6 +241,17 @@ while ( <STDIN> )
 	    store_file ($parsed_file_ref);
 	    ycp::Return ("true");
 	}
+	elsif ($path eq ".filename" && ! ref ($argument))
+	{
+	    if (defined ($argument))
+	    {
+		$filename = $argument;
+	    }
+	    else
+	    {
+		$filename = $default_filename;
+	    }
+	}
     }
     elsif ($command eq "Read")
     {
@@ -261,12 +272,3 @@ while ( <STDIN> )
     }
 
 }
-
-#@parsed_file = @{parse_file ()};
-
-#$filename = "/tmp/dhcpd.conf";
-
-#store_file (\@parsed_file);
-
-
-#close (INFILE);
