@@ -2,7 +2,7 @@
 # neededforbuild yast2-devel-packages yast2-firewall yast2-perl-bindings perl-gettext perl-X500-DN yast2-network yast2-firewall yast2-country yast2-installation perl-Digest-SHA1 perl-Parse-RecDescent
 
 @HEADER@
-Requires: yast2 yast2-firewall perl-gettext yast2-perl-bindings bind-utils perl-X500-DN yast2-network yast2-firewall perl-Digest-SHA1 perl-Parse-RecDescent
+Requires: yast2 yast2-firewall perl-gettext yast2-perl-bindings bind-utils perl-X500-DN yast2-network yast2-firewall yast2-ldap perl-Digest-SHA1 perl-Parse-RecDescent
 
 BuildArchitectures:	noarch
 

@@ -2407,7 +2407,10 @@ sub LdapPrepareToWrite {
     if (DNS->IsHostLocal ($ldap_server))
     {
 	y2milestone ("LDAP server is local, checking included schemas");
-	LdapServerAccess->AddLdapSchemas (["/etc/openldap/schema/dhcp.schema"]);
+	LdapServerAccess->AddLdapSchemas (
+	    ["/etc/openldap/schema/dhcp.schema"],
+	    1
+	);
     }
     else
     {
