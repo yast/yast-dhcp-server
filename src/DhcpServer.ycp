@@ -133,11 +133,9 @@ YaST2 will install package %1."));
 	    // is not able means the feature is missing
 	    if (! Popup::ContinueCancel (_("Warning!
 
-YaST2 is not able to read /etc/dhcpd.conf file. Because of this,
-YaST2 stores the settings in its own file, which is used to 
-create the /etc/dhcpd.conf file. No file
-with settings found -- creating initial settings. Add
-at least one subnet to make the DHCP server work.
+You have not used YaST for configuring DHCP server yet.
+Creating initial settings.  Add at least one subnet
+to make the DHCP server work.
 
 /etc/dhcpd.conf is rewritten when saving the
 configuration.")))
