@@ -112,7 +112,7 @@ sub AdaptFirewall {
     if (! $ret)
     {
 	# error report
-	Report::Error (_("Error while setting firewall settings occured"));
+	Report::Error (_("Error occurred while setting firewall settings."));
     }
     return $ret;
 }
@@ -808,7 +808,7 @@ sub Write {
 	if (0 != $ret)
 	{
 	    # error report
-	    Report::Error (_("Error while restarting DHCP daemon occured."));
+	    Report::Error (_("Error occurred while restarting DHCP daemon."));
 	    $ok = 0;
 	}
     }

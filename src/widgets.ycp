@@ -344,7 +344,7 @@ global define symbol configTreeHandle (string id, map event) ``{
 global define void configTreeInit (string id) ``{
     list items = getItems ("", "");
     items = [
-	`item (`id (" "), _("Global options"), true, items)
+	`item (`id (" "), _("Global Options"), true, items)
     ];
     UI::ReplaceWidget (`configtree_rp, `Tree (
 	`id ("configtree"),
@@ -503,10 +503,10 @@ global define void DDNSZonesInit (string id) ``{
 
     UI::ReplaceWidget (`ddns_key_rp, `ComboBox (`id("ddns_key"),
 	// combo box
-	_("Forward zone TSIG &key"), updater_keys));
+	_("Forward Zone TSIG &Key"), updater_keys));
     UI::ReplaceWidget (`rev_ddns_key_rp, `ComboBox (`id("ddns_rev_key"),
 	// combo box
-	_("Reverse zone TSIG &key"), updater_keys));
+	_("Reverse Zone TSIG &Key"), updater_keys));
 
     if (found_ddns)
     {
@@ -575,7 +575,7 @@ global define symbol KeyFileBrowseButtonHandle (string id, map event) ``{
     string filename = (string)UI::QueryWidget (`id ("key_filename"), `Value);
     filename = UI::AskForExistingFile (filename, "",
 	// popup headline
-	_("Select file with authentication key"));
+	_("Select File with Authentication Key"));
     if (filename != nil)
 	UI::ChangeWidget (`id ("key_filename"), `Value, filename);
     return nil;
@@ -634,7 +634,7 @@ global define symbol TsigKeysHandle (string id, map event) ``{
     {
         filename = UI::AskForExistingFile (filename, "",
             // popup headline
-            _("Select file with authentication key"));
+            _("Select File with Authentication Key"));
         if (filename != nil)
             UI::ChangeWidget (`id (`k_new), `Value, filename);
     }
@@ -644,7 +644,7 @@ global define symbol TsigKeysHandle (string id, map event) ``{
         if (size (keys) == 0)
         {
             // message popup
-            Popup::Message (_("Specified file does not contain any TSIG key"));
+            Popup::Message (_("The specified file does not contain a TSIG key."));
             return nil;
         }
         boolean collision = false;
@@ -655,9 +655,10 @@ global define symbol TsigKeysHandle (string id, map event) ``{
         if (collision)
         {
             // yes-no popup
-            if (!Popup::YesNo (_("Specified file contains TSIG key with the same
-identifier, as some of already present keys.
-Old keys will be removed. Continue?")))
+            if (!Popup::YesNo (_("The specified file contains a TSIG key with the same
+identifier as some of already present keys.
+Old keys will be removed. Continue?
+")))
             {
                 return nil;
             }
@@ -694,7 +695,7 @@ Old keys will be removed. Continue?")))
                 )
             ),
             // text entry
-            `TextEntry (`id (`key_id), _("Key identifier")),
+            `TextEntry (`id (`key_id), _("Key Identifier")),
             `HBox (
                 `HStretch (),
                 `PushButton (`id (`ok), Label::OKButton ()),
@@ -712,7 +713,7 @@ Old keys will be removed. Continue?")))
                     UI::QueryWidget (`id (`filename), `Value);
                 filename = (string)UI::AskForSaveFileName (filename, "",
                     // popup headline
-                    _("Select file for creatint the authentication key"));
+                    _("Select File for Creating the Authentication Key"));
                 if (filename != nil)
                     UI::ChangeWidget (`id (`filename), `Value, filename);
                 ret = nil;
@@ -767,7 +768,7 @@ define map getTsigKeysWidget () ``{
             `Left (`PushButton (`id (`k_delete), Label::DeleteButton ())),
             `VSpacing (1),
 	    // frame
-            `Frame (_("Add new key"), `VBox (
+            `Frame (_("Add New Key"), `VBox (
                 `HBox (
                     `TextEntry (`id (`k_new), _("&File Name")),
                     `VBox (
@@ -779,7 +780,7 @@ define map getTsigKeysWidget () ``{
                     `PushButton (`id (`k_add), Label::AddButton ()),
                     `HStretch (),
 		    // push button
-                    `PushButton (`id (`k_create), _("Create &new key"))
+                    `PushButton (`id (`k_create), _("Create &New Key"))
                 )
             ))
         ),
@@ -882,7 +883,7 @@ global define void InitWidgets () ``{
 	"start" : $[
 		"widget" : `checkbox,
 		// check box
-		"label" : _("&Start DHCP server"),
+		"label" : _("&Start DHCP Server"),
 		"help" : HELPS["start"]:"",
 		"init" : startInit,
 		"handle" : startHandle,
@@ -895,7 +896,7 @@ global define void InitWidgets () ``{
 		    `ReplacePoint (`id (`configtree_rp), `Tree (
 			`id ("configtree"),
 			// tree widget
-			_("&Configured declarations"),
+			_("&Configured Declarations"),
 			[]
 		    )),
 		    `HBox (
@@ -907,11 +908,11 @@ global define void InitWidgets () ``{
 			// menu button
 			`MenuButton (`id (`adv), _("Ad&vanced"), [
 			    // item of a menu button
-			    `item (`id (`log), _("Display &log")),
+			    `item (`id (`log), _("Display &Log")),
 			    // item of a menu button
-			    `item (`id (`interfaces), _("&Interfaces configuration")),
+			    `item (`id (`interfaces), _("&Interface Configuration")),
 			    // item of a menu button
-			    `item (`id (`tsig_keys), _("TSIG keys management")),
+			    `item (`id (`tsig_keys), _("TSIG Key Management")),
 			])
 		    )),
 		"help" : HELPS["configtree"]:"",
@@ -935,7 +936,7 @@ global define void InitWidgets () ``{
 	    "host" : $[
 		"widget" : `textentry,
 		// text entry
-		"label" : _("Host &name"),
+		"label" : _("Host &Name"),
 		"help" : HELPS["host"]:"",
 		"init" : idInit,
 		"store" : idStore,
@@ -959,7 +960,7 @@ global define void InitWidgets () ``{
 	"shared-network" : $[
 		"widget" : `textentry,
 		// text entry
-		"label" : _("Shared network &name"),
+		"label" : _("Shared Network &Name"),
 		"help" : HELPS["shared-network"]:"",
 		"init" : idInit,
 		"store" : idStore,
@@ -967,7 +968,7 @@ global define void InitWidgets () ``{
 	"class" : $[
 		"widget" : `textentry,
 		// text entry
-		"label" : _("Class &name"),
+		"label" : _("Class &Name"),
 		"help" : HELPS["class"]:"",
 		"init" : idInit,
 		"store" : idStore,
@@ -977,7 +978,7 @@ global define void InitWidgets () ``{
 	    "custom_widget" : `MultiSelectionBox (
 		`id ("interfaces"),
 		// multi selection box
-		_("Available interfaces"),
+		_("Available Interfaces"),
 		filter (string s, (list<string>)SCR::Dir (.network.section), ``(
 		    s != "lo"
 		))
@@ -989,7 +990,7 @@ global define void InitWidgets () ``{
 	"adapt_firewall" : $[
 	    "widget" : `checkbox,
 	    // check box
-	    "label" : _("Adapt &Firewall settings"),
+	    "label" : _("Adapt &Firewall Settings"),
 	    "init" : FirewallInit,
 	    "store" : FirewallStore,
 	    "help" : HELPS["adapt_firewall"]:"",
@@ -999,17 +1000,17 @@ global define void InitWidgets () ``{
 	    "custom_widget" : `VBox (
 		`Left (`CheckBox (`id ("ddns_enable"),
 		    // check box
-		    _("&Enable Dynamic DNS for this subnet"))),
+		    _("&Enable Dynamic DNS for This Subnet"))),
 		`VSpacing (0.5),
 		`Left (`ReplacePoint (`id (`ddns_key_rp),
 			// combo box
-			`ComboBox (`id("ddns_key"), _("Forward zone TSIG &key")))),
+			`ComboBox (`id("ddns_key"), _("Forward Zone TSIG &Key")))),
 		`Left (`ReplacePoint (`id (`rev_ddns_key_rp),
                         // combo box
-                        `ComboBox (`id("rev_ddns_key"), _("Reverse zone TSIG &key")))),
+                        `ComboBox (`id("rev_ddns_key"), _("Reverse Zone TSIG &Key")))),
 		`Left (`CheckBox (`id (`update_ddns_glob),
 		    // check box
-		    _("Update global Dynamic DNS settings")))
+		    _("Update Global Dynamic DNS Settings")))
 	    ),
 	    // check box
 	    "help" : HELPS["enable_ddns"]:"",
@@ -1027,7 +1028,7 @@ global define void InitWidgets () ``{
 	"zone_ip" : $[
 	    "widget" : `textentry,
 	    // text entry
-	    "label" : _("&Primary DNS server"),
+	    "label" : _("&Primary DNS Server"),
 	    "help" : " ",
 	    "validate_type" : `function,
 	    "validate_function" : EmptyOrIpValidate,
@@ -1041,7 +1042,7 @@ global define void InitWidgets () ``{
 	"reverse_ip" : $[
 	    "widget" : `textentry,
 	    // text entry
-	    "label" : _("Pr&imary DNS server"),
+	    "label" : _("Pr&imary DNS Server"),
 	    "help" : " ",
 	    "validate_type" : `function,
 	    "validate_function" : EmptyOrIpValidate,
