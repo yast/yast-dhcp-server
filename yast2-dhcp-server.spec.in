@@ -2,7 +2,7 @@
 # neededforbuild yast2-devel-packages yast2-firewall yast2-perl-bindings perl-gettext
 
 @HEADER@
-Requires:	yast2 yast2-firewall perl-gettext yast2-perl-bindings
+Requires:	yast2 yast2-firewall perl-gettext yast2-perl-bindings bind-utils
 
 BuildArchitectures:	noarch
 
