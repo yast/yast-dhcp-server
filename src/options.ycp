@@ -240,7 +240,7 @@
 	    if (! Address::Check (new_addr))
 	    {
 		// popup message
-		Popup::Message (_("Entered address is not valid"));
+		Popup::Message (_("Entered address is not valid."));
 		return nil;
 	    }
 	    entry_list = add (entry_list, new_addr);
@@ -298,7 +298,7 @@
 		&& Address::Check (l[1]:"")))
 	    {
 		// message popup
-		Popup::Message (_("Entered addresses are not valid"));
+		Popup::Message (_("Entered addresses are not valid."));
 		return nil;
 	    }
 	    entry_list = add (entry_list, new_addr);
@@ -579,7 +579,7 @@ all clients*/
 		),
 		`HBox (
 		    // text entry
-		    `TextEntry (`id (`new_addr), _("&New address")),
+		    `TextEntry (`id (`new_addr), _("&New Address")),
 		    `VBox (
 			`Label (""),
 			`PushButton (`id (`add), Label::AddButton ())
@@ -610,7 +610,7 @@ all clients*/
 		),
 		`HBox (
 		    // int field
-		    `IntField (`id (`new_entry), _("&New value"), 0, 65535, 0),
+		    `IntField (`id (`new_entry), _("&New Value"), 0, 65535, 0),
 		    `VBox (
 			`Label (""),
 			`PushButton (`id (`add), Label::AddButton ())
@@ -640,10 +640,10 @@ all clients*/
 		    `PushButton (`id (`delete), Label::DeleteButton ())
 		),
 		// label (in role of help text)
-		`Left (`Label (_("Split addresses by space"))),
+		`Left (`Label (_("Separate addresses with spaces"))),
 		`HBox (
 		    // push button
-		    `TextEntry (`id (`new_addr), _("&Add address pair")),
+		    `TextEntry (`id (`new_addr), _("&Add Address Pair")),
 		    `VBox (
 			`Label (""),
 			`PushButton (`id (`add), Label::AddButton ())
@@ -751,7 +751,7 @@ all clients*/
 	if (IP::ToInteger (lvalue) > IP::ToInteger (uvalue))
 	{
 	    // popup message
-	    Popup::Message(_("Lowest address must be lower than the highest one"));
+	    Popup::Message(_("The lowest address must be lower than the highest one."));
 	    UI::SetFocus (`id (`lower));
 	    return false;
 	}
@@ -804,9 +804,9 @@ all clients*/
 		    "custom_widget" : `VBox (
 			`HBox (
 			    // text entry
-			    `TextEntry (`id (`lower), _("&Lowest IP address")),
+			    `TextEntry (`id (`lower), _("&Lowest IP Address")),
 			    // text entry
-			    `TextEntry (`id (`upper), _("&Highest IP address"))
+			    `TextEntry (`id (`upper), _("&Highest IP Address"))
 			),
 			// checkbox
 			`CheckBox (`id (`bootp), _("Allow Dynamic &BOOTP"))

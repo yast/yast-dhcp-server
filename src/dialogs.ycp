@@ -86,7 +86,7 @@ global define symbol GlobalsDialog () ``{
 	`VSpacing (1)
     ), `HSpacing (2));
     // dialog caption
-    string caption = _("Global options");
+    string caption = _("Global Options");
     string help = CWM::MergeHelps (w);
 
     Wizard::SetContentsButtons (caption, contents, help,
@@ -217,7 +217,7 @@ global define symbol Groupdialog () ``{
 	`VSpacing (1)
     ), `HSpacing (2));
     // dialog caption
-    string caption = _("Configuration of Group-specific options");
+    string caption = _("Configuration of Group-Specific Options");
     string help = CWM::MergeHelps (w);
 
     Wizard::SetContentsButtons (caption, contents, help,
@@ -243,7 +243,7 @@ global define symbol ClassDialog () ``{
 	`VSpacing (1)
     ), `HSpacing (2));
     // dialog caption
-    string caption = _("Configuration a Class");
+    string caption = _("Configuration of a Class");
     string help = CWM::MergeHelps (w);
 
     Wizard::SetContentsButtons (caption, contents, help,
@@ -301,7 +301,7 @@ global define symbol SectionTypeChoose () ``{
 	// radio button
         "group" : _("&Group"),
 	// radio button
-	"pool" : _("&Pool of addresses"),
+	"pool" : _("&Pool of Addresses"),
 	// radio button
 	"class" : _("&Class"),
     ];
@@ -315,7 +315,7 @@ global define symbol SectionTypeChoose () ``{
     contents = `HBox (`HSpacing (5), contents, `HSpacing (5));
     contents = `RadioButtonGroup (`id (`entry_type), contents);
     // frame
-    contents = `Frame (_("Declaration types"), contents);
+    contents = `Frame (_("Declaration Types"), contents);
     contents = `HBox (`HStretch (), `VBox (`VStretch (),
 	contents,
     `VStretch ()), `HStretch ());
@@ -359,7 +359,7 @@ global define symbol IfacesDialog () ``{
 	`VStretch ()
     ), `HStretch ());
     // dialog caption
-    string caption = _("Interfaces Configuration");
+    string caption = _("Interface Configuration");
     string help = CWM::MergeHelps (w);
 
     Wizard::SetContentsButtons (caption, contents, help,
@@ -391,7 +391,7 @@ global define symbol DynDnsDialog () ``{
 	`VStretch ()
     ), `HStretch ());
     // dialog caption
-    string caption = _("Interfaces Configuration");
+    string caption = _("Interface Configuration");
 
     return CWM::ShowAndRun (w, widgets,
 	contents, caption, Label::BackButton (), Label::OKButton (), functions);
@@ -413,7 +413,7 @@ global define symbol RunTsigKeysDialog () ``{
     ), `HSpacing (2));
 
     // dialog caption
-    string caption = _("TSIG keys management");
+    string caption = _("TSIG Key Management");
 
     return CWM::ShowAndRun (w, widgets,
         contents, caption, Label::BackButton (), Label::OKButton (),
