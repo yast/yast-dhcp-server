@@ -80,16 +80,22 @@ sub get_lines {
 		    $comment_after = "$comment_after $1";
 		    $orig_line = "";
 		}
-y2error ("Pushing line >>$line<<");
 		$line =~ s/^[ \t]*([^ \t]+)[ \t]*$/$1/;
+		if ($line =~ /.*;$/)
+		{
+		    $line = substr ($line, 0, length ($line) - 1);
+		}
 		my %next_line = (
 		    "line" => $line,
 		    "comment_before" => $comment_before,
 		    "comment_after" => $comment_after,
 		);
-		push @lines, \%next_line;
-		$comment_before = "";
-		$comment_after = "";
+		if (defined ($line) && $line ne "")
+		{
+		    push @lines, \%next_line;
+		    $comment_before = "";
+		    $comment_after = "";
+		}
 		$line = "";
 		$braces = 0;
 		next if ($orig_line eq "");
@@ -118,7 +124,6 @@ sub parse_section {
 	my $type;
 	if ($line =~ /^[ \t]*([^ \t]+.*[^ \t]+)[ \t]*{[ \t]*$/)
 	{
-y2error ("Section line $line");
 	    $type = "section";
 	    $key = $1;
 	    $value = parse_section ();
@@ -155,14 +160,12 @@ y2error ("Section line $line");
 	}
 	elsif ($line =~ /^[ \t]*option[ \t]+([^ \t]+)[ \t]+([^ \t].*);?[ \t]*$/)
 	{
-y2error ("Option line $line");
 	    $type = "option";
 	    $key = $1;
 	    $value = $2;
 	}
 	elsif ($line =~ /^[ \t]*([^ \t]+)[ \t]+([^ \t].*);?[ \t]*$/)
 	{
-y2error ("Directive line $line");
 	    $type = "directive";
 	    $key = $1;
 	    $value = $2;
@@ -206,14 +209,22 @@ sub store_section {
 	my $key = $record{"key"};
 	my $value = $record{"value"};
 	print OUTFILE "$indent$cb\n" if ($cb ne "");
+	my $suffix = ";";
+	if ($type eq "directive" || $type eq "option")
+	{
+	    if ($value =~ /}[ \t]*$/)
+	    {
+		$suffix = "";
+	    }
+	}
 	if ($type eq "directive")
 	{
-	    print OUTFILE "$indent$key $value;";
+	    print OUTFILE "$indent$key $value$suffix";
 	}
 	elsif ($type eq "option")
 	{
 	    my $tmp = "option";
-	    print OUTFILE "$indent$tmp $key $value;";
+	    print OUTFILE "$indent$tmp $key $value$suffix";
 	}
 	else
 	{ #section

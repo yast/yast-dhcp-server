@@ -9,7 +9,7 @@ use strict;
 
 use ycp;
 use YaST::YCP qw(Boolean);
-#use Data::Dumper;
+use Data::Dumper;
 use Time::localtime;
 
 use Locale::gettext;
@@ -32,6 +32,10 @@ my $chroot = 0;
 my @allowed_interfaces = ();
 
 my @settings = ();
+
+my $ddns_file_name = "";
+
+my $ddns_file_create = 0;
 
 #transient variables
 
@@ -57,6 +61,8 @@ YaST::YCP::Import ("SCR");
 YaST::YCP::Import ("Mode");
 YaST::YCP::Import ("Service");
 YaST::YCP::Import ("Progress");
+YaST::YCP::Import ("Report");
+YaST::YCP::Import ("Require");
 YaST::YCP::Import ("SuSEFirewall");
 
 
@@ -68,6 +74,9 @@ sub AdaptFirewall {
     {
 	return 1;
     }
+
+    my $ret = 1;
+
     foreach my $i ("INT", "EXT", "DMZ") {
 	y2milestone ("Removing dhcpd iface $i");
 	SuSEFirewall::RemoveService ("67", "UDP", $i);
@@ -82,25 +91,123 @@ sub AdaptFirewall {
     if (! Mode::test ())
     {
 	Progress::off ();
-	SuSEFirewall::Write ();
+	$ret = SuSEFirewall::Write () && $ret;
 	Progress::on ();
     }
     if ($start_service)
     {
-	SCR::Write (".sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD",
-	    SuSEFirewall::MostInsecureInterface (\@allowed_interfaces));
+	$ret = SCR::Write (".sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD",
+	    SuSEFirewall::MostInsecureInterface (\@allowed_interfaces)) && $ret;
     }
     else
     {
-	SCR::Write (".sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD", "no");
+	$ret = SCR::Write (".sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD", "no")
+	    && $ret;
     }
 
-    SCR::Write (".sysconfig.SuSEfirewall2", undef);
+    $ret = SCR::Write (".sysconfig.SuSEfirewall2", undef) && $ret;
     if (! $write_only)
     {
-	SCR::Execute (".target.bash", "test -x /sbin/rcSuSEfirewall2 && /sbin/rcSuSEfirewall2 status && /sbin/rcSuSEfirewall2 restart");
+	$ret = SCR::Execute (".target.bash", "test -x /sbin/rcSuSEfirewall2 && /sbin/rcSuSEfirewall2 status && /sbin/rcSuSEfirewall2 restart") && $ret;
     }
+    if (! $ret)
+    {
+	# error report
+	Report::Error (_("Error while setting firewall settings occured"));
+    }
+    return $ret;
+}
 
+sub AdaptDDNS {
+    return 1 if ($ddns_file_name eq "");
+
+    my @do_not_copy_chroot = ();
+
+    my @directives = GetEntryDirectives ("", "");
+    @directives = grep {
+	my %dir = %{$_};
+	my $ret = 1;
+	if ($dir{"key"} eq "include")
+	{
+	    my $filename = $dir{"value"};
+	    while ($filename ne "" && (substr ($filename, 0, 1) eq " "
+		|| substr ($filename, 0, 1) eq "\""))
+	    {
+		$filename = substr ($filename, 1);
+	    }
+	    while ($filename ne ""
+		&& (substr ($filename, length ($filename) - 1, 1) eq " "
+		|| substr ($filename, length ($filename) - 1, 1) eq "\""))
+	    {
+		$filename = substr ($filename, 0, length ($filename) - 1);
+	    }
+	    my $contents = SCR::Read (".target.string", $filename);
+	    if ($contents =~ /.*key.*DHCP_UPDATER.* {/)
+	    {
+		push @do_not_copy_chroot, $filename;
+		y2error ("Removing file $filename");
+		$ret = 0;
+	    }
+	}
+	if ($dir{"key"} eq "ddns-update-style"
+	    || $dir{"key"} eq "ddns-updates"
+	    || $dir{"key"} eq "ignore")
+	{
+	    $ret = 0;
+	}
+	$ret;
+    } @directives;
+
+    my $includes = SCR::Read (".sysconfig.dhcpd.DHCPD_CONF_INCLUDE_FILES");
+    my @includes = split (/ /, $includes);
+    @includes = grep {
+	my $current_grepped = $_;
+	grep {
+	    $_ ne $current_grepped
+	} @do_not_copy_chroot;
+    } @includes;
+    push @includes, $ddns_file_name;
+    $includes = join (" ", @includes);
+    SCR::Write (".sysconfig.dhcpd.DHCPD_CONF_INCLUDE_FILES", $includes);
+
+    push @directives, {
+	"key" => "ddns-update-style",
+	"value" => "interim",
+    };
+    push @directives, {
+	"key" => "ignore",
+	"value" => "client-updates",
+    };
+    push @directives, {
+	"key" => "ddns-updates",
+	"value" => "on",
+    };
+    push @directives, {
+	"key" => "include",
+	"value" => "\"$ddns_file_name\"",
+    };
+
+    SetEntryDirectives ("", "", \@directives);
+
+    if ($ddns_file_create)
+    {
+	if (-1 != SCR::Read (".target.size", $ddns_file_name))
+	{
+	    SCR::Execute (".target.remove", $ddns_file_name);
+	}
+	my $command = sprintf (
+	    "KEYFILE=%s bash /usr/share/doc/packages/dhcp-server/genDDNSKey.sh",
+	    $ddns_file_name);
+	y2milestone ("Creating updater key via command $command");
+	my $ret = SCR::Execute (".target.bash", $command);
+	if ($ret)
+	{
+	    # error report
+	    Report::Error (_("Creating Dynamic DNS updater key failed."));
+	    return 0;
+	}
+    }
+    return 1;
 }
 
 sub PreprocessSettings {
@@ -168,8 +275,7 @@ sub PrepareToSave {
 
     my $record_index = FindEntry ($type, $id);
 
-    # FIXME return value
-    return if ($record_index == -1);
+    return [] if ($record_index == -1);
     my %record = %{$settings[$record_index]};
 
     my @to_save = ();
@@ -525,6 +631,11 @@ sub SetModified {
     $modified = 1;
 }
 
+BEGIN { $TYPEINFO{SetWriteOnly} = ["function", "void", "boolean" ]; }
+sub SetWriteOnly {
+    $write_only = $_[0];
+}
+
 BEGIN{$TYPEINFO{GetAllowedInterfaces} = ["function", ["list", "string"] ];}
 sub GetAllowedInterfaces {
     return @allowed_interfaces;
@@ -544,6 +655,26 @@ sub SetAdaptFirewall {
     $adapt_firewall = $_[0];
 }
 
+BEGIN{$TYPEINFO{GetDDNSFileName} = ["function", "string"];}
+sub GetDDNSFileName {
+    return $ddns_file_name;
+}
+
+BEGIN{$TYPEINFO{SetDDNSFileName} = ["function", "void", "string"];}
+sub SetDDNSFileName {
+    $ddns_file_name = $_[0];
+}
+
+BEGIN{$TYPEINFO{GetDDNSFileCreate} = ["function", "boolean"];}
+sub GetDDNSFileCreate {
+    return Boolean($ddns_file_create);
+}
+
+BEGIN{$TYPEINFO{SetDDNSFileCreate} = ["function", "void", "boolean"];}
+sub SetDDNSFileCreate {
+    $ddns_file_create = $_[0];
+}
+
 ##------------------------------------
 BEGIN { $TYPEINFO{Read} = ["function", "boolean"]; }
 sub Read {
@@ -551,11 +682,15 @@ sub Read {
     # Dhcp-server read dialog caption
     my $caption = _("Initializing DHCP Server Configuration");
 
-    Progress::New( $caption, " ", 1, [
+    Progress::New( $caption, " ", 2, [
+	# progress stage
+	_("Check the environment"),
 	# progress stage
 	_("Read the settings"),
     ],
     [
+	# progress step
+	_("Checking the environment..."),
 	# progress step
 	_("Reading the settings..."),
 	# progress step
@@ -567,9 +702,22 @@ sub Read {
     my $sl = 0.5;
     sleep ($sl);
 
-# Check packages
-# TODO check installed packages
+    Progress::NextStage ();
 
+    if (! (Mode::config () || Require::AreAllPackagesInstalled (["dhcp-server"])))
+    {
+	my $installed = Require::RequireAndConflictTarget (["dhcp-server"], [],
+	# richtext, %1 is name of package
+	    _("For running DHCP server, a DHCP daemon is required.
+YaST2 will install package %1.
+"));
+	if (! $installed && ! Require::LastOperationCanceled ())
+	{
+	    # error popup
+	    Report::Error (_("Installing required packages failed."));
+	}
+    }
+ 
 # Information about the daemon
 
     Progress::NextStage ();
@@ -630,6 +778,8 @@ sub Write {
     #adapt firewall
     $ok = AdaptFirewall () && $ok;
 
+    $ok = AdaptDDNS () && $ok;
+
     #save globals
     my $settings_to_save_ref = PrepareToSave ("", "");
 
@@ -654,6 +804,8 @@ sub Write {
 	Service::Enable ("dhcpd");
 	if (0 != $ret)
 	{
+	    # error report
+	    Report::Error (_("Error while restarting DHCP daemon occured."));
 	    $ok = 0;
 	}
     }
@@ -679,6 +831,8 @@ sub Export {
 	"chroot" => $chroot,
 	"allowed_interfaces" => \@allowed_interfaces,
 	"settings" => \@settings,
+	"ddns_file_name" => $ddns_file_name,
+	"ddns_file_create" => $ddns_file_create,
     );
     return \%ret;
 }
@@ -690,6 +844,9 @@ sub Import {
     $chroot = $settings{"chroot"} || 1;
     @allowed_interfaces = @{$settings{"allowed_interfaces"} || []};
     @settings = @{$settings{"settings"} || {}};
+
+    $ddns_file_name = $settings{"ddns_file_name"} || "";
+    $ddns_file_create = $settings{"ddns_file_create"} || 0;
 
     $modified = 1;
     $adapt_firewall = 0;

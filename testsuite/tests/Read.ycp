@@ -62,11 +62,17 @@
 		    "type":"option",
 		    "value":"{ a1, a2 }, { a1, a2 }, { a3, a4 }"
 		],
-	    ]
+	    ],
 	],
 	"target" : $[
 	    "stat" : $[],
 	    "size" : 5,
+	],
+	"sysconfig" : $[
+	    "dhcpd" : $[
+		"DHCPD_INTERFACE" : "eth0 eth2",
+		"DHCPD_RUN_CHROOTED" : "no",
+	    ],
 	],
     ];
     map WRITE = $[];
