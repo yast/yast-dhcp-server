@@ -1407,9 +1407,9 @@ sub Read {
 
     if (! Mode->test ())
     {
-	Progress->off ();
+	my $progress_orig = Progress->set (0);
 	SuSEFirewall->Read ();
-	Progress->on ();
+	Progress->set ($progress_orig);
     }
 
 # Information about the daemon
@@ -1611,9 +1611,9 @@ sub Write {
 
     if (! Mode->test ())
     {
-	Progress->off ();
+	my $progress_orig = Progress->set (0);
 	SuSEFirewall->Write ();
-	Progress->on ();
+	Progress->set ($progress_orig);
     }
 
 # Set daemon starting
