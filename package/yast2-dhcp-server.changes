@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Thu Feb 19 11:31:47 CET 2004 - jsrain@suse.de
+
+- removed yast2-packager from neededforbuild
+
+-------------------------------------------------------------------
 Tue Feb 10 15:42:37 CET 2004 - jsrain@suse.de
 
 - fixed testsuite to updated perl-bindings
