@@ -44,9 +44,9 @@ To run the DHCP server in chroot jail, set
 is more secure and strongly recommended."),
 
 	// help text 3/5
-	"ldap_support" : _("<p><b>LDAP Support</b><br>To store the DHCP configuration in LDAP,
-enable this check box.</p>
-"),
+	"ldap_support" : _("<p><b><big>LDAP Support</big></b><br>
+To store the DHCP configuration in LDAP,
+enable this check box.</p>"),
 
 	// help text 4/5
 	"configtree" : _("<p><b><big>Configured Declarations</big></b><br>
