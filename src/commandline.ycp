@@ -481,12 +481,12 @@ map cmdline = $[
 	"min-ip" : $[
 	    // command line help text for an option
 	    "help"	: _("Lowest IP address of the dynamic address assigning range"),
-	    "type"	: "string",
+	    "type"	: "ip4",
 	],
 	"max-ip" : $[
 	    // command line help text for an option
 	    "help"	: _("Highest IP address of the dynamic address assigning range"),
-	    "type"	: "string",
+	    "type"	: "ip4",
 	],
 	"default-lease-time" : $[
 	    // command line help text for an option
