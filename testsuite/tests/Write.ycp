@@ -27,7 +27,7 @@
 
     Mode::SetTest ("testsuite");
 
-    Progress::off ();
+    boolean progress_orig = Progress::set (false);
 
     map READ = $[
 	// Runlevel

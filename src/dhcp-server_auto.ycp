@@ -121,17 +121,17 @@ else if (func == "Packages") {
 /* Read current state */
 else if (func == "Read") {
     import "Progress";
-    Progress::off();
+    boolean progress_orig = Progress::set (false);
     ret = DhcpServer::Read();
-    Progress::on();
+    Progress::set (progress_orig);
 }
 /* Write givven settings */
 else if (func == "Write") {
     import "Progress";
-    Progress::off();
+    boolean progress_orig = Progress::set (false);
     DhcpServer::SetWriteOnly (true);
     ret = DhcpServer::Write();
-    Progress::on();
+    Progress::set (progress_orig);
 }
 /* Unknown function */
 else {
