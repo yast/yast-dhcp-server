@@ -444,7 +444,7 @@ map cmdline = $[
 	],
 	"ip-address" : $[
 	    // command line help text for an option
-	    "help"	: _("The IP address of the host with a fixed address"),
+	    "help"	: _("The IP address (or host name) of the host with a fixed address"),
 	    "type"	: "string",
 	],
 	"list" : $[

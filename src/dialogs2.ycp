@@ -773,7 +773,7 @@ term Common_HostManagementDialog() {
                                 `Left(`TextEntry(`id("domain"), `opt(`disabled), "  "))
                             ),
 				// Textentry label - IP address of the host
-                            `Left(`TextEntry(`id("hostip"), _("IP Address")))
+                            `Left(`TextEntry(`id("hostip"), _("IP Address or Host Name")))
                         )),
                         `HWeight(10, `VBox(
                             `HStretch()
@@ -813,7 +813,7 @@ void HostManagementValidChars ()
 {
     // ValidChars definition for HostManagementDialog
     UI::ChangeWidget(`id( "hostname" ),		`ValidChars, Hostname::ValidChars);
-    UI::ChangeWidget(`id( "hostip" ),		`ValidChars, IP::ValidChars4);
+    UI::ChangeWidget(`id( "hostip" ),		`ValidChars, Hostname::ValidCharsFQ);
     UI::ChangeWidget(`id( "hosthwaddress" ),	`ValidChars, "ABCDEFabcdef0123456789:");
 }
 
@@ -1051,10 +1051,10 @@ symbol HostManagementHandle (string key, map event_descr)
 	    Popup::Error ( _("The input value must be defined.") );
 	    return nil;
 	}
-	else if ( IP::Check4 ( hostip ) != true )
+	else if ( Hostname::CheckFQ ( hostip ) != true )
 	{
 	    UI::SetFocus ( `id ( "hostip" ) );
-	    Popup::Error ( IP::Valid4 () );
+	    Popup::Error ( Hostname::ValidFQ () );
 	    return nil;
 	}
 
@@ -1129,10 +1129,10 @@ symbol HostManagementHandle (string key, map event_descr)
 	    Popup::Error ( _("The input value must be defined.") );
 	    return nil;
 	}
-	else if ( IP::Check4 ( hostip ) != true )
+	else if ( Hostname::CheckFQ ( hostip ) != true )
 	{
 	    UI::SetFocus ( `id ( "hostip" ) );
-	    Popup::Error ( IP::Valid4 () );
+	    Popup::Error ( Hostname::ValidFQ () );
 	    return nil;
 	}
 

@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Feb  8 11:18:42 CET 2005 - jsrain@suse.cz
+
+- allow to specify host name instead of IP address in the dialog
+  for management of hosts with static IP address (#50161)
+
+-------------------------------------------------------------------
 Mon Feb  7 16:21:54 CET 2005 - jsrain@suse.cz
 
 - merged texts from proofread
