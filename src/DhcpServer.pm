@@ -1494,6 +1494,8 @@ sub Write {
 
     my $ok = 1;
 
+    $modified = $modified || SuSEFirewall->GetModified ();
+
     if (! $modified)
     {
 	y2milestone ("Nothing modified, nothing to save");
