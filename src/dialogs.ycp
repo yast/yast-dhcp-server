@@ -361,9 +361,10 @@ global define symbol SectionTypeChoose () ``{
 
 /**
   * Run interfaces and firewall dialog
+  * @param initial boolean true if running before main dialog
   * @return symbol for wizard sequencer
   */
-global define symbol IfacesDialog () ``{
+global define symbol IfacesDialog (boolean initial) ``{
     y2milestone ("Running interfaces dialog");
     list<map<string,any> > w = CWM::CreateWidgets (["interfaces", "adapt_firewall"],widgets);
     term contents = `HBox (`HStretch (), `VBox (
@@ -376,10 +377,20 @@ global define symbol IfacesDialog () ``{
     // dialog caption
     string caption = _("Interface Configuration");
     string help = CWM::MergeHelps (w);
+    string next_label = initial ? Label::NextButton () : Label::OKButton ();
 
     Wizard::SetContentsButtons (caption, contents, help,
-	Label::BackButton (), Label::OKButton ());
-    Wizard::RestoreAbortButton ();
+	Label::BackButton (), next_label);
+    if (initial)
+    {
+	Wizard::HideBackButton();
+	Wizard::SetAbortButton(`abort, Label::CancelButton() );
+    }
+    else
+    {
+	Wizard::RestoreAbortButton ();
+	Wizard::RestoreBackButton ();
+    }
 
     return CWM::Run (w, functions);
 }
@@ -490,6 +501,17 @@ global define symbol SectionStore () ``{
     DhcpServer::SetDDNSFileCreate (current_ddns_key_create);*/
 
     return `next;
+}
+
+/**
+  * Detect if at least one network interface is selected
+  * @return symbol for wizard sequencer
+  */
+global define symbol CheckConfiguredInterfaces () ``{
+    list ifaces = DhcpServer::GetAllowedInterfaces ();
+    if (size (ifaces) == 0)
+	return `ifaces;
+    return `main;
 }
 
 // EOF
