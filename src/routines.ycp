@@ -11,13 +11,37 @@
 
 textdomain "dhcp-server";
 
+    global define string typeid2key (string type, string id) ``{
+	return sformat ("%1 %2", type, id);
+    }
+
+    global define map<string,string> key2typeid (string key) ``{
+	if (key == " ")
+	{
+	    return $[
+		"type" : "",
+		"id" : "",
+	    ];
+	}
+	if (! regexpmatch (key, "^[^ ]+ .+$"))
+	    return nil;
+	string type = regexpsub (key, "^([^ ]+) .+$", "\\1");
+	string id = regexpsub (key, "^[^ ]+ (.+)$", "\\1");
+	return $[
+	    "type" : type,
+	    "id" : id,
+	];
+    }
+
     global define list getItems (string type, string id) ``{
 	list<map> entries = DhcpServer::GetChildrenOfEntry (type, id);
+	if (entries == nil)
+	    return [];
 	list<term>ret = maplist (map e, entries, ``{
 	    string type = e["type"]:"group";
 	    string id = e["id"]:"";
 	    list<map> subentries = DhcpServer::GetChildrenOfEntry (type, id);
-	    string full_id = sformat ("%1: %2", type, id);
+	    string full_id = typeid2key (type, id);
 	    if (size (subentries) > 0)
 	    {
 		return `item (`id (full_id), full_id, true, getItems (type,id));

@@ -1,0 +1,183 @@
+/**
+ * File:	include/dhcp-server/ui.ycp
+ * Package:	Configuration of dhcp-server
+ * Summary:	User interface
+ * Authors:	Jiri Srain <jsrain@suse.cz>
+ *
+ * $Id$
+ */
+
+{
+
+textdomain "dhcp-server";
+
+import "Wizard";
+import "DhcpServer";
+import "CWM";
+
+import "Popup";
+import "Label";
+
+global map<symbol,any> functions = $[
+    `abort : confirmAbort,
+];
+
+/**
+  * Read settings dialog
+  * @return `abort if aborted and `next otherwise
+  */
+global define symbol ReadDialog() ``{
+    y2milestone ("Running read dialog");
+    Wizard::RestoreHelp (HELPS["read"]:"");
+    boolean ret = DhcpServer::Read();
+    return ret ? `next : `abort;
+}
+
+/**
+  * Write settings dialog
+  * @return `abort if aborted and `next otherwise
+  */
+global define symbol WriteDialog() ``{
+    y2milestone ("Running write dialog");
+    Wizard::RestoreHelp (HELPS["read"]:"");
+    Wizard::RestoreHelp (HELPS["write"]:"");
+    boolean ret = DhcpServer::Write();
+//      if (! ret && cfg_restart_wanted)
+//          return `back;
+    return ret ? `next : `abort;
+}
+
+
+/**
+  * Run main dialog
+  * @return symbol for wizard sequencer
+  */
+global define symbol MainDialog () ``{
+    y2milestone ("Running main dialog");
+    list<map> w = CWM::CreateWidgets (["start", "configtree"], widgets);
+    term contents = `HBox (`HSpacing (2), `VBox (
+	`VSpacing (1),
+	w[0, "widget"]:`VSpacing (0),
+	`VSpacing (1),
+	w[1, "widget"]:`VSpacing (0),
+	`VSpacing (1)
+    ), `HSpacing (2));
+    // dialog caption
+    string caption = _("DHCP Server Configuration");
+    string help = CWM::MergeHelps (w);
+
+    Wizard::SetContentsButtons (caption, contents, help,
+	Label::BackButton (), Label::FinishButton ());
+
+    return CWM::Run (w, functions);
+}
+
+global define symbol GlobalsDialog () ``{
+    y2milestone ("Running global options dialog");
+    list<map> w = CWM::CreateWidgets (["global_table"], widgets);
+    term contents = `HBox (`HSpacing (2), `VBox (
+	`VSpacing (1),
+	w[0, "widget"]:`VSpacing (0),
+	`VSpacing (1)
+    ), `HSpacing (2));
+    // dialog caption
+    string caption = _("Global options");
+    string help = CWM::MergeHelps (w);
+
+    Wizard::SetContentsButtons (caption, contents, help,
+	Label::BackButton (), Label::OKButton ());
+
+    return CWM::Run (w, functions);
+}
+
+/**
+  * Run subnet dialog
+  * @return symbol for wizard sequencer
+  */
+global define symbol SubnetDialog () ``{
+    y2milestone ("Running subnet dialog");
+    list<map> w = CWM::CreateWidgets (["subnet", "subnet_table"], widgets);
+    term contents = `HBox (`HSpacing (2), `VBox (
+	`VSpacing (1),
+	w[0, "widget"]:`VSpacing (0),
+	`VSpacing (1),
+	w[1, "widget"]:`VSpacing (0),
+	`VSpacing (1)
+    ), `HSpacing (2));
+    // dialog caption
+    string caption = _("Subnet Configuration");
+    string help = CWM::MergeHelps (w);
+
+    Wizard::SetContentsButtons (caption, contents, help,
+	Label::BackButton (), Label::OKButton ());
+
+    return CWM::Run (w, functions);
+}
+
+/**
+  * Run host dialog
+  * @return symbol for wizard sequencer
+  */
+global define symbol HostDialog () ``{
+    list<map> w = CWM::CreateWidgets (["host_table"], DhcpServerUI::widgets);
+    term contents = `HBox (`HSpacing (2), `VBox (
+	`VSpacing (1),
+	w[0, "widget"]:`VSpacing (0),
+	`VSpacing (1)
+    ), `HSpacing (2));
+    // dialog caption
+    string caption = _("Configuration of Host with Fixed Address");
+    string help = CWM::MergeHelps (w);
+
+    Wizard::SetContentsButtons (caption, contents, help,
+	Label::BackButton (), Label::OKButton ());
+
+    return CWM::Run (w, functions);
+}
+
+global define symbol SharedNetworkDialog () ``{
+    return `back;
+}
+
+global define symbol PoolDialog () ``{
+    return `back;
+}
+
+global define symbol Groupdialog () ``{
+    return `back;
+}
+
+
+
+// fake dialogs - switchers
+
+global define symbol SelectEditationDialog () ``{
+    if (current_entry_type == "")
+	return `global;
+    if (current_entry_type == "subnet")
+	return `subnet;
+// TODO
+    return `back;
+}
+
+global define symbol SectionStore () ``{
+    y2milestone ("Storing record");
+    if (parent_type == "") // existing entry was edited
+    {
+	DhcpServer::ChangeEntry (original_entry_type, original_entry_id,
+	    current_entry_type, current_entry_id);
+    }
+    else // new entry was added
+    {
+	DhcpServer::CreateEntry (current_entry_type, current_entry_id,
+	    parent_type, parent_id);
+    }
+    DhcpServer::SetEntryDirectives (current_entry_type, current_entry_id,
+	current_entry_directives);
+    DhcpServer::SetEntryOptions (current_entry_type, current_entry_id,
+	current_entry_options);
+    return `next;
+}
+
+// EOF
+}

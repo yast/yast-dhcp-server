@@ -26,6 +26,15 @@
     import "SuSEFirewall";
     import "DhcpServer";
 
+    global string current_entry_type = "";
+    global string current_entry_id = "";
+    global list<any> current_entry_options = [];
+    global list<any> current_entry_directives = [];
+    global string original_entry_type = "";
+    global string original_entry_id = "";
+    global string parent_type = "";
+    global string parent_id = "";
+
     global map widgets = $[];
 
     global map popups = $[];
@@ -33,7 +42,8 @@
     include "dhcp-server/routines.ycp";
     include "dhcp-server/helps.ycp";
     include "dhcp-server/widgets.ycp";
-    include "dhcp-server/ui.ycp";
+    include "dhcp-server/dialogs.ycp";
+    include "dhcp-server/wizards.ycp";
 //    include "dhcp-server/options.ycp";
 
     /**

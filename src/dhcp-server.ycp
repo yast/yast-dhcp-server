@@ -25,35 +25,16 @@
     import "DhcpServerUI";
     import "Wizard";
 
-    Wizard::CreateDialog ();
-    boolean read = DhcpServer::Read ();
-    if (! read)
-    {
-	UI::CloseDialog();
-	return `abort;
-    }
-    boolean exit = false;
-    symbol ret = nil;
-    while (! exit)
-    {
-	ret = DhcpServerUI::runWizard ();
-	y2debug("ret=%1", ret);
-//	if (ret == `next)
-//	{
-//	    DhcpServer::cfg_restart_wanted = false;
-//	    DhcpServer::Write ();
-//	    exit = ! DhcpServer::cfg_restart_wanted;
-//	}
-//	else
-//	    exit = true;
-    }
-    UI::CloseDialog ();
+    any ret = nil;
+
+    ret = DhcpServerUI::DhcpSequence ();
+    y2debug("ret=%1", ret);
 
     /* Finish */
     y2milestone("Dhcp-server module finished");
     y2milestone("----------------------------------------");
 
-//    return ret;
+    return ret;
 
 /* EOF */
 }
