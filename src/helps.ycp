@@ -27,10 +27,10 @@ Select the network interfaces to which the DHCP server should listen from
 
 	// help text 2/2
 	"open_firewall" : _("<p><b><big>Firewall Settings</big></b><br>
-To open the firewall to allow access the service from remote computers
-through the selected interface, set
+To open the firewall to allow access to the service from 
+remote computers through the selected interface, set
 <b>Open Firewall for Selected Interface</b>.<br>
-This option is available only if the firewall
+This option is only available if the firewall
 is enabled.</p>"),
 
 	// help text 1/5
@@ -191,7 +191,7 @@ Select the network interfaces to which the DHCP server should listen from
 
 
 	// host management help 1/3
-"host_management" : _("<p><b><big>Host Management</big></b><br>
+	"host_management" : _("<p><b><big>Host Management</big></b><br>
 Use this dialog to edit hosts with static address binding.</p>") +
 
 	// host management help 1/3
