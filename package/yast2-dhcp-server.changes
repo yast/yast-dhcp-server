@@ -2,6 +2,8 @@
 Tue Mar 30 17:12:23 CEST 2004 - jsrain@suse.de
 
 - fixed grabbing the list of interfaces to listen to (#37534)
+- fixed accidental destroying of list of files to copy to chroot
+  jail (#37281)
 
 -------------------------------------------------------------------
 Tue Mar 30 08:39:29 CEST 2004 - jsrain@suse.de
