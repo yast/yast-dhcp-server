@@ -337,6 +337,7 @@ global boolean OpenFirewallValidate (string id, map event) {
     boolean enabled = Service::Enabled("SuSEfirewall2_init");
     if (enabled && ! open)
     {
+	// yes-no popup
 	if (! Popup::YesNo (_("The port in firewall is not open. The DHCP server
 will not be able to serve your network.
 Continue?")))
