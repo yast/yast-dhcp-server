@@ -12,31 +12,31 @@ This package is the public YaST2 API to configure the ISC DHCP server
 
   use YaPI::DHCPD
 
-  $status = StopDhcpService ()
+$status = StopDhcpService()
 
-  $status = StartDhcpService ()
+$status = StartDhcpService()
 
-  $status = GetDhcpServiceStatus ()
+$status = GetDhcpServiceStatus()
 
-  $ret = AddDeclaration ($type, $id, $parent_type, $parent_id)
+$ret = AddDeclaration($type,$id,$parent_type,$parent_id)
 
-  $ret = DeleteDeclaration ($type, $id)
+$ret = DeleteDeclaration($type,$id)
 
-  $parent = GetDeclarationParent ($type, $id)
+$parent = GetDeclarationParent($type,$id)
 
-  $ret = SetDeclarationParent ($type, $id, $new_parent_type, $new_parent_id)
+$ret = SetDeclarationParent($type,$id,$new_parent_type,$new_parent_id)
 
-  $children = GetChildrenOfDeclaration ($type, $id)
+$children = GetChildrenOfDeclaration($type,$id)
 
-  $options = GetDeclarationOptions ($type, $id)
+$options = GetDeclarationOptions($type,$id)
 
-  $ret = SetDeclarationOptions ($type, $id, $options)
+$ret = SetDeclarationOptions($type,$id,$options)
 
-  $directives = GetDeclarationDirectives ($type, $id)
+$directives = GetDeclarationDirectives($type,$id)
 
-  $ret = SetDeclarationDirectives ($type, $id, $directives)
+$ret = SetDeclarationDirectives($type,$id,$directives)
 
-  $exists = ExistsDeclaration ($type, $id)
+$exists = ExistsDeclaration($type,$id)
 
 
 =head1 DESCRIPTION
