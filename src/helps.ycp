@@ -124,15 +124,6 @@ Specify forward and reverse zones to update. For both, also specify
 their primary name server. If the name server runs on the same host as the DHCP
 server, you can leave the fields empty.</p>"),
 
-    // ddns keys dialog
-    // help text 1/1
-    "ddns_keys" :  _("<p><b><big>TSIG Key Management</big></b><br>
-Define TSIG keys used for dynamic zone updates here.
-To add a new TSIG key, use the 
-<b>File Name</b> text field or the <b>Browse</b> button then click <b>Add</b>.
-To delete an existing TSIG key, select it in the list and click <b>Delete</b>.
-</p>"),
-
 	// Wizard Installation - Step 1
 	"card_selection" : _("<p><b><big>Network Card Selection</big></b><br>
 Select one of listed network cards to configure the DHCP to run on it.</p>"),
