@@ -21,7 +21,6 @@ import "Hostname";
 import "Progress";
 import "DialogTree";
 import "CWMServiceStart";
-import "CWMFirewallInterfaces";
 import "ProductFeatures";
 
 
@@ -1097,12 +1096,17 @@ Continue?
 
 map<string, map<string, any> > tabs = $[
     "start_up" : $[
-	"contents"	: `VBox ("start_up", `VStretch ()),
+	"contents"	: `VBox (
+	    "auto_start_up",
+	    "use_ldap",
+	    "start_stop",
+	    `VStretch ()
+	),
 	// dialog caption
 	"caption"	: _("DHCP Server -- Start-Up"),
 	// tree item
 	"tree_item_label"	: _("Start-Up"),
-	"widget_names"	: ["start_up", "expert_settings"],
+	"widget_names"	: ["auto_start_up", "use_ldap", "start_stop", "expert_settings"],
     ],
     "card_selection" : $[
 	"contents"	: `VBox (
@@ -1155,17 +1159,15 @@ map<string, map<string, any> > tabs = $[
 map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
   widgets,
   $[
-    "start_up" : CWMServiceStart::CreateWidget ($[
+    "auto_start_up" : CWMServiceStart::CreateAutoStartWidget ($[
 	"get_service_auto_start" : DhcpServer::GetStartService,
 	"set_service_auto_start" : DhcpServer::SetStartService,
 	// push button
 	"start_auto_button" : _("Start DHCP Server when &Booting"),
 	// push button
 	"start_manual_button" : _("Start DHCP Server &Manually"),
-
-	"get_use_ldap" : DhcpServer::GetUseLdap,
-	"set_use_ldap" : SetUseLdap,
-
+    ]),
+    "start_stop" : CWMServiceStart::CreateStartStopWidget ($[
 	"service_id" : "dhcpd",
 	// label - service status
 	"service_running_label" : _("DHCP Server is running"),
@@ -1178,15 +1180,15 @@ map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
 	"save_now_action" : DhcpServer::Write,
 	// push button
 	"save_now_button" : _("Save Settings and Restart DHCP Server &Now"),
-/*
-"get_open_firewall" : nil,
-"set_open_firewall" : nil,
-"common_details_handler" : CWMFirewallInterfaces::DisplayPopup,
-//"firewall_details_handler" : nil,
-"get_allowed_interfaces" : nil,
-"set_allowed_interfaces" : nil,
-*/
     ]),
+    "use_ldap" : CWMServiceStart::CreateLdapWidget ($[
+	"get_use_ldap" : DhcpServer::GetUseLdap,
+	"set_use_ldap" : SetUseLdap,
+    ]),
+/*    "firewall" : CWMFirewallInterfaces::CreateOpenFirewallWidget ($[
+"services" : [],
+"display_details" : true,
+    ]),*/
     "card_selection" : $[
 	"widget"	: `custom,
 	"custom_widget"	: `VBox (),
@@ -1262,14 +1264,15 @@ any FirstRunDialog (string current_tab, integer step_number) {
     string caption = sformat (_("DHCP Server Wizard (%1/3)"), step_number) 
 	+ " : " + tab_descr["caption"]:"";
 
-    return CWM::ShowAndRun (
-	tab_descr["widget_names"]:[],
-	widgets,
-	tab_descr["contents"]:`VBox (),
-	caption,
-	Label::BackButton (),
-	Label::NextButton (),
-	$[]);
+    symbol ret = CWM::ShowAndRun ($[
+	"widget_names" : widgets,
+	"widget_descr" : tab_descr["widget_names"]:[],
+	"contents" : tab_descr["contents"]:`VBox (),
+	"caption" :  caption,
+	"back_button" : Label::BackButton (),
+	"next_button" : Label::OKButton (),
+	"fallback_functions" : $[],
+    ]);
 }
 
 /* EOF */

@@ -126,8 +126,8 @@ global define symbol ldapHandle (string id, map event);
       * @param add_values list of values to be offered via the add button
       * @return map of widget
       */
-    global define map getOptionsTableWidget (list add_values) ``{
-	map ret = TablePopup::CreateTableDescr (
+    global define map<string,any> getOptionsTableWidget (list add_values) ``{
+	map<string,any> ret = TablePopup::CreateTableDescr (
 	    $["add_delete" : true, "up_down" : false],
 	    $[
 		"init": TablePopup::TableInitWrapper,
@@ -886,7 +886,7 @@ global define void InitWidgets () ``{
     group_commands = optsort ((list<string>)
 	merge (group_commands, common_commands));
 
-    map w = $[
+    map<string,map<string,any> > w = $[
 	"global_table" : getOptionsTableWidget (global_commands),
 	"host_table" : getOptionsTableWidget (host_commands),
 	"subnet_table" : getOptionsTableWidget (subnet_commands),

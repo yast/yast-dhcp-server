@@ -428,8 +428,15 @@ global define symbol DynDnsDialog () ``{
     // dialog caption
     string caption = _("Interface Configuration");
 
-    return CWM::ShowAndRun (w, widgets,
-	contents, caption, Label::BackButton (), Label::OKButton (), functions);
+    return CWM::ShowAndRun ($[
+	"widget_names" : w,
+	"widget_descr" : widgets,
+	"contents" : contents,
+	"caption" :  caption,
+	"back_button" : Label::BackButton (),
+	"next_button" : Label::OKButton (),
+	"fallback_functions" : functions
+    ]);
 }
 
 /**
@@ -450,9 +457,15 @@ global define symbol RunTsigKeysDialog (boolean called_from_subnet) ``{
     // dialog caption
     string caption = _("TSIG Key Management");
 
-    symbol ret = CWM::ShowAndRun (w, widgets,
-        contents, caption, Label::BackButton (), Label::OKButton (),
-        $[`abort : confirmAbort]);
+    symbol ret = CWM::ShowAndRun ($[
+	"widget_names" : w,
+	"widget_descr" : widgets,
+	"contents" : contents,
+	"caption" :  caption,
+	"back_button" : Label::BackButton (),
+	"next_button" : Label::OKButton (),
+	"fallback_functions" : $[`abort : confirmAbort],
+    ]);
 
     if (ret == `next && called_from_subnet)
     {
