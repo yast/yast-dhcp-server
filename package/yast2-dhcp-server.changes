@@ -5,6 +5,8 @@ Mon Mar 29 13:40:08 CEST 2004 - jsrain@suse.de
   to chroot (#37281)
 - enabling the wodgets of the DynamicDNS dialog properly (#37282)
 - fixed adding of new TSIG keys
+- fixed writing of some directives (eg. 'filename', 'authoritative')
+  (#37265)
 
 -------------------------------------------------------------------
 Wed Mar 24 12:37:50 CET 2004 - jsrain@suse.cz

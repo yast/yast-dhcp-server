@@ -343,7 +343,8 @@
       */
     global define void flagInit (any opt_id, string key) ``{
 	any value = fetchValue (opt_id, key);
-	UI::ChangeWidget ( `id (key), `Value, value != "off");
+	UI::ChangeWidget ( `id (key), `Value,
+	    value != "off" && value != "\"off\"");
     }
 
     /**
@@ -353,7 +354,7 @@
       */
     global define void flagStore (any opt_id, string key) ``{
 	boolean value = (boolean)UI::QueryWidget ( `id (key), `Value);
-	storeValue (opt_id, key, value ? "on" : "off");
+	storeValue (opt_id, key, value ? "\"on\"" : "\"off\"");
     }
 
     /**
@@ -491,7 +492,7 @@ all clients*/
 "do-forward-updates" : "flag",
 "dynamic-bootp-lease-cutoff" : "date",
 "dynamic-bootp-lease-length" : "length",
-"filename" : "filename",
+"filename" : "text",
 "fixed-address" : "array_ip-address",
 "get-lease-hostnames" : "flag",
 "hardware" : "hardware",
