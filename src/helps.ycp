@@ -203,11 +203,6 @@ for which this IP is blocked for the client on the DHCP server.</p>
 Select the network interfaces to which the DHCP server should listen from
 <b>Available Interfaces</b>.</p>"),
 
-	// start up help text 1/1
-	"start_up" : _("<p><b><big>Start DHCP Server</big></b><br>
-To run the DHCP server every time your computer is started, set this to
-<b>On</b>. Otherwise, select <b>Off</b>.</p>
-"),
 
 	// host management help 1/3
 "host_management" : _("<p><b><big>Host Management</big></b><br>
