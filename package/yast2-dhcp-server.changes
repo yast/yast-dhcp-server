@@ -1,7 +1,10 @@
 -------------------------------------------------------------------
 Wed Sep 17 10:22:43 CEST 2003 - jsrain@suse.de
 
+- added possibility to adapt firewall settings when saving DNS
+  server configuration (#30783)
 - fixed requires (added yast2-packager)
+- 2.8.6
 
 -------------------------------------------------------------------
 Mon Sep 15 10:09:25 CEST 2003 - jsrain@suse.de

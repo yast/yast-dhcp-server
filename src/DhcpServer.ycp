@@ -62,6 +62,8 @@
 
     global boolean cfg_restart_wanted = false;
 
+    global boolean adapt_firewall = true;
+
     /**
       * Constructor
       */
@@ -238,9 +240,56 @@ Display the log and continue with configuration?
 	    SCR::Execute (.target.bash, "/etc/init.d/dhcpd stop");
 	    Runlevel::ServiceAdjust ("dhcpd", "disable");
 	}
+	adaptFirewall ();
 
 	if(UI::PollInput() == `abort) return false;
 	return true;
+    }
+
+    /**
+      * Adjust the firewall settings if wanted
+      */
+    global define void adaptFirewall () ``{
+	if (adapt_firewall)
+	{
+	    if (settings["__run_dhcp_server"]:false)
+	    {
+		if (SCR::Read (.sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD)=="no")
+		    SCR::Write (.sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD,
+			"yes");
+		SCR::Write (.sysconfig.SuSEfirewall2.FW_PROTECT_FROM_INTERNAL,
+		    "no");
+	    }
+	    else
+	    {
+		SCR::Write (.sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD, "no");
+		if ("no" != SCR::Read (
+			.sysconfig.SuSEfirewall2.FW_SERVICE_DNS)
+		    ||"no" != SCR::Read (
+			.sysconfig.SuSEfirewall2.FW_SERVICE_DHCLIENT)
+		    ||"no" != SCR::Read (
+			.sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD)
+		    ||"no" != SCR::Read (
+			.sysconfig.SuSEfirewall2.FW_SERVICE_SQUID)
+		    ||"no" != SCR::Read (
+			.sysconfig.SuSEfirewall2.FW_SERVICE_SAMBA))
+		{
+		    SCR::Write (
+			.sysconfig.SuSEfirewall2.FW_PROTECT_FROM_INTERNAL,
+			"no");
+		}
+		else
+		{
+		    SCR::Write (
+			.sysconfig.SuSEfirewall2.FW_PROTECT_FROM_INTERNAL,
+			"yes");
+		}
+	    }
+
+	    SCR::Write (.sysconfig.SuSEfirewall2, nil);
+	    if (! write_only)
+		SCR::Execute (.target.bash, "test -x /sbin/rcSuSEfirewall2 && /sbin/rcSuSEfirewall2 status && /sbin/rcSuSEfirewall2 restart");
+	}
     }
 
     /**

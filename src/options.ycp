@@ -38,6 +38,19 @@
 		    "help" : _("If multiple interfaces are needed, separate them with spaces."),
 		],
 	    ],
+	    "__firewall" : $[
+		"table" : $[
+		    // table cell, label
+		    "label" : _("Adapt Firewall"),
+		    "optional" : false,
+		    "summary" : ``(DhcpServer::FirewallSummary ()),
+		],
+		"popup" : $[
+		    "widget" : `checkbox,
+		    "init" : ``(DhcpServer::FirewallInit ()),
+		    "store" : ``(DhcpServer::FirewallStore ()),
+		],
+	    ],
 	    "__enable_service" : $[
 		"table" : $[
 		   // table cell, label
@@ -173,6 +186,43 @@
 	settings["__dhcpd_interface"] = UI::QueryWidget (`id (opt_key), `Value);
     }
 
+    /**
+      * Summary function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      * @return string table entry summary
+      */
+    global define string FirewallSummary (any opt_id, any opt_key) ``{
+	if (adapt_firewall)
+	{
+	    // table cell
+	    return _("Yes");
+	}
+	else
+	{
+	    // table cell
+	    return _("No");
+	}
+    }
+
+    /**
+      * Initialization function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void FirewallInit (any opt_id, any opt_key) ``{
+	UI::ChangeWidget (`id (opt_key), `Value,
+	    adapt_firewall);
+    }
+
+    /**
+      * Summary function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void FirewallSave (any opt_id, any opt_key)``{
+	adapt_firewall = UI::QueryWidget (`id (opt_key), `Value);
+    }
 
     /**
       * Summary function of a table entry / popup

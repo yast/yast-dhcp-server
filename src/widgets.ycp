@@ -505,7 +505,7 @@
 	list prefer = [];
 	symbol what = descr["what"]:nil;
 	if (what == `global)
-	    prefer =  ["__enable_service", "__subnets", "__hosts",
+	    prefer =  ["__enable_service", "__firewall", "__subnets", "__hosts",
 		"__interfaces"];
 	else if (what == `host)
 	    prefer = ["host"];

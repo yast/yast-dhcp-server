@@ -22,6 +22,8 @@
 
     Progress::off ();
 
+    DhcpServer::adapt_firewall = true;
+
     map READ = $[
 	// Runlevel
         "init": $[
@@ -44,6 +46,15 @@
 	    "stat" : $[],
 	    "ycp" : $[],
 	],
+        "sysconfig" : $[
+            "SuSEfirewall2" : $[
+                "FW_SERVICE_DNS" : "no",
+                "FW_SERVICE_DHCLIENT" : "no",
+                "FW_SERVICE_DHCPD" : "no",
+                "FW_SERVICE_SQUID" : "no",
+                "FW_SERVICE_SAMBA" : "no",
+            ],
+        ],
     ];
     map WRITE = $[];
     map EXEC = $[
