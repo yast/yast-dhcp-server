@@ -790,6 +790,17 @@ define list<string> optsort (list<string> options) ``{
     return (list<string>)merge (o2, o1);
 }
 
+define void ConfigSummaryInit (string key) {
+    UI::ChangeWidget (`id (key), `Value, sformat (
+	"<ul><li>%1</li></ul>",
+	mergestring (DhcpServer::Summary (["no_start"]), "</li>\n<li>")
+    ));
+}
+
+define symbol AllSettingsButtonHandle (string key, map event) {
+    return `main;
+}
+
 /**
   * Initialize widgets
   * Create description map and copy it into appropriate variable of the
@@ -1099,6 +1110,18 @@ global define void InitWidgets () ``{
 	    "get_keys_info" : DhcpServer::GetKeysInfo,
 	    "set_keys_info" : DhcpServer::SetKeysInfo,
 	]),
+	"config_summary" : $[
+	    "widget" : `custom,
+	    "custom_widget" : `RichText (`id ("config_summary"), ""),
+	    "init" : ConfigSummaryInit,
+	],
+	"all_settings_button" : $[
+	    "widget" : `push_button,
+	    "label" : _("&Enter DHCP Server Expert Configuration"),
+	    "handle_events" : ["all_settings_button"],
+	    "handle" : AllSettingsButtonHandle,
+	    "help" : HELPS["all_settings_button"]:"",
+	],
     ];
     DhcpServerUI::widgets = w;
 }

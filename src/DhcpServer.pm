@@ -1743,23 +1743,58 @@ sub Import {
     }
 }
 
-BEGIN { $TYPEINFO{Summary} = ["function", [ "list", "string" ] ]; }
+BEGIN{$TYPEINFO{Summary} = ["function",["list","string"],["list","string"]];}
 sub Summary {
     my $self = shift;
+    my $opt_ref = shift;
 
     my @ret = ();
+    my @opt = @{$opt_ref || []};
 
-    if ($start_service)
+    if (0 == scalar (grep (/no_start/, @opt)))
     {
-	# summary string
-	push (@ret, __("The DHCP server is started at boot time"));
-    }
-    else
-    {
-	# summary string
-	push (@ret, __("The DHCP server is not started at boot time"));
+	if ($start_service)
+	{
+	    # summary string
+	    push (@ret, __("The DHCP server is started at boot time"));
+	}
+	else
+	{
+	    # summary string
+	    push (@ret, __("The DHCP server is not started at boot time"));
+	}
     }
 
+    if (0 != scalar (@allowed_interfaces))
+    {
+	my $allowed_str = join (", ", @allowed_interfaces);
+	# summary string, %1 is list of network interfaces
+	push (@ret, sformat (__("Listen on: %1"), $allowed_str));
+
+	#FIXME multiple interfaces
+	my $interface = @allowed_interfaces[0];
+	my $info = $self->GetInterfaceInformation ($interface);
+	my $id = $info->{"network"} . " netmask " . $info->{"netmask"};
+	if ($self->EntryExists ("subnet", $id))
+	{
+	    my $directives = $self->GetEntryDirectives ( "subnet", $id );
+	    if (defined ($directives))
+	    {
+		my @directives = @{$directives};
+		foreach my $dir_ref (@directives) {
+		    my %dir = %{$dir_ref};
+		    if ($dir{"key"} eq "range")
+		    {
+			my $range = $dir{"value"};
+			$range =~ s/([0-9])[ \t]+([0-9])/\1 - \2/;
+			# summary string, %1 is IP address range
+			push (@ret, sformat (__("Dynamic Address Range: %1"),
+			    $range));
+		    }
+		}
+            }
+	}
+    }
     return \@ret;
 }
 

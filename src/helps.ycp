@@ -189,6 +189,10 @@ which sets the optimal IP refreshing time for clients.<br>
 for which this IP is blocked for the client on the DHCP server.</p>
 "),
 
+	"all_settings_button" : _("<p><b><big>Expert configuration</big></b><br>
+To enter complete configuration of the DHCP server, click
+<b>Enter DHCP Server Expert Configuration</b>.</p>"),
+
 	// help text 1/2
 	"interfaces" : _("<p><b><big>Network Interfaces</big></b><br>
 Select the network interfaces to which the DHCP server should listen from

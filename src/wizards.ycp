@@ -21,6 +21,7 @@ any FirstRunSequence() {
 	"cardselection"	: ``( FirstRunDialog ("card_selection",1) ),
 	"globalsettings"  : ``( FirstRunDialog ("global_settings",2) ),
 	"dynamicdhcp"  : ``( FirstRunDialog ("dynamic_dhcp",3) ),
+	"inst_summary" : ``( FirstRunDialog ("inst_summary", 4) ),
     ];
 
     map sequence = $[
@@ -35,8 +36,13 @@ any FirstRunSequence() {
         ],
 	"dynamicdhcp" : $[
 	    `abort	: `abort,
-	    `next	: `next
-	]
+	    `next	: "inst_summary",
+	],
+	"inst_summary" : $[
+	    `abort	: `abort,
+	    `next	: `next,
+	    `main	: `main,
+	],
     ];
 
     any ret = Sequencer::Run(aliases, sequence);
@@ -194,9 +200,6 @@ global define symbol DhcpAutoSequence() ``{
   * @return sequence result
   */
 global define symbol DhcpSequence() ``{
-
-y2error ("Running DHCP sequence");
-
     map aliases = $[
 	"read"      : [ ``( ReadDialog() ), true ],
 	"wizard"    :	``( FirstRunSequence () ),
@@ -217,7 +220,8 @@ y2error ("Running DHCP sequence");
 	],
 	"wizard" : $[
 	    `abort  : `abort,
-	    `next   : "main"
+	    `next   : "write",
+	    `main   : "main",
 	],
 	"write" : $[
 	    `abort  : `abort,
