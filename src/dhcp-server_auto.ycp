@@ -66,14 +66,14 @@
                   `VSpacing(),
                   `HBox(
                         // pushbutton
-                        `PushButton(`id(`configure), _("&Configure DHCP server")),
+                        `PushButton(`id(`configure), _("&Configure DHCP Server")),
                         `HStretch(),
                         // pushbutton
                         `PushButton(`id(`reset), _("&Reset Configuration"))
                         )
                   );
         // dialog caption
-        Wizard::SetContents(_("DHCP server Configuration"),
+        Wizard::SetContents(_("DHCP Server Configuration"),
                             contents, "", true, true);
     }
 

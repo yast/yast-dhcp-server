@@ -7,7 +7,7 @@
 [Y2Module dhcp-server]
 
 ; name of the entry, shown in y2cc
-Name = _("DHCP server")
+Name = _("DHCP Server")
 
 ; "raw" group name to which this module belongs
 ; see /usr/share/YaST2/config/y2cc.groups for valid values
@@ -17,7 +17,7 @@ Group = Net_advanced
 Icon = dhcp-server.png
 
 ; *one* *short* descriptive line for y2cc
-Helptext = _("Configure DHCP server")
+Helptext = _("Configure DHCP Server")
 
 ; arguments, seperated by space
 Arguments = 

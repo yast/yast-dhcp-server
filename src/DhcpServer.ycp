@@ -74,7 +74,7 @@
     global define boolean Read() ``{
 
 	/* Dhcp-server read dialog caption */
-	string caption = _("Initializing DHCP server configuration");
+	string caption = _("Initializing DHCP Server Configuration");
 
 	Progress::New( caption, " ", 1, [
 	    // progress stage
@@ -110,18 +110,17 @@
         if (settings == nil)
         {
 	    // yes-no popup
-	    if (! Popup::YesNo (_("Warning!
+	    // is not able means the feature is missing
+	    if (! Popup::ContinueCancel (_("Warning!
 
-YaST2 is not able to read /etc/dhcpd.conf file. Because of it
+YaST2 is not able to read /etc/dhcpd.conf file. Because of this,
 YaST2 stores the settings in its own file, which is used to 
-create the /etc/dhcpd.conf file. YaST2 didn't find its file
-with settings and creates an initial settings. You must add
-at least one subnet to make DHCP server work.
+create the /etc/dhcpd.conf file. No file
+with settings found -- creating initial settings. Add
+at least one subnet to make the DHCP server work.
 
-Remember that YaST2 rewrites /etc/dhcpd.conf when saving the
-configuration.
-
-Continue?")))
+/etc/dhcpd.conf is rewritten when saving the
+configuration.")))
 		return false;
             settings = createSettings ();
         }
@@ -132,10 +131,11 @@ Continue?")))
 	    if (! Popup::YesNo (_("Warning!
 
 /etc/dhcpd.conf was created or modified manually or using
-other tool than YaST2. YaST2 will rewrite the changes
+a tool other than YaST2. YaST2 will rewrite the changes
 when saving the configuration.
 
-Continue?")))
+Continue?
+")))
 		return false;
 	}
 
@@ -151,7 +151,7 @@ Continue?")))
     global define boolean Write() ``{
 
 	/* Dhcp-server read dialog caption */
-	string caption = _("Saving DHCP server configuration");
+	string caption = _("Saving DHCP Server Configuration");
 
 	// We do not set help text here, because it was set outside
 	Progress::New(caption, " ", 2, [
@@ -163,7 +163,7 @@ Continue?")))
 	    // progress step
 	    _("Writing the settings..."),
 	    // progress step
-	    _("Restarting DHCP server"),
+	    _("Restarting DHCP server..."),
 	    // progress step
 	    _("Finished")
 	],
@@ -189,8 +189,9 @@ Continue?")))
 		// yes-no popup
 		if (Popup::YesNo (_("Warning!
 
-An error occured during starting of DHCP server.
-Display the log and continue with configuration?")))
+An error occurred while starting the DHCP server.
+Display the log and continue with configuration?
+")))
 		{
 		    DhcpServer::showLogPopup ("", $[]);
 		    cfg_restart_wanted = true;
@@ -235,9 +236,9 @@ Display the log and continue with configuration?")))
     global define list Summary() ``{
 	string status = settings["__run_dhcp_server"]:false
 		// summary text
-	    ? _("Start DHCP server at boot time")
+	    ? _("The DHCP server is started at boot time")
 		// summary text
-	    : _("Do not start DHCP server at boot time");
+	    : _("The DHCP server is not started at boot time");
 	return [ status ];
     }
 

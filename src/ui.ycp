@@ -38,7 +38,7 @@
                 `VSpacing (1)
                 ), `HSpacing (2));
         // dialog caption
-        string caption = _("DHCP server configuration");
+        string caption = _("DHCP Server Configuration");
         string help = CWM::MergeHelps (widgets);
 
         Wizard::SetContentsButtons (caption, contents, help,
@@ -59,7 +59,7 @@
                 `VSpacing (1)
                 ), `HSpacing (2));
         // dialog caption
-        string caption = _("Subnet configuration");
+        string caption = _("Subnet Configuration");
         string help = CWM::MergeHelps (widgets);
 
         Wizard::SetContentsButtons (caption, contents, help,
@@ -80,7 +80,7 @@
                 `VSpacing (1)
                 ), `HSpacing (2));
         // dialog caption
-        string caption = _("Host with fixed address configuration");
+        string caption = _("Configuration of Host with Fixed Address");
         string help = CWM::MergeHelps (widgets);
 
         Wizard::SetContentsButtons (caption, contents, help,
@@ -101,7 +101,7 @@
                 `VSpacing (1)
                 ), `HSpacing (2));
         // dialog caption
-        string caption = _("Subnet configuration");
+        string caption = _("Subnet Configuration");
         string help = CWM::MergeHelps (widgets);
 
         Wizard::SetContentsButtons (caption, contents, help,
@@ -122,7 +122,7 @@
                 `VSpacing (1)
                 ), `HSpacing (2));
         // dialog caption
-        string caption = _("Host with fixed address configuration");
+        string caption = _("Configuration of Host with Fixed Address");
         string help = CWM::MergeHelps (widgets);
 
         Wizard::SetContentsButtons (caption, contents, help,

@@ -17,9 +17,10 @@
       */
     global define string getInitReadHelp () ``{
 	// help text 1/1
-	return _("<p><b><big>Initializing DHCP server configuration</big></b>
+	return _("<p><b><big>Initializing DHCP Server Configuration</big></b>
 <br>
-Please wait for a while...<br></p>");
+Please wait...<br></p>
+");
     }
 
     /**
@@ -28,8 +29,9 @@ Please wait for a while...<br></p>");
       */
     global define string getWriteHelp () ``{
         // help text 1/1
-	return _("<p><b><big>Saving DHCP server configuration</big></b><br>
-Please wait for a while...<br></p>");
+	return _("<p><b><big>Saving DHCP Server Configuration</big></b><br>
+Please wait...<br></p>
+");
     }
 
     /**
@@ -90,11 +92,12 @@ a subnet, click <B>Delete</B>.</P>");
       */
     global define string getHostsHelp () ``{
 	// help text 1/1
-	return _("<P>To edit settings of host with fixed address,
+	return _("<P>To edit the settings of a host with a fixed address,
 choose the appropriate
 entry of the table then click <B>Edit</B>.
-To add a new such host, use <B>Add</B>. To remove
-a host, click <B>Delete</B>.</P>");
+To add a new host of this type, use <B>Add</B>. To remove
+a host, click <B>Delete</B>.</P>
+");
     }
 
 

@@ -26,7 +26,7 @@
 	    "__enable_service" : $[
 		"table" : $[
 		   // table cell, label
-		    "label" : _("Enable DHCP server at boot time"),
+		    "label" : _("Enable DHCP Server at Boot Time"),
 		    "summary" : ``(DhcpServer::enableServiceSummary ()),
 		    "optional" : false,
 		],
@@ -75,13 +75,13 @@
 	    "range" : $[
 		"popup" : $[
 		    // label -- help text
-		    "help" : _("If multiple ranges are needed, split them by coma"),
+		    "help" : _("If multiple ranges are needed, separate them with commas"),
 		],
 	    ],
 	    "log-facility" : $[
 		"popup" : $[
 		    // label -- help text
-		    "help" : _("If you change this, update also syslog configuration"),
+		    "help" : _("If you change this, also update the syslog configuration"),
 		],
 	    ],
 	    "hardware" : $[
@@ -89,14 +89,14 @@
 		    "widget" : `custom,
 		    "custom_widget" : `VBox (
 			// combo box
-			`ComboBox (`id (`hw), _("&Hardware type"), [
+			`ComboBox (`id (`hw), _("&Hardware Type"), [
 			    // combo box entry, networking technology name
 			    `item (`id ("ethernet"), _("Ethernet")),
 			    // combo box entry, networking technology name
-			    `item (`id ("token-ring"), _("Token ring"))]),
+			    `item (`id ("token-ring"), _("Token Ring"))]),
 			// test entry, MAC better not to be translated,
 			// translation would decrease the understandability
-			`TextEntry (`id (`addr), _("&MAC address"))),
+			`TextEntry (`id (`addr), _("&MAC Address"))),
 		    "init" : ``(DhcpServer::hardwareInit ()),
 		    "store" : ``(DhcpServer::hardwareSave ()),
 		],

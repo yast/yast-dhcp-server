@@ -94,7 +94,7 @@
 	    "log_button" : $[
 		"widget" : `push_button,
 		// push button
-		"label" : _("&Display log"),
+		"label" : _("&Display Log"),
 		"handle" : ``(DhcpServer::showLogPopup ()),
 		"handle_events" : [ "log_button" ],
 		"help" : getLogButtonHelp (),
@@ -116,7 +116,7 @@
 	    // log view header
 	    `HSpacing (70),
 	    // log view header
-	    `LogView (`id (`log), _("DHCP server log"), 20, 50),
+	    `LogView (`id (`log), _("DHCP Server Log"), 20, 50),
 	    `HBox (
 		`HStretch (),
 		`PushButton (`id (`close), Label::CloseButton ()),
