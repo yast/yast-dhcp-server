@@ -128,7 +128,7 @@ global define symbol ldapHandle (string id, map event);
       */
     global define map<string,any> getOptionsTableWidget (list add_values) ``{
 	map<string,any> ret = TablePopup::CreateTableDescr (
-	    $["add_delete" : true, "up_down" : false],
+	    $["add_delete_butons" : true, "up_down_buttons" : false],
 	    $[
 		"init": TablePopup::TableInitWrapper,
 		"handle": TablePopup::TableHandleWrapper,
