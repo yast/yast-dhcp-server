@@ -30,7 +30,17 @@ my $chroot = 0;
 
 my @allowed_interfaces = ();
 
-my @settings = ();
+my @settings = (
+	{
+	    "type" => "",
+	    "id" => "",
+	    "directives" => [],
+	    "options" => [],
+	    "parent_id" => "",
+	    "parent_type" => "",
+	    "children" => [],
+	},
+    );
 
 my @settings_for_ldap = ();
 

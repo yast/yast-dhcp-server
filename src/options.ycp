@@ -816,6 +816,8 @@ all clients*/
       */
     global define void rangeInit (any opt_id, string key) ``{
 	string value = (string)fetchValue (opt_id, key);
+	if (value == nil)
+	    value = "";
 	list<string> l = splitstring (value, " ");
 	l = filter (string i, l, ``(i != ""));
 	integer lindex = 0;

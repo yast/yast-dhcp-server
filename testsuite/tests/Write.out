@@ -1,4 +1,4 @@
-Write	.etc.dhcpd_conf [] true
+Write	.etc.dhcpd_conf [$["key":"ddns-update-style", "type":"directive", "value":"none"]] true
 Write	.sysconfig.dhcpd.DHCPD_RUN_CHROOTED "no" true
 Write	.sysconfig.dhcpd.DHCPD_INTERFACE "" true
 Write	.sysconfig.dhcpd nil true
