@@ -84,41 +84,41 @@ sub AdaptFirewall {
 
     foreach my $i ("INT", "EXT", "DMZ") {
 	y2milestone ("Removing dhcpd iface $i");
-	SuSEFirewall::RemoveService ("67", "UDP", $i);
+	SuSEFirewall->RemoveService ("67", "UDP", $i);
     }
     if ($start_service)
     {
 	foreach my $i (@allowed_interfaces) {
 	    y2milestone ("Adding dhcpd iface %1", $i);
-	    SuSEFirewall::AddService ("67", "UDP", $i);
+	    SuSEFirewall->AddService ("67", "UDP", $i);
 	}
     }
-    if (! Mode::test ())
+    if (! Mode->test ())
     {
-	Progress::off ();
-	$ret = SuSEFirewall::Write () && $ret;
-	Progress::on ();
+	Progress->off ();
+	$ret = SuSEFirewall->Write () && $ret;
+	Progress->on ();
     }
     if ($start_service)
     {
-	$ret = SCR::Write (".sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD",
-	    SuSEFirewall::MostInsecureInterface (\@allowed_interfaces)) && $ret;
+	$ret = SCR->Write (".sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD",
+	    SuSEFirewall->MostInsecureInterface (\@allowed_interfaces)) && $ret;
     }
     else
     {
-	$ret = SCR::Write (".sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD", "no")
+	$ret = SCR->Write (".sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD", "no")
 	    && $ret;
     }
 
-    $ret = SCR::Write (".sysconfig.SuSEfirewall2", undef) && $ret;
+    $ret = SCR->Write (".sysconfig.SuSEfirewall2", undef) && $ret;
     if (! $write_only)
     {
-	$ret = SCR::Execute (".target.bash", "test -x /sbin/rcSuSEfirewall2 && /sbin/rcSuSEfirewall2 status && /sbin/rcSuSEfirewall2 restart") && $ret;
+	$ret = SCR->Execute (".target.bash", "test -x /sbin/rcSuSEfirewall2 && /sbin/rcSuSEfirewall2 status && /sbin/rcSuSEfirewall2 restart") && $ret;
     }
     if (! $ret)
     {
 	# error report
-	Report::Error (_("Error occurred while setting firewall settings."));
+	Report->Error (_("Error occurred while setting firewall settings."));
     }
     return $ret;
 }
@@ -152,7 +152,7 @@ sub AdaptDDNS {
     my $self = shift;
 
     # FIXME temporary hack because of testsuite
-    if (Mode::test ())
+    if (Mode->test ())
     {
 	return 1;
     }
@@ -191,7 +191,7 @@ sub AdaptDDNS {
 	$ret;
     } @directives;
 
-    my $includes = SCR::Read (".sysconfig.dhcpd.DHCPD_CONF_INCLUDE_FILES")|| "";
+    my $includes = SCR->Read (".sysconfig.dhcpd.DHCPD_CONF_INCLUDE_FILES")|| "";
     my @includes = split (/ /, $includes);
     @includes = grep {
 	my $current_grepped = $_;
@@ -207,8 +207,8 @@ sub AdaptDDNS {
 	};
     }
     $includes = join (" ", @includes);
-    SCR::Write (".sysconfig.dhcpd.DHCPD_CONF_INCLUDE_FILES", $includes);
-    SCR::Write (".sysconfig.dhcpd", undef);
+    SCR->Write (".sysconfig.dhcpd.DHCPD_CONF_INCLUDE_FILES", $includes);
+    SCR->Write (".sysconfig.dhcpd", undef);
 
     if ($adapt_ddns_settings)
     {
@@ -750,7 +750,7 @@ sub Read {
     # Dhcp-server read dialog caption
     my $caption = _("Initializing DHCP Server Configuration");
 
-    Progress::New( $caption, " ", 2, [
+    Progress->New( $caption, " ", 2, [
 	# progress stage
 	_("Check the environment"),
 	# progress stage
@@ -770,39 +770,39 @@ sub Read {
     my $sl = 0.5;
     sleep ($sl);
 
-    Progress::NextStage ();
+    Progress->NextStage ();
 
-    if (! (Mode::config () || Package::Installed ("dhcp-server")))
+    if (! (Mode->config () || Package->Installed ("dhcp-server")))
     {
-	my $installed = Package::Install ("dhcp-server");
-	if (! $installed && ! Package::LastOperationCanceled ())
+	my $installed = Package->Install ("dhcp-server");
+	if (! $installed && ! Package->LastOperationCanceled ())
 	{
 	    # error popup
-	    Report::Error (_("Installing required packages failed."));
+	    Report->Error (_("Installing required packages failed."));
 	}
     }
  
 # Information about the daemon
 
-    Progress::NextStage ();
+    Progress->NextStage ();
 
-    $start_service = Service::Enabled ("dhcpd");
+    $start_service = Service->Enabled ("dhcpd");
     y2milestone ("Service start: $start_service");
-    $chroot = ((SCR::Read (".sysconfig.dhcpd.DHCPD_RUN_CHROOTED")||"") ne "no")
+    $chroot = ((SCR->Read (".sysconfig.dhcpd.DHCPD_RUN_CHROOTED")||"") ne "no")
 	? 1
 	: 0;
     y2milestone ("Chroot: $chroot");
-    my $ifaces_list = SCR::Read (".sysconfig.dhcpd.DHCPD_INTERFACE") || "";
+    my $ifaces_list = SCR->Read (".sysconfig.dhcpd.DHCPD_INTERFACE") || "";
     @allowed_interfaces = split (/ /, $ifaces_list);
 
-    my $ag_settings_ref = SCR::Read (".etc.dhcpd_conf");
+    my $ag_settings_ref = SCR->Read (".etc.dhcpd_conf");
 
     @settings = ();
     $self->PreprocessSettings ($ag_settings_ref, {});
 
     $self->InitTSIGKeys ();
 
-    Progress::NextStage ();
+    Progress->NextStage ();
 
     return "true";
 }
@@ -815,7 +815,7 @@ sub Write {
     my $caption = _("Saving DHCP Server Configuration");
 
     # We do not set help text here, because it was set outside
-    Progress::New($caption, " ", 2, [
+    Progress->New($caption, " ", 2, [
 	# progress stage
 	_("Write the settings"),
 	# progress stage
@@ -840,7 +840,7 @@ sub Write {
 	return Boolean(1);
     }
 
-    Progress::NextStage ();
+    Progress->NextStage ();
 
     #adapt firewall
     $ok = $self->AdaptFirewall () && $ok;
@@ -851,15 +851,15 @@ sub Write {
     #save globals
     my $settings_to_save_ref = $self->PrepareToSave ("", "");
 
-    $ok = SCR::Write (".etc.dhcpd_conf", $settings_to_save_ref) && $ok;
+    $ok = SCR->Write (".etc.dhcpd_conf", $settings_to_save_ref) && $ok;
 
-    Progress::NextStage ();
+    Progress->NextStage ();
 
     #set daemon starting
-    SCR::Write (".sysconfig.dhcpd.DHCPD_RUN_CHROOTED", $chroot ? "yes" : "no");
+    SCR->Write (".sysconfig.dhcpd.DHCPD_RUN_CHROOTED", $chroot ? "yes" : "no");
     my $ifaces_list = join (" ", @allowed_interfaces);
-    SCR::Write (".sysconfig.dhcpd.DHCPD_INTERFACE", $ifaces_list);
-    SCR::Write (".sysconfig.dhcpd", undef);
+    SCR->Write (".sysconfig.dhcpd.DHCPD_INTERFACE", $ifaces_list);
+    SCR->Write (".sysconfig.dhcpd", undef);
 
     if ($start_service)
     {
@@ -867,13 +867,13 @@ sub Write {
 	my $ret = 0;
 	if (! $write_only)
 	{
-	    $ret = SCR::Execute (".target.bash", "/etc/init.d/dhcpd restart");
+	    $ret = SCR->Execute (".target.bash", "/etc/init.d/dhcpd restart");
 	}
-	Service::Enable ("dhcpd");
+	Service->Enable ("dhcpd");
 	if (0 != $ret)
 	{
 	    # error report
-	    Report::Error (_("Error occurred while restarting DHCP daemon."));
+	    Report->Error (_("Error occurred while restarting DHCP daemon."));
 	    $ok = 0;
 	}
     }
@@ -882,12 +882,12 @@ sub Write {
 	y2milestone ("Disabling the DHCP service");
 	if (! $write_only)
 	{
-	    SCR::Execute (".target.bash", "/etc/init.d/dhcpd stop");
+	    SCR->Execute (".target.bash", "/etc/init.d/dhcpd stop");
 	}
-	Service::Disable ("dhcpd");
+	Service->Disable ("dhcpd");
     }
 
-    Progress::NextStage ();
+    Progress->NextStage ();
 
     return $ok;
 }

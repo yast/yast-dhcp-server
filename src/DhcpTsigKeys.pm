@@ -35,10 +35,6 @@ my @deleted_tsig_keys = ();
 
 
 YaST::YCP::Import ("SCR");
-YaST::YCP::Import ("Mode");
-YaST::YCP::Import ("Service");
-YaST::YCP::Import ("Progress");
-YaST::YCP::Import ("Report");
 
 
 BEGIN{$TYPEINFO{ListTSIGKeys}=["function",["list",["map","string","string"]]];}
@@ -75,7 +71,7 @@ sub AnalyzeTSIGKeyFile {
 
     y2milestone ("Reading TSIG file $filename");
     $filename = $self->NormalizeFilename ($filename);
-    my $contents = SCR::Read (".target.string", $filename);
+    my $contents = SCR->Read (".target.string", $filename);
     if (! defined ($contents))
     {
 	return [];
@@ -95,7 +91,7 @@ sub AddTSIGKey {
     my @new_keys = $self->AnalyzeTSIGKeyFile ($filename);
     y2milestone ("Reading TSIG file $filename");
     $filename = $self->NormalizeFilename ($filename);
-    my $contents = SCR::Read (".target.string", $filename);
+    my $contents = SCR->Read (".target.string", $filename);
     if (0 != @new_keys)
     {
         foreach my $new_key (@new_keys) {

@@ -1,7 +1,7 @@
 -------------------------------------------------------------------
-Wed Mar 17 17:39:22 CET 2004 - jsrain@suse.cz
+Thu Mar 18 09:40:14 CET 2004 - jsrain@suse.cz
 
-- addapted to calling all perl functions as class methods
+- addapted to calling all perl and YCP functions as class methods
   (added $self = shift; ,...)
 
 -------------------------------------------------------------------
