@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Mon Sep 15 10:09:25 CEST 2003 - jsrain@suse.de
+
+- fixed managing of multiple hosts (#30781)
+
+-------------------------------------------------------------------
 Fri Sep  5 08:53:33 CEST 2003 - jsrain@suse.de
 
 - merged texts from proofread

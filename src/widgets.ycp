@@ -213,7 +213,7 @@
       * @return any modified event if needed
       */
     global define any hostSave (any key, map event) ``{
-        string host = current_section["subnet"]:"";
+        string host = current_section["host"]:"";
         string key = sformat ("host%1", host);
         current_list = filter (`k, `v, current_list,
             ``(k != current_identifier));
