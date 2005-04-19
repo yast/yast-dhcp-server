@@ -30,7 +30,7 @@ include "dhcp-server/helps.ycp";
 include "dhcp-server/widgets.ycp";
 
 /* Using expert UI */
-define boolean expert_ui = (ProductFeatures::ui_mode == "expert");
+define boolean expert_ui = (ProductFeatures::GetFeature ("globals", "ui_mode") == "expert");
 
 /* Start of common configuration section */
 
@@ -842,7 +842,7 @@ boolean DynamicDHCPValidate (string key, map event)
 
     // checking from_ip network with the current network
     string from_ip_network = IP::ComputeNetwork(from_ip, current_dynamic_dhcp["netmask"]:"");
-    if (current_network != nil && current_network != "" && current_network != from_ip_network) {
+    if (from_ip_network != "" && current_network != nil && current_network != "" && current_network != from_ip_network) {
 	UI::SetFocus(`id ( "from_ip" ));
 	Report::Error(
 	    // TRANSLATORS: popup error message
@@ -856,7 +856,7 @@ IP '%1' does not match the network '%2/%3'"),
 
     // checking to_ip network with the current network
     string to_ip_network   = IP::ComputeNetwork(to_ip, current_dynamic_dhcp["netmask"]:"");
-    if (current_network != nil && current_network != "" && current_network != to_ip_network) {
+    if (to_ip_network != "" && current_network != nil && current_network != "" && current_network != to_ip_network) {
 	UI::SetFocus(`id ( "to_ip" ));
 	Report::Error(
 	    // TRANSLATORS: popup error message

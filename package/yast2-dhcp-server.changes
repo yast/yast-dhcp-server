@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Apr 19 10:00:23 CEST 2005 - locilka@suse.cz
+
+- Applied new functional interface of ProductFeatures
+- 2.12.0
+
+-------------------------------------------------------------------
 Thu Mar 31 16:56:16 CEST 2005 - locilka@suse.cz
 
 - Added checking for Dynamic DHCP addresses to match the current
