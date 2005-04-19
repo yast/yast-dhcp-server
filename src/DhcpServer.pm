@@ -1390,7 +1390,7 @@ sub Read {
 	$ifaces_found = 1;
 	last;
     }
-    if (!$ifaces_found) {
+    if (! Mode->test () && ! $ifaces_found) {
 	# TRANSLATORS: error report popup
 	Report->Error (_("This server needs at least one
 configured network device (besides loopback) for its
