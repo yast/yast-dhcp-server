@@ -1780,7 +1780,7 @@ sub Import {
 	@original_allowed_interfaces = @allowed_interfaces;
 
 	# Initialize LDAP if needed
-	if (ProductFeatures->ui_mode () ne "simple")
+	if (ProductFeatures->GetFeature ("globals", "ui_mode") ne "simple")
 	{
 	    $self->InitYapiConfigOptions ({"use_ldap" => $use_ldap});
 	    $self->LdapInit ([], 1);
@@ -1848,7 +1848,7 @@ BEGIN { $TYPEINFO{IsConfigurationSimple} = ["function", "boolean"];}
 sub IsConfigurationSimple {
     my $self = shift;
 
-    if (ProductFeatures->ui_mode () eq "simple")
+    if (ProductFeatures->GetFeature ("globals", "ui_mode") eq "simple")
     {
 	return Boolean (1);
     }
@@ -2209,7 +2209,7 @@ sub LdapInit {
     $use_ldap = 0;
     my $configured_ldap = 0;
 
-    if (ProductFeatures->ui_mode () eq "simple")
+    if (ProductFeatures->GetFeature ("globals", "ui_mode") eq "simple")
     {
 	return;
     }
@@ -2469,7 +2469,7 @@ BEGIN { $TYPEINFO{LdapPrepareToWrite} = ["function", "boolean"];}
 sub LdapPrepareToWrite {
     my $self = shift;
 
-    if (ProductFeatures->ui_mode () eq "simple")
+    if (ProductFeatures->GetFeature ("globals", "ui_mode") eq "simple")
     {
 	return;
     }
@@ -2717,7 +2717,7 @@ BEGIN { $TYPEINFO{LdapStore} = ["function", "void" ]; }
 sub LdapStore {
     my $self = shift;
 
-    if (ProductFeatures->ui_mode () eq "simple")
+    if (ProductFeatures->GetFeature ("globals", "ui_mode") eq "simple")
     {
 	return 1;
     }
