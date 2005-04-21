@@ -18,7 +18,7 @@ X-SuSE-YaST-SortKey=
 X-SuSE-YaST-AutoInstResource=dhcp-server
 X-SuSE-YaST-AutoInstClonable=true
 
-Icon=dhcp-server
+Icon=yast-dhcp-server
 Exec=/sbin/yast2 dhcp-server 
 
 Name=DHCP Server
