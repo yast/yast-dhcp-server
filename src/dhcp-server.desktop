@@ -17,6 +17,7 @@ X-SuSE-YaST-Geometry=
 X-SuSE-YaST-SortKey=
 X-SuSE-YaST-AutoInstResource=dhcp-server
 X-SuSE-YaST-AutoInstClonable=true
+X-SuSE-YaST-AutoInstRequires=lan,ldap,ldap-server,ldap-client
 
 Icon=yast-dhcp-server
 Exec=/sbin/yast2 dhcp-server 
