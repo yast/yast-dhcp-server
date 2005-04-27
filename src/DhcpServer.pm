@@ -1382,7 +1382,9 @@ sub Read {
     }
 
     # Reading current network configuration
-    NetworkDevices->Read();
+    if (!Mode->autoinst() && !Mode->config()) {
+	NetworkDevices->Read();
+    }
     my $ifaces_found = 0;
     foreach my $iface (@{ NetworkDevices->List("") }) {
     	next if ($iface =~ /^lo/i);
@@ -1435,8 +1437,7 @@ YaST will quit now."));
 
     Progress->NextStage ();
 
-    if (! Mode->test ())
-    {
+    if (! Mode->test ()) {
 	my $progress_orig = Progress->set (0);
 	SuSEFirewall->Read ();
 	Progress->set ($progress_orig);
@@ -2261,7 +2262,9 @@ sub LdapInit {
     y2milestone ("DHCP configured LDAP: $configured_ldap");
 
     # grab info about the LDAP server
-    Ldap->Read ();
+    if (!Mode->autoinst() && !Mode->config()) {
+	Ldap->Read ();
+    }
     my $ldap_data_ref = Ldap->Export ();
 
     $use_ldap = $configured_ldap;

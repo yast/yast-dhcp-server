@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Apr 27 11:37:52 CEST 2005 - locilka@suse.cz
+
+- Fixed the same behavior as in DNS-Server - bug #78569
+  Mode::config() and Mode::autoinst() don't call Ldap::Read() now
+
+-------------------------------------------------------------------
 Tue Apr 19 10:00:23 CEST 2005 - locilka@suse.cz
 
 - Applied new functional interface of ProductFeatures
