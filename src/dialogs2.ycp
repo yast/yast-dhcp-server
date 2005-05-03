@@ -805,6 +805,11 @@ boolean DynamicDHCPValidate (string key, map event)
     string defaultleasetime	= (string) UI::QueryWidget ( `id ("defaultleasetime"),	`Value );
     string maxleasetime		= (string) UI::QueryWidget ( `id ("maxleasetime"),	`Value );
 
+    if (from_ip == "" && to_ip == "") {
+	// disable dynamic IP assigning
+	return true;
+    }
+
     // defined only one, both from and to must be defined
     if ( from_ip != "" && to_ip == "" ) {
 	UI::SetFocus ( `id ( "to_ip" ) );
