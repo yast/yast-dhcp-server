@@ -103,16 +103,9 @@ string current_item_iface = nil;
  */
 term Common_CardSelectionDialog() {
     term dialog = `VBox(
-	    // detection and selection of network card to configure 1/2
-            `Left(`Label(_("YaST detected the following network devices."))),
-	    // detection and selection of network card to configure 2/2
-            `Left(`Label(_("Select the interface the DHCP server should use."))),
-
-            `VSpacing(1),
-
             `VBox(
-		// Selectionbox - listing available network cards
-		`Left( `Label( _("Network Card Selection") ) ),
+		// Table - listing available network cards
+		`Left( `Label( _("Network Cards for DHCP Server") ) ),
                 `Table (
 		    `id("nic_selection"),
 		    `header (
@@ -131,7 +124,8 @@ term Common_CardSelectionDialog() {
 	    `HBox (
 		`PushButton(`id("add"), Label::AddButton()),
 		`PushButton(`id("remove"), Label::RemoveButton())
-	    )
+	    ),
+	    `VStretch()
         );
 
     return dialog;
@@ -162,7 +156,12 @@ void CardSelectionInit (string key)
 	if (iface != "" && !issubstring(iface, "lo") && !issubstring(iface, "sit")) {
 	    DhcpServerUI::ifaces[iface] = $[
 		"device" : NetworkDevices::GetValue(iface, "NAME"),
-		"ipaddr" : NetworkDevices::GetValue(iface, "IPADDR"),
+		"ipaddr" : (NetworkDevices::GetValue(iface, "BOOTPROTO") == "dhcp" ?
+		    // TRANSLATORS: Table items; Informs that the IP is a DHCP Address
+		    _("DHCP Address")
+		    :
+		    NetworkDevices::GetValue(iface, "IPADDR")
+		),
 		"active" : false,
 	    ];
 	}
@@ -397,7 +396,9 @@ void GlobalSettingsInit (string key)
     UI::ChangeWidget ( `id ("defaultleasetime"), `Value, tostring (value) );
     UI::ChangeWidget ( `id ("defaultleasetimeunits"), `Value, unit );
     
-    UI::ChangeWidget ( `id ("ldap"), `Value, DhcpServer::GetUseLdap () );
+    if (expert_ui) {
+	UI::ChangeWidget ( `id ("ldap"), `Value, DhcpServer::GetUseLdap () );
+    }
 
     GlobalSettingsValidChars ();
 }
@@ -617,12 +618,12 @@ term Common_DynamicDHCPDialog() {
             ),
 	    `VSpacing (1),
 	    // frame
-            `Frame(_("Lease"),
+            `Frame(_("Lease Time"),
                 `VBox(
                     `HBox(
                             `HBox(
 					// Textentry label - lease time for IPs in the range
-                                `Left(`TextEntry(`id("defaultleasetime"), _("Lease &Time"))),
+                                `Left(`TextEntry(`id("defaultleasetime"), _("&Default"))),
                         		// Combobox - type of units for lease time
 			        `Left(`ComboBox(`id("defaultleasetimeunits"), "",
 				time_combo_items
@@ -630,7 +631,7 @@ term Common_DynamicDHCPDialog() {
                             ),
                             `HBox(
 				//TextEntryLabel - max. time for leasing of IPs from the range
-                                `Left(`TextEntry(`id("maxleasetime"), _("&Max. Lease Time"))),
+                                `Left(`TextEntry(`id("maxleasetime"), _("&Maximum"))),
 				// Combobox - type of units for max lease time
                                 `Left(`ComboBox(`id("maxleasetimeunits"), "",
 				    time_combo_items
@@ -638,7 +639,8 @@ term Common_DynamicDHCPDialog() {
                             )
                         )
                     )
-            )
+            ),
+	    `VStretch()
         );
 
     return dialog;
@@ -1348,12 +1350,13 @@ map<string, map<string, any> > tabs = $[
     "start_up" : $[
 	"contents"	: `VBox (
 	    "auto_start_up",
+	    `VSpacing(),
 	    "use_ldap",
 	    "start_stop",
 	    `VStretch ()
 	),
 	// dialog caption
-	"caption"	: _("DHCP Server -- Start-Up"),
+	"caption"	: _("DHCP Server: Start-Up"),
 	// tree item
 	"tree_item_label"	: _("Start-Up"),
 	"widget_names"	: ["auto_start_up", "use_ldap", "start_stop", "expert_settings"],
@@ -1367,7 +1370,7 @@ map<string, map<string, any> > tabs = $[
 	    `VStretch ()
 	),
 	// dialog caption
-	"caption"	: _("DHCP Server -- Card Selection"),
+	"caption"	: _("DHCP Server: Card Selection"),
 	// tree item
 	"tree_item_label"	: _("Card Selection"),
 	"widget_names"	: ["card_selection", "open_firewall",
@@ -1376,7 +1379,7 @@ map<string, map<string, any> > tabs = $[
     "global_settings" : $[
 	"contents"	: Common_GlobalSettingsDialog(),
 	// dialog caption
-	"caption"	: _("DHCP Server -- Global Settings"),
+	"caption"	: _("DHCP Server: Global Settings"),
 	// tree item
 	"tree_item_label"	: _("Global Settings"),
 	"widget_names"	: ["global_settings", "expert_settings"],
@@ -1384,7 +1387,7 @@ map<string, map<string, any> > tabs = $[
     "dynamic_dhcp" : $[
 	"contents"	: Common_DynamicDHCPDialog(),
 	// dialog caption
-	"caption"	: _("DHCP Server -- Dynamic DHCP"),
+	"caption"	: _("DHCP Server: Dynamic DHCP"),
 	// tree item
 	"tree_item_label"	: _("Dynamic DHCP"),
 	"widget_names"	: ["dynamic_dhcp", "expert_settings"],
@@ -1392,14 +1395,14 @@ map<string, map<string, any> > tabs = $[
     "host_management" : $[
 	"contents"	: Common_HostManagementDialog(),
 	// dialog caption
-	"caption"	: _("DHCP Server -- Host Management"),
+	"caption"	: _("DHCP Server: Host Management"),
 	// tree item
 	"tree_item_label"	: _("Host Management"),
 	"widget_names"	: ["host_management", "expert_settings"],
     ],
     "expert_settings" : $[
 	// dialog caption
-	"caption"	: _("DHCP Server -- Expert Settings"),
+	"caption"	: _("DHCP Server: Expert Settings"),
 	// tree item
 	"tree_item_label"	: _("Expert Settings"),
 	"init"		: ExpertSettingsTabInit,

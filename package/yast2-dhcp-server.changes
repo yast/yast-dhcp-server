@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu May 19 12:29:32 CEST 2005 - locilka@suse.cz
+
+- Changing texts to be YaSY2 Style Guide Compatible
+- Changing the layout of dialogs to be more consistent 
+
+-------------------------------------------------------------------
 Wed Apr 27 11:37:52 CEST 2005 - locilka@suse.cz
 
 - Fixed the same behavior as in DNS-Server - bug #78569

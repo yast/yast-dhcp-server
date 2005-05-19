@@ -172,13 +172,12 @@ that should leased to the clients.<br>These addresses must match the same netmas
 For instance, 192.168.1.1 and 192.168.1.64</p>") +
 
 	// Wizard Installation - Step 3 2/3
-	_("<p><b><big>Lease</big></b><br>
-Here, set the default <b>Lease Time</b> for the current IP address range,
+	_("<p><b><big>Lease Time</big></b><br>
+Here, set the <b>Default</b> lease time for the current IP address range,
 which sets the optimal IP refreshing time for clients.<br></p>") +
 
 	// Wizard Installation - Step 3 3/3
-	_("<p><b>Max. Lease Time</b>
-(optional value) sets the maximum time period
+	_("<p><b>Maximum</b> (optional value) sets the maximum time period
 for which this IP is blocked for the client on the DHCP server.</p>"),
 
 	// Help text
