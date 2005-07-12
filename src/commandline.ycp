@@ -26,9 +26,9 @@ include "dhcp-server/misc.ycp";
 define boolean StatusHandler (map options) {
     CommandLine::Print (DhcpServer::GetStartService ()
 	// status information for command line
-	? _("DHCP server is enabled.")
+	? _("DHCP server is enabled")
 	// status information for command line
-	: _("DHCP server is disabled.")
+	: _("DHCP server is disabled")
     );
     return false;
 }
@@ -111,7 +111,7 @@ define boolean HostHandler (map options) {
     if (name == nil)
     {
 	// command-line error report
-	CommandLine::Error (_("Host name not specified."));
+	CommandLine::Error (_("Hostname not specified."));
 	return false;
     }
 
@@ -181,10 +181,10 @@ boolean InterfaceHandler (map options) {
 	string other = mergestring (other_ifaces, ", ");
 	if (selected == "")
 	    // to be eventually pasted to "Selected interfaces: %1"
-	    selected = _("none");
+	    selected = _("None");
 	if (other == "")
 	    // to be eventually pasted to "Other interfaces: %1"
-	    other = _("none");
+	    other = _("None");
 	// command-line text output, %1 is list of network interfaces
 	CommandLine::Print (sformat (_("Selected Interfaces: %1"), selected));
 	// command-line text output, %1 is list of network interfaces
@@ -296,7 +296,7 @@ boolean SubnetHandler (map options) {
 	    {
 		list<string> range = splitstring ( opt["value"]:"", " " );
 		// command-line output text, %1  and %1 are IP addresses
-		CommandLine::Print (sformat (_("Address Range: %1 - %2"),
+		CommandLine::Print (sformat (_("Address Range: %1-%2"),
 		     range[0]:"", range[1]:""));
 	    }
 	    else if ( opt["key"]:nil == "default-lease-time" )
@@ -366,8 +366,8 @@ y2error ("Range: %1", range);
 
 map cmdline = $[
    "id"			: "dhcp-server",
-    // command line help text for NTP client module
-    "help"		: _("DHCP server configuration module."),
+    // command line help text for DHCP server module
+    "help"		: _("DHCP server configuration module"),
     "guihandler"	: GuiHandler,
     "initialize"	: DhcpServer::Read,
     "finish"		: DhcpServer::Write,
@@ -444,7 +444,7 @@ map cmdline = $[
 	],
 	"ip-address" : $[
 	    // command line help text for an option
-	    "help"	: _("The IP address (or host name) of the host with a fixed address"),
+	    "help"	: _("The IP address (or hostname) of the host with a fixed address"),
 	    "type"	: "string",
 	],
 	"list" : $[
@@ -470,12 +470,12 @@ map cmdline = $[
 	],
 	"key" : $[
 	    // command line help text for an option
-	    "help"	: _("Option key (e.g., ntp-servers)"),
+	    "help"	: _("Option key (for example, ntp-servers)"),
 	    "type"	: "string",
 	],
 	"value" : $[
 	    // command line help text for an option
-	    "help"	: _("Option value (e.g., IP address)"),
+	    "help"	: _("Option value (for example, IP address)"),
 	    "type"	: "string",
 	],
 	"min-ip" : $[

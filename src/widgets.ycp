@@ -158,8 +158,8 @@ global define symbol ldapHandle (string id, map event);
     global define boolean confirmAbort () ``{
         return Popup::YesNo (
 // Yes-No popup
-_("Really leave the DHCP server configuration without saving?
-All changes will be lost."));
+_("If you leave the DHCP server configuration without saving,
+all changes will be lost. Really leave?"));
     }
 
     /**
@@ -363,9 +363,9 @@ Continue?"))) {
 	if (size(ifaces_not_in_fw)>1) {
 	    // TRANSLATORS: popup error message, %1 is list of network interfaces
 	    Report::Error(sformat(
-		_("Network interfaces listed below are not mentioned in any firewall zone.
+		_("The network interfaces listed below are not mentioned in any firewall zone.
 %1
-Run YaST2 firewall configuration to assign them into any zone."),
+Run the YaST firewall configuration to assign them to a zone."),
 		mergestring(ifaces_not_in_fw,"\n")
 	    ));
 	    //return false;
@@ -374,8 +374,8 @@ Run YaST2 firewall configuration to assign them into any zone."),
 	} else if (size(ifaces_not_in_fw)>0) {
 	    // TRANSLATORS: popup error message, %1 a network interface name
 	    Report::Error(sformat(
-		_("Network interface '%1' is not mentioned in any firewall zone.
-Run YaST2 firewall configuration to assign it into any zone."), ifaces_not_in_fw[0]:""
+		_("Network interface %1 is not mentioned in any firewall zone.
+Run YaST firewall configuration to assign it to a zone."), ifaces_not_in_fw[0]:""
 	    ));
 	    //return false;
 	    // FIXME: dialog for adding interfaces into firewall zones

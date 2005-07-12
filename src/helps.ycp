@@ -14,11 +14,11 @@
     map<string,string> HELPS = $[
 	// help text 1/1
 	"read" : _("<p><b><big>Initializing DHCP Server Configuration</big></b><br>
-Please wait...<br></p>"),
+Please wait...</p>"),
 
         // help text 1/1
 	"write" : _("<p><b><big>Saving DHCP Server Configuration</big></b><br>
-Please wait...<br></p>"),
+Please wait...</p>"),
 
 	// help text 1/2
 	"interfaces" : _("<p><b><big>Network Interfaces</big></b><br>
@@ -29,28 +29,28 @@ Select the network interfaces to which the DHCP server should listen from
 	"open_firewall" : _("<p><b><big>Firewall Settings</big></b><br>
 To open the firewall to allow access to the service from 
 remote computers through the selected interface, set
-<b>Open Firewall for Selected Interface</b>.<br>
+<b>Open Firewall for Selected Interface</b>. 
 This option is only available if the firewall
 is enabled.</p>"),
 
 	// help text 1/5
-	"start" : _("<p><b><big>Start DHCP Server</big></b><br>
-To run the DHCP server every time your computer is started, set
+	"start" : _("<p><b><big>DHCP Server</big></b></p>
+<p>To run the DHCP server every time your computer is started, set
 <b>Start DHCP Server</b>.</p>"),
 
 	// help text 2/5
-	"chroot" : _("<p><b><big>Chroot Jail</big></b><br>
+	"chroot" : _("<p>
 To run the DHCP server in chroot jail, set
 <b>Run DHCP Server in Chroot Jail</b>. Starting any daemon in a chroot jail
 is more secure and strongly recommended.</p>"),
 
 	// help text 3/5
-	"ldap_support" : _("<p><b><big>LDAP Support</big></b><br>
+	"ldap_support" : _("<p>
 To store the DHCP configuration in LDAP,
-enable this check box.</p>"),
+enable <b>LDAP Support</b>.</p>"),
 
 	// help text 4/5
-	"configtree" : _("<p><b><big>Configured Declarations</big></b><br>
+	"configtree" : _("<p><b>Configured Declarations</b> shows the configuration options in use.
 To modify an existing declaration, select it and click <b>Edit</b>.
 To add a new declaration, select a declaration that should include
 the new declaration and click <b>Add</b>.
@@ -58,47 +58,50 @@ To delete a declaration, select it and click <b>Delete</b>.</p>")
 
 	// help text 5/5
 	+ _("<p><b><big>Advanced Functions</big></b><br>
-To display the log of the DHCP server,
+Use <b>Advanced</b> to display the log of the DHCP server,
 change network interfaces to which the DHCP server listens,
-or manage TSIG keys that can be used for authentication of Dynamic DNS updates,
-use <b>Advanced</b>.</p>"),
+or manage TSIG keys that can be used for authentication of 
+dynamic DNS updates.</p>"),
 
 	// help text 1/3, alt. 1
-	"subnet" : _("<p><b><big>Network Address and Mask</big></b><br>
+	"subnet" : _("<p><b><big>Subnet Configuration</big></b><br>
 Set the <b>Network Address</b> and <b>Network Mask</b> of the subnet.</p>"),
 
 	// help text 1/3, alt. 1
-	"host" : _("<p><b><big>Host Name</big></b><br>
+	"host" : _("<p><b><big>Host with Fixed Address</big></b><br>
 Set the name of the host for which to set the fixed address or other
-special options.</p>"),
+special options in <b>Hostname</b>.</p>"),
 
 	// help text 1/3, alt. 3
-	"group" : _("<p><b><big>Group Name</big></b><br>
-Set the name of the group of declarations.  It is just for your identification.
+	"group" : _("<p><b><big>Group-Specific Options</big></b><br>
+Set the name of the group of declarations in <b>Group Name</b>.  
+It is just for your identification.
 The name does not affect behavior of the DHCP server.</p>"),
 
 	// help text 1/3, alt. 4
-	"pool" : _("<p><b><big>Pool Name</big></b><br>
-Set the name of the pool of addresses. It is just for your identification.
+	"pool" : _("<p><b><big>Pool of Addresses</big></b><br>
+Set the name of the pool of addresses in <b>Pool Name</b>. 
+It is just for your identification.
 The name does not affect behavior of the DHCP server.</p>"),
 
 	// help text 1/3, alt. 5
 	"shared-network" : _("<p><b><big>Shared Network</big></b><br>
-Set the name of the shared network. It is just for your identification.
+Set the name for the shared network in <b>Shared Network Name</b>. 
+It is just for your identification.
 The name does not affect behavior of the DHCP server.</p>"),
 	// help text 1/3, alt. 6
 	"class" : _("<p><b><big>Class</big></b><br>
-Set the name of the class of hosts.</p>"),
+Set the name of the class of hosts in <b>Class Name</b>.</p>"),
 
 	// help text 2/3
-	"options_table" : _("<p><b><big>Options</big></b><br>
+	"options_table" : _("<p>
 To edit DHCP options, choose the appropriate
 entry of the table then click <b>Edit</b>.
 To add a new option, use <b>Add</b>. To remove
 an option, select it and click <b>Delete</b>.</p>"),
 
 	// help text 3/3
-	"dyn_dns_button" : _("<p><b><big>Dynamic DNS</big></b><br>
+	"dyn_dns_button" : _("<p>
 To adjust dynamic DNS for hosts of this subnet, use <b>Dynamic DNS</b>.</p>"),
 
 	// help text 1/4
@@ -127,7 +130,7 @@ server, you can leave the fields empty.</p>"),
 
 	// Wizard Installation - Step 1
 	"card_selection" : _("<p><b><big>Network Card Selection</big></b><br>
-Select one of listed network cards to configure the DHCP to run on it.</p>"),
+Select one of listed network cards to use for the DHCP server.</p>"),
 
 	// Wizard Installation - Step 2 1/9
 	"global_settings" : _("<p><b><big>Global Settings</big></b><br>
@@ -138,21 +141,21 @@ Here, make several DHCP settings.</p>") +
 enable this check box.</p>") +*/
 
 	// Wizard Installation - Step 2 3/9 (2 is removed)
-_("<p><b>Domain Name</b> sets for which domain the DHCP server
-is leasing IPs to clients.</p>") +
+_("<p><b>Domain Name</b> sets the domain for which the DHCP server
+leases IPs to clients.</p>") +
 
 	// Wizard Installation - Step 2 4/9
 _("<p><b>Primary Name Server IP</b> and <b>Secondary Name Server IP</b> 
-offers these name servers for the DHCP clients.
+offers these name servers to the DHCP clients.
 These values must be IP addresses.</p>") +
 
 	// Wizard Installation - Step 2 5/9
-_("<p><b>Default Gateway</b> sets the client's routing table with this
-value as the default route.</p>") +
+_("<p><b>Default Gateway</b> inserts this
+value as the default route in the routing table of clients.</p>") +
 
 	// Wizard Installation - Step 2 6/9
 _("<p><b>Time Server</b> tells clients to use this server
-for the time synchronizations.</p>") +
+for the time synchronization.</p>") +
 
 	// Wizard Installation - Step 2 7/9
 _("<p><b>Print Server</b> offers this server as the default print server.</p>") +
@@ -168,7 +171,7 @@ and the client must ask for an IP again.</p>"),
 	// Wizard Installation - Step 3 1/3
 	"dynamic_dhcp" : _("<p><b><big>IP Address Range</big></b><br>
 Here, set the <b>First IP Address</b> and the <b>Last IP Address</b>
-that should leased to the clients.<br>These addresses must match the same netmask.
+that should leased to the clients.  These addresses must have the same netmask.
 For instance, 192.168.1.1 and 192.168.1.64</p>") +
 
 	// Wizard Installation - Step 3 2/3
@@ -181,9 +184,9 @@ which sets the optimal IP refreshing time for clients.<br></p>") +
 for which this IP is blocked for the client on the DHCP server.</p>"),
 
 	// Help text
-	"all_settings_button" : _("<p><b><big>Expert configuration</big></b><br>
-To enter complete configuration of the DHCP server, click
-<b>Enter DHCP Server Expert Configuration</b>.</p>"),
+	"all_settings_button" : _("<p><b><big>Expert Configuration</big></b><br>
+To enter the complete configuration of the DHCP server, click
+<b>DHCP Server Expert Configuration</b>.</p>"),
 
 	// help text 1/2
 	"interfaces" : _("<p><b><big>Network Interfaces</big></b><br>
@@ -214,7 +217,7 @@ _("<p>To remove a host, select it and click <b>Delete from List</b>.</p>"),
       */
     global define string getSelectDeclarationTypeHelp (list possible) ``{
 	// help text 1/7
-	string ret = _("<p>Select the type of the declaration to add.</p>");
+	string ret = _("<p>Select the type of declaration to add.</p>");
 
 	if (contains (possible, "subnet"))
 	{
@@ -226,7 +229,7 @@ select <b>Subnet</b>.</p>");
 	{
 	    // help text 3/7, optional
 	   ret = ret + _("<p>To add a host that needs special parameters
-(usually fixed address), select <b>Host</b>.</p>");
+(usually a fixed address), select <b>Host</b>.</p>");
 	}
 	if (contains (possible, "shared-network"))
 	{
@@ -251,7 +254,7 @@ subnet, select <b>Pool of Addresses</b>.</p>");
 	{
 	    // help text 7/7, optional
 	    ret = ret + _("<p>To create a condition class that can be used for
-handling clients differently depending on to which class they belong,
+handling clients differently depending on the class to which they belong,
 select <b>Class</b>.</p>");
 	}
 	return ret;
