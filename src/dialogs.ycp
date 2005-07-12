@@ -150,7 +150,7 @@ global define symbol HostDialog () ``{
 	`VSpacing (1)
     ), `HSpacing (2));
     // dialog caption
-    string caption = _("Configuration of Host with Fixed Address");
+    string caption = _("Host with Fixed Address");
     string help = CWM::MergeHelps (w);
 
     Wizard::SetContentsButtons (caption, contents, help,
@@ -178,7 +178,7 @@ global define symbol SharedNetworkDialog () ``{
 	`VSpacing (1)
     ), `HSpacing (2));
     // dialog caption
-    string caption = _("Configuration of Shared Network");
+    string caption = _("Shared Network");
     string help = CWM::MergeHelps (w);
 
     Wizard::SetContentsButtons (caption, contents, help,
@@ -205,7 +205,7 @@ global define symbol PoolDialog () ``{
 	`VSpacing (1)
     ), `HSpacing (2));
     // dialog caption
-    string caption = _("Configuration of Pool of Addresses");
+    string caption = _("Pool of Addresses");
     string help = CWM::MergeHelps (w);
 
     Wizard::SetContentsButtons (caption, contents, help,
@@ -233,7 +233,7 @@ global define symbol Groupdialog () ``{
 	`VSpacing (1)
     ), `HSpacing (2));
     // dialog caption
-    string caption = _("Configuration of Group-Specific Options");
+    string caption = _("Group-Specific Options");
     string help = CWM::MergeHelps (w);
 
     Wizard::SetContentsButtons (caption, contents, help,
@@ -260,7 +260,7 @@ global define symbol ClassDialog () ``{
 	`VSpacing (1)
     ), `HSpacing (2));
     // dialog caption
-    string caption = _("Configuration of a Class");
+    string caption = _("Class");
     string help = CWM::MergeHelps (w);
 
     Wizard::SetContentsButtons (caption, contents, help,
@@ -339,7 +339,7 @@ global define symbol SectionTypeChoose () ``{
     `VStretch ()), `HStretch ());
 
     // dialog caption
-    string caption = _("Select Declaration Type");
+    string caption = _("Declaration Type");
     string help = getSelectDeclarationTypeHelp (possible);
 
     Wizard::SetContentsButtons (caption, contents, help,

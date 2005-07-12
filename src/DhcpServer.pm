@@ -1399,7 +1399,7 @@ configured network device (besides loopback) for its
 proper function.
 Configure one.
 
-YaST will quit now."));
+Aborting now."));
 	return Boolean(0);
     }
 
@@ -1428,8 +1428,8 @@ YaST will quit now."));
     }
     if (! (defined ($dhcp_server) && defined($dhcp_server_fqdn)))
     {
-	# error report
-	Report->Error (__("Cannot determine the host name of"));
+	# error report, %1 is server name
+Report->Error (sformat(__("Cannot determine the hostname of %1."), $dhcp_server_fqdn));
 	return 0;
     }
 
@@ -1671,7 +1671,7 @@ sub Write {
 	if (0 != $ret)
 	{
 	    # error report
-	    Report->Error (__("Error occurred while restarting DHCP daemon."));
+	    Report->Error (__("Error occurred while restarting the DHCP daemon."));
 	    $ok = 0;
 	}
     }
@@ -1816,7 +1816,7 @@ sub Summary {
     {
 	my $allowed_str = join (", ", @allowed_interfaces);
 	# summary string, %1 is list of network interfaces
-	push (@ret, sformat (__("Listen on: %1"), $allowed_str));
+	push (@ret, sformat (__("Listen On: %1"), $allowed_str));
 
 	#FIXME multiple interfaces
 	my $interface = $allowed_interfaces[0];
@@ -2529,7 +2529,8 @@ y included");
     Ldap->SetGUI(YaST::YCP::Boolean(0)); 
     if(! Ldap->CheckBaseConfig($ldap_config_dn))
     { 
-	Ldap->SetGUI(YaST::YCP::Boolean(1)); 
+	Ldap->SetGUI(YaST::YCP::Boolean(1));
+	# %1 is LDAP record key
 	Report->Error (sformat (__("Error occurred while creating %1."),
 	    $ldap_config_dn));
     } 
@@ -2563,7 +2564,7 @@ y included");
 	my $result = SCR->Write (".ldap.add", \%ldap_request, \%ldap_object);
 	if (! $result)
 	{
-	    # Error report
+	    # Error report, %1 is LDAP record key
 	    Report->Error (sformat (__("Error occurred while creating %1."),
                                       $dhcp_conf_dn));
 	    my $err = SCR->Read (".ldap.error") || {};
@@ -2594,7 +2595,7 @@ y included");
 	my $result = SCR->Write (".ldap.modify", \%ldap_request, \%ldap_object);
 	if (! $result)
 	{
-	    # error report
+	    # error report, %1 is LDAP record key 
 	    Report->Error (sformat (__("Error occurred while updating %1."), $dhcp_conf_dn));
 	    my $err = SCR->Read (".ldap.error") || {};
 	    my $err_descr = Dumper ($err);
@@ -2665,7 +2666,7 @@ y included");
 	my $result = SCR->Write (".ldap.add",\%ldap_request,\%server_entry);
 	if (! $result)
 	{
-	   # error report
+	   # error report, %1=ldap domain, %2=dhcp server
 	    Report->Error (sformat (__("Error occurred while creating cn=%2,ou=DHCP,%1."), $ldap_domain, $dhcp_server));
 	    my $err = SCR->Read (".ldap.error") || {};
 	    my $err_descr = Dumper ($err);
@@ -2702,7 +2703,7 @@ y included");
 	my $result = SCR->Write (".ldap.add",\%ldap_request,\%ldap_object);
 	if (! $result)
 	{
-	    # error report
+	    # error report, %1 is LDAP record key
 	    Report->Error (sformat (__("Error occurred while creating %1."),
 		$ldap_dhcp_config_dn));
 	    my $err = SCR->Read (".ldap.error") || {};
@@ -2767,7 +2768,7 @@ sub LdapStore {
 	my $ret = SCR->Write (".etc.dhcpd_conf", \@settings_for_ldap);
 	if (! $ret)
 	{
-	    # error report
+	    # error report, /etc/dhcpd.conf is filename
 	    Report->Error (__("Error occurred while writing /etc/dhcpd.conf."));
 	}
     }

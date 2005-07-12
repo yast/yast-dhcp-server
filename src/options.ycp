@@ -241,7 +241,7 @@
 	    if (! Address::Check (new_addr))
 	    {
 		// popup message
-		Popup::Message (_("Entered address is not valid."));
+		Popup::Message (_("The entered address is not valid."));
 		return nil;
 	    }
 	    entry_list = add (entry_list, new_addr);
@@ -333,7 +333,7 @@
 		&& Address::Check (l[1]:"")))
 	    {
 		// message popup
-		Popup::Message (_("Entered addresses are not valid."));
+		Popup::Message (_("The entered addresses are not valid."));
 		return nil;
 	    }
 	    entry_list = add (entry_list, new_addr);
@@ -592,7 +592,7 @@ all clients*/
 	    if (value == "")
 	    {
 		// popup message
-		Popup::Message (_("Value must be specified."));
+		Popup::Message (_("A value must be specified."));
 		return false;
 	    }
 	}
@@ -753,7 +753,7 @@ all clients*/
 		    `PushButton (`id (`delete), Label::DeleteButton ())
 		),
 		// label (in role of help text)
-		`Left (`Label (_("Separate addresses with spaces"))),
+		`Left (`Label (_("Separate multiple addresses with spaces."))),
 		`HBox (
 		    // push button
 		    `TextEntry (`id (`new_addr), _("&Add Address Pair")),

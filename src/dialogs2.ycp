@@ -158,7 +158,7 @@ void CardSelectionInit (string key)
 		"device" : NetworkDevices::GetValue(iface, "NAME"),
 		"ipaddr" : (NetworkDevices::GetValue(iface, "BOOTPROTO") == "dhcp" ?
 		    // TRANSLATORS: Table items; Informs that the IP is a DHCP Address
-		    _("DHCP Address")
+		    _("DHCP address")
 		    :
 		    NetworkDevices::GetValue(iface, "IPADDR")
 		),
@@ -553,7 +553,7 @@ boolean GlobalSettingsValidate (string key, map event)
     ) {
 	UI::SetFocus ( `id ( "defaultgw" ) );
 	// error popup
-	Popup::Error ( _("Specified value is not a valid host name or IP address.") );
+	Popup::Error ( _("The specified value is not a valid hostname or IP address.") );
 	return false;
     }
 
@@ -564,7 +564,7 @@ boolean GlobalSettingsValidate (string key, map event)
     ) {
 	UI::SetFocus ( `id ( "timeserver" ) );
 	// error popup
-	Popup::Error ( _("Specified value is not a valid host name or IP address.") );
+	Popup::Error ( _("The specified value is not a valid hostname or IP address.") );
 	return false;
     }
 
@@ -575,7 +575,7 @@ boolean GlobalSettingsValidate (string key, map event)
     ) {
 	UI::SetFocus ( `id ( "printserver" ) );
 	// error popup
-	Popup::Error ( _("Specified value is not a valid host name or IP address.") );
+	Popup::Error ( _("The specified value is not a valid hostname or IP address.") );
 	return false;
     }
 
@@ -586,7 +586,7 @@ boolean GlobalSettingsValidate (string key, map event)
     ) {
 	UI::SetFocus ( `id ( "winsserver" ) );
 	// error popup
-	Popup::Error ( _("Specified value is not a valid host name or IP address.") );
+	Popup::Error ( _("The specified value is not a valid hostname or IP address.") );
 	return false;
     }
 
@@ -611,9 +611,9 @@ term Common_DynamicDHCPDialog() {
 			`TextEntry( `id("current_netmask"), _("Current Net&mask") )
 		    ),
 			// text entry
-		    `Left( `TextEntry ( `id ("from_ip"), _("&First IP Address:") ) ),
+		    `Left( `TextEntry ( `id ("from_ip"), _("&First IP Address") ) ),
 			// text entry
-		    `Left( `TextEntry ( `id ("to_ip"), _("&Last IP Address:") ) )
+		    `Left( `TextEntry ( `id ("to_ip"), _("&Last IP Address") ) )
 		) ) 
             ),
 	    `VSpacing (1),
@@ -816,7 +816,7 @@ boolean DynamicDHCPValidate (string key, map event)
     if ( from_ip != "" && to_ip == "" ) {
 	UI::SetFocus ( `id ( "to_ip" ) );
 	// A popup error text
-	Popup::Error ( _("The input value must be defined.") );
+	Popup::Error ( _("Enter values for both ends of the IP address range.") );
 	return false;
     }
 
@@ -824,7 +824,7 @@ boolean DynamicDHCPValidate (string key, map event)
     if ( from_ip == "" && to_ip != "" ) {
 	UI::SetFocus ( `id ( "from_ip" ) );
 	// A popup error text
-	Popup::Error ( _("The input value must be defined.") );
+	Popup::Error ( _("Enter values for both ends of the IP address range.") );
 	return false;
     }
 
@@ -854,8 +854,8 @@ boolean DynamicDHCPValidate (string key, map event)
 	Report::Error(
 	    // TRANSLATORS: popup error message
 	    //              %1 is the tested IP which should match network %2 and netmask %3
-	    sformat(_("Dynamic DHCP address range is needed to match the same network as the DHCP server runs.
-IP '%1' does not match the network '%2/%3'"),
+	    sformat(_("The dynamic DHCP address range must be in the same network as the DHCP server.
+IP %1 does not match the network %2/%3."),
 	    from_ip, current_dynamic_dhcp["network"]:"", current_dynamic_dhcp["netmask"]:"")
 	);
 	return false;
@@ -868,8 +868,8 @@ IP '%1' does not match the network '%2/%3'"),
 	Report::Error(
 	    // TRANSLATORS: popup error message
 	    //              %1 is the tested IP which should match network %2 and netmask %3
-	    sformat(_("Dynamic DHCP address range is needed to match the same network as the DHCP server runs.
-IP '%1' does not match the network '%2/%3'"),
+	    sformat(_("The dynamic DHCP address range must be in the same network as the DHCP server.
+IP %1 does not match the network %2/%3."),
 	    to_ip, current_dynamic_dhcp["network"]:"", current_dynamic_dhcp["netmask"]:"")
 	);
 	return false;
@@ -914,7 +914,7 @@ term Common_HostManagementDialog() {
                                 `Left(`TextEntry(`id("domain"), `opt(`disabled), "  "))
                             ),
 				// Textentry label - IP address of the host
-                            `Left(`TextEntry(`id("hostip"), _("&IP Address or Host Name")))
+                            `Left(`TextEntry(`id("hostip"), _("&IP Address or Hostname")))
                         )),
                         `HWeight(10, `VBox(
                             `HStretch()
@@ -1099,7 +1099,7 @@ boolean CheckMacAddrFormat () {
 	UI::SetFocus (`id ("hosthwaddress"));
 	Report::Error (
 	    // error popup
-	    _("The format of the hardware address is incorrect."));
+	    _("The hardware address is invalid."));
 	return false;
     }
     return true;
@@ -1156,7 +1156,7 @@ boolean CheckHostId (string name) {
     {
 	    UI::SetFocus (`id("hostname"));
 	    // error popup
-	    Popup::Error (_("Host name cannot be empty."));
+	    Popup::Error (_("The hostname cannot be empty."));
 	    return false;
     }
     else if (! Hostname::Check(name))
@@ -1169,7 +1169,7 @@ boolean CheckHostId (string name) {
     {
 	    UI::SetFocus (`id("hostname"));
 	    // error popup, %1 is host name
-	    Popup::Error (sformat (_("Host named '%1' already exists."), name));
+	    Popup::Error (sformat (_("A host named %1 already exists."), name));
 	    return false;
     }
     return true;
@@ -1189,7 +1189,7 @@ symbol HostManagementHandle (string key, map event_descr)
 	{
 	    UI::SetFocus ( `id ( "hostip" ) );
 	    // error popup
-	    Popup::Error ( _("The input value must be defined.") );
+	    Popup::Error ( _("Enter a host IP.") );
 	    return nil;
 	}
 	else if ( Hostname::CheckFQ ( hostip ) != true )
@@ -1267,7 +1267,7 @@ symbol HostManagementHandle (string key, map event_descr)
 	{
 	    // FIXME: text?
 	    UI::SetFocus ( `id ( "hostip" ) );
-	    Popup::Error ( _("The input value must be defined.") );
+	    Popup::Error ( _("Enter a host IP.") );
 	    return nil;
 	}
 	else if ( Hostname::CheckFQ ( hostip ) != true )
@@ -1329,9 +1329,10 @@ symbol ExpertSettingsTabInit (string tab) {
     {
 	// yes-no popup
 	if (! Popup::YesNo (_("If you enter the expert settings, you cannot return 
-to this dialog. To display this dialog, save the changes
-and restart the module. If too complex a configuration
-is set, the expert settings dialog is displayed when you
+to this dialog. You may be able to display this dialog 
+by saving the changes and restarting the module. 
+If too complex a configuration is set, the expert 
+settings dialog is displayed when you
 start the DHCP server module.
 
 Continue?")))
@@ -1443,14 +1444,14 @@ map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
 	"get_service_auto_start" : GetStartService,
 	"set_service_auto_start" : SetStartService,
 	// radio button
-	"start_auto_button" : _("Start DHCP Server When &Booting"),
+	"start_auto_button" : _("When &Booting"),
 	// radio button
-	"start_manual_button" : _("Start DHCP Server &Manually"),
+	"start_manual_button" : _("&Manually"),
 	"help" : sformat (CWMServiceStart::AutoStartHelpTemplate (),
 	    // part of help text - radio button label, NO SHORTCUT!!!
-	    _("Start DHCP Server When Booting"),
+	    _("When Booting"),
 	    // part of help text - radio button label, NO SHORTCUT!!!
-	    _("Start DHCP Server Manually")),
+	    _("Manually")),
     ]),
     "start_stop" : CWMServiceStart::CreateStartStopWidget ($[
 	"service_id" : "dhcpd",
@@ -1557,7 +1558,7 @@ symbol FirstRunDialog (string current_tab, integer step_number) {
     map<string,any> tab_descr = tabs[current_tab]:$[];
 
     // dialog caption, %1 is step number
-    string caption = sformat (_("DHCP Server Wizard (%1/4)"), step_number)
+    string caption = sformat (_("DHCP Server Wizard (%1 of 4)"), step_number)
 	+ " : " + tab_descr["caption"]:"";
 
     symbol ret = CWM::ShowAndRun ($[
