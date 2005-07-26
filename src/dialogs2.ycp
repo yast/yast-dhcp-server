@@ -1358,6 +1358,8 @@ map<string, map<string, any> > tabs = $[
 	),
 	// dialog caption
 	"caption"	: _("DHCP Server: Start-Up"),
+	// dialog caption
+	"wizard"	: _("Start-Up"),
 	// tree item
 	"tree_item_label"	: _("Start-Up"),
 	"widget_names"	: ["auto_start_up", "use_ldap", "start_stop", "expert_settings"],
@@ -1372,6 +1374,8 @@ map<string, map<string, any> > tabs = $[
 	),
 	// dialog caption
 	"caption"	: _("DHCP Server: Card Selection"),
+	// dialog caption
+	"wizard"	: _("Card Selection"),
 	// tree item
 	"tree_item_label"	: _("Card Selection"),
 	"widget_names"	: ["card_selection", "open_firewall",
@@ -1381,6 +1385,8 @@ map<string, map<string, any> > tabs = $[
 	"contents"	: Common_GlobalSettingsDialog(),
 	// dialog caption
 	"caption"	: _("DHCP Server: Global Settings"),
+	// dialog caption
+	"wizard"	: _("Global Settings"),
 	// tree item
 	"tree_item_label"	: _("Global Settings"),
 	"widget_names"	: ["global_settings", "expert_settings"],
@@ -1389,6 +1395,8 @@ map<string, map<string, any> > tabs = $[
 	"contents"	: Common_DynamicDHCPDialog(),
 	// dialog caption
 	"caption"	: _("DHCP Server: Dynamic DHCP"),
+	// dialog caption
+	"wizard"	: _("Dynamic DHCP"),
 	// tree item
 	"tree_item_label"	: _("Dynamic DHCP"),
 	"widget_names"	: ["dynamic_dhcp", "expert_settings"],
@@ -1418,6 +1426,8 @@ map<string, map<string, any> > tabs = $[
 	    "all_settings_button",
 	    `VSpacing (1)
 	),
+	// dialog caption
+	"wizard" : _("Start-Up"),
 	"widget_names" : ["auto_start_up", "config_summary", "all_settings_button"],
     ],
 ];
@@ -1559,7 +1569,7 @@ symbol FirstRunDialog (string current_tab, integer step_number) {
 
     // dialog caption, %1 is step number
     string caption = sformat (_("DHCP Server Wizard (%1 of 4)"), step_number)
-	+ " : " + tab_descr["caption"]:"";
+	+ ": " + tab_descr["wizard"]:"";
 
     symbol ret = CWM::ShowAndRun ($[
 	"widget_names" : tab_descr["widget_names"]:[],
