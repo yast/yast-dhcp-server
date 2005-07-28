@@ -1,0 +1,632 @@
+-------------------------------------------------------------------
+Thu Jul 28 12:49:41 CEST 2005 - locilka@suse.cz
+
+- Merged proofread texts
+- 2.12.3 
+
+-------------------------------------------------------------------
+Tue Jul 26 13:48:27 CEST 2005 - locilka@suse.cz
+
+- Fixing captions in Setup Wizard
+- 2.12.2 
+
+-------------------------------------------------------------------
+Tue Jul 12 10:56:44 CEST 2005 - locilka@suse.cz
+
+- Applying texts and helps changes
+- 2.12.1 
+
+-------------------------------------------------------------------
+Thu May 19 12:29:32 CEST 2005 - locilka@suse.cz
+
+- Changing texts to be YaSY2 Style Guide Compatible
+- Changing the layout of dialogs to be more consistent 
+
+-------------------------------------------------------------------
+Wed Apr 27 11:37:52 CEST 2005 - locilka@suse.cz
+
+- Fixed the same behavior as in DNS-Server - bug #78569
+  Mode::config() and Mode::autoinst() don't call Ldap::Read() now
+
+-------------------------------------------------------------------
+Tue Apr 19 10:00:23 CEST 2005 - locilka@suse.cz
+
+- Applied new functional interface of ProductFeatures
+- 2.12.0
+
+-------------------------------------------------------------------
+Thu Mar 31 16:56:16 CEST 2005 - locilka@suse.cz
+
+- Added checking for Dynamic DHCP addresses to match the current
+  network/netmask
+- Added information abour current network/netmask into the Dynamic
+  DHCP dialog
+
+-------------------------------------------------------------------
+Wed Mar 30 10:42:49 CEST 2005 - locilka@suse.cz
+
+- Presenting network interfaces with their device names and IP
+- Added confirmation dialog for aborting Wizard configuration
+- Fixing firewall behaviour
+- Changing maintainer
+
+-------------------------------------------------------------------
+Fri Feb 25 08:43:17 CET 2005 - jsrain@suse.cz
+
+- fixed testsuite
+- 2.11.6
+
+-------------------------------------------------------------------
+Thu Feb 24 15:36:05 CET 2005 - jsrain@suse.cz
+
+- fixed completely broken behavior in Mode::config () (#66422)
+- 2.11.5
+
+-------------------------------------------------------------------
+Wed Feb 23 12:49:11 CET 2005 - jsrain@suse.cz
+
+- fixed check_ycp errors
+
+-------------------------------------------------------------------
+Tue Feb  8 11:18:42 CET 2005 - jsrain@suse.cz
+
+- allow to specify host name instead of IP address in the dialog
+  for management of hosts with static IP address (#50161)
+- 2.11.4
+
+-------------------------------------------------------------------
+Mon Feb  7 16:21:54 CET 2005 - jsrain@suse.cz
+
+- merged texts from proofread
+- 2.11.3
+
+-------------------------------------------------------------------
+Mon Jan  3 17:41:05 CET 2005 - jsrain@suse.cz
+
+- added support for commandline interface
+- 2.11.2
+
+-------------------------------------------------------------------
+Wed Dec 15 13:04:09 CET 2004 - jsrain@suse.cz
+
+- cleanup of requires and neededforbuild
+- using new function for disabling/enabling progress bar
+- 2.11.1
+
+-------------------------------------------------------------------
+Tue Nov  9 14:10:22 CET 2004 - jsrain@suse.cz
+
+- fixed checks of hosts with static addresses (#40319)
+
+-------------------------------------------------------------------
+Mon Nov  8 13:03:32 CET 2004 - jsrain@suse.cz
+
+- prevent used TSIG keys from being removed
+
+-------------------------------------------------------------------
+Tue Nov  2 13:48:50 CET 2004 - jsrain@suse.cz
+
+- adapted to new Mode.ycp
+- 2.11.0
+
+-------------------------------------------------------------------
+Tue Oct 19 14:02:02 CEST 2004 - jsrain@suse.cz
+
+- use unified messages from Label.ycp and Confirm.ycp
+
+-------------------------------------------------------------------
+Thu Oct 14 15:17:19 CEST 2004 - jsrain@suse.cz
+
+- set "ntp-servers" instead of "time-servers" in dhcpd.conf
+  (#47029)
+
+-------------------------------------------------------------------
+Mon Sep 27 14:37:01 CEST 2004 - jsrain@suse.cz
+
+- fixed error reported after configuration was saved even it it was
+  saved successfully (#46223)
+- fixed saving settings: If eg. only service was enabled/disabled,
+  nothing was saved (#46228)
+- 2.10.7
+
+-------------------------------------------------------------------
+Mon Sep 20 09:41:39 CEST 2004 - jsrain@suse.cz
+
+- fixed "Save and Restart" (the progress was kept instead of
+  returning to the main dialog) (#45580)
+- 2.10.6
+
+-------------------------------------------------------------------
+Wed Sep 15 12:40:31 CEST 2004 - jsrain@suse.cz
+
+- fixed validation of "Open Port in Firewall" widget (#45254)
+
+-------------------------------------------------------------------
+Fri Sep  3 14:20:15 CEST 2004 - jsrain@suse.cz
+
+- added SetMofified function to _auto client
+- 2.10.5
+
+-------------------------------------------------------------------
+Mon Aug 30 05:22:31 CEST 2004 - nashif@suse.de
+
+- Added GetModified function to _auto client
+- 2.10.4
+
+-------------------------------------------------------------------
+Fri Aug 27 15:16:41 CEST 2004 - jsrain@suse.cz
+
+- merged texts from proofread
+
+-------------------------------------------------------------------
+Mon Aug 16 08:08:06 CEST 2004 - jsrain@suse.cz
+
+- fixed handling of some DHCP statements and options (eg.
+  update-static-leases) (#42778)
+- check also if firewall was modified
+- 2.10.3
+
+-------------------------------------------------------------------
+Tue Aug 10 09:33:01 CEST 2004 - jsrain@suse.cz
+
+- merged texts from proofread
+
+-------------------------------------------------------------------
+Mon Aug  9 17:21:53 CEST 2004 - jsrain@suse.cz
+
+- adapted to interface changes in LdapServerAccess
+- fixed Requires
+- 2.10.2
+
+-------------------------------------------------------------------
+Fri Aug  6 15:15:51 CEST 2004 - jsrain@suse.cz
+
+- update firewall handling
+- 2.10.1
+
+-------------------------------------------------------------------
+Wed Aug  4 15:58:02 CEST 2004 - jsrain@suse.cz
+
+- adapted to the changes in CWM
+- added 4th step of installation wizard
+- enhanced the summary
+- added default values for max-lease-time and default-lease-time
+- removed yast2-ldap-server from requires and neededforbuild
+- 2.10.0
+
+-------------------------------------------------------------------
+Fri Jul 30 13:14:20 CEST 2004 - jsrain@suse.cz
+
+- adapted functionality for 9.2 box
+
+-------------------------------------------------------------------
+Mon Jul 19 12:27:53 CEST 2004 - jsrain@suse.cz
+
+- use common function for checking installed packages (#30872)
+
+-------------------------------------------------------------------
+Wed Jul 14 12:21:56 CEST 2004 - jsrain@suse.cz
+
+- fixed and cleaned-up the initial sequence
+
+-------------------------------------------------------------------
+Mon Jul 12 16:04:22 CEST 2004 - jsrain@suse.cz
+
+- fixed help formatting (#40246)
+
+-------------------------------------------------------------------
+Tue Jun 22 13:03:46 CEST 2004 - jsrain@suse.cz
+
+- fixed syntax in YaPI file (#42012)
+
+-------------------------------------------------------------------
+Thu Jun 17 13:10:50 CEST 2004 - jsrain@suse.cz
+
+- using common implementation of the navigation tree
+- using common implementation of the service start-up dialog
+- usign common implementation of the TSIG Keys handling dialog
+
+-------------------------------------------------------------------
+Tue Jun  8 12:38:05 CEST 2004 - jsrain@suse.cz
+
+- fixed examples in YaPI documentation (#41651)
+
+-------------------------------------------------------------------
+Mon May 31 14:49:56 CEST 2004 - jsrain@suse.cz
+
+- YaPI fixes (no functino wrote settings properly) (#41450)
+- added YaPI testsuite
+- 2.9.23
+
+-------------------------------------------------------------------
+Wed May 26 07:54:58 CEST 2004 - jsrain@suse.cz
+
+- not forcing user to set the default lease time (as it is not
+  needed, default value is used if not set) (#41144)
+- 2.9.22
+
+-------------------------------------------------------------------
+Thu May 20 12:23:43 CEST 2004 - jsrain@suse.cz
+
+- highlight the selected entry of the left tree widget (#40782)
+- do not start if installation of required packages failed or
+  cancelled (#40908)
+- prevent from touching system when preparing autoinstallation
+  profile (#40479)
+- 2.9.21
+
+-------------------------------------------------------------------
+Wed May 19 14:46:57 CEST 2004 - jsrain@suse.cz
+
+- added YaPI capabilities and version (#40796)
+- do not allow to configure interfaces when preparing profile for
+  AutoYaST (#40558)
+
+-------------------------------------------------------------------
+Tue May 18 08:50:27 CEST 2004 - jsrain@suse.cz
+
+- display the left tree widget also in NCurses (#40569)
+- connecting to LDAP server using the Ldap module (in order to
+  prevent it from reconnecting) (#40577)
+- fixed behavior if recreating TSIG key (#40600)
+- fixed handling of present/not-present options if configuration
+  is stored in LDAP (#40775)
+- do not read information about network interfaces directly from
+  sysconfig, but use ifconfig instead (#40412)
+- prevent from listing include files in syscofnig multiple times,
+  adding dots to DDNS zone names if missed (#40604)
+- ensure /etc/named.d exists before creating TSIG key (#40786)
+
+-------------------------------------------------------------------
+Mon May 17 10:32:37 CEST 2004 - jsrain@suse.cz
+
+- fixed exporting data for autoinstallation (#40555)
+- always start expert sequence when preparing autoinstallation
+  control file, fixed possible crash (#40568)
+- check hardware address properly before writing to LDAP (#40599)
+- fixed importing of incomplete data (#40558)
+- correctly create ou=ldapconfig if called through YaPI (#40577)
+
+-------------------------------------------------------------------
+Thu May 13 13:14:15 CEST 2004 - jsrain@suse.cz
+
+- fixed checking of values in the DDNS dialog (#40411)
+- 2.9.20
+
+-------------------------------------------------------------------
+Wed May 12 15:13:59 CEST 2004 - jsrain@suse.cz
+
+- allow only a-zA-Z0-9_ for TSIG Key identifier (#40422)
+- fixed reading and saving lease times (#40414)
+- creating ldapConfig in LDAP if missing (#40366)
+
+-------------------------------------------------------------------
+Wed May 12 10:29:04 CEST 2004 - visnov@suse.cz
+
+- correctly handle if only one nameserver is entered (#40333) 
+
+-------------------------------------------------------------------
+Tue May 11 14:06:00 CEST 2004 - visnov@suse.cz
+
+- show really configured domain (#40326) 
+
+-------------------------------------------------------------------
+Tue May 11 08:35:46 CEST 2004 - jsrain@suse.cz
+
+- added check box for LDAP support to expert dialogs (#40246)
+- do not discard changes when switching to/from LDAP (#40306)
+- detect if configuration is simple enough for the simple sequence
+  and start expert sequence otherwise (#40077)
+- added correct error reporting when switching to LDAP (#40321)
+- don't offer to select TSIG key if no is set (#40353)
+
+-------------------------------------------------------------------
+Mon May 10 08:44:09 CEST 2004 - jsrain@suse.cz
+
+- one more fix of creating new configuration in LDAP tree (mt)
+  (#39686)
+- properly handle quoting in DHCP optinos (#40044)
+- define ddns-update-style if not defined (#40044)
+- start wizard in case of empty/sample dhcpd.conf (#40043)
+- properly remove unneeded options from dhcpd.conf when switched
+  to use / not to use LDAP (#40043)
+- merged texts from proofread
+- fixed calling of gettext from Perl modules (#40160)
+- create needed LDAP stuff when saving (and not during reading
+  process) (#39942)
+- add suport for specifying lease times in minutes and seconds
+  (#40247)
+- fixed forgotten lease time values (#40258)
+- fixed checking for values in global options dialog (locilka)
+  (#40255)
+- fixed data checking in host management dialog (locilka) (#40269)
+
+-------------------------------------------------------------------
+Thu May  6 13:30:48 CEST 2004 - jsrain@suse.cz
+
+- moved the "Expert settings" button to the tree widget (#39985)
+- abort reading if cannot determine t:he host name (#39791)
+- check if default sample configuration file is found and avoid
+  using it (#40043)
+- 2.9.19
+
+-------------------------------------------------------------------
+Wed May  5 10:06:12 CEST 2004 - jsrain@suse.cz
+
+- fixed saving when no data is present in LDAP and dhcpd.conf
+  (#39791)
+- moved the settings in LDAP tree under ou=DNS,$ldap_domain
+  (#39686)
+
+-------------------------------------------------------------------
+Tue May  4 08:59:56 CEST 2004 - jsrain@suse.cz
+
+- merged texts from proofread
+- fixed input checking (#39861)
+- fixed comments for translators
+
+-------------------------------------------------------------------
+Mon May  3 10:41:29 CEST 2004 - jsrain@suse.cz
+
+- check if dhcp.schema is included in /etc/openldap/slapd.conf
+  and add it if it is missing (#39589) 
+
+-------------------------------------------------------------------
+Fri Apr 30 13:32:43 CEST 2004 - jsrain@suse.cz
+
+- added missing helps
+- 2.9.18
+
+-------------------------------------------------------------------
+Thu Apr 29 13:44:54 CEST 2004 - visnov@suse.cz
+
+- complete UI redesign 
+- 2.9.17
+
+-------------------------------------------------------------------
+Mon Apr 26 10:38:41 CEST 2004 - jsrain@suse.cz
+
+- updated API to support LDAP
+
+-------------------------------------------------------------------
+Fri Apr 23 10:50:53 CEST 2004 - jsrain@suse.cz
+
+- added LDAP support
+
+-------------------------------------------------------------------
+Mon Apr  5 17:21:56 CEST 2004 - jsrain@suse.de
+
+- fixed names of directives in the list of possible directioves
+  to add (#38168)
+- fixed type of the 'ddns-updates' option (#38168)
+- 2.9.16
+
+-------------------------------------------------------------------
+Fri Apr  2 16:05:40 CEST 2004 - jsrain@suse.de
+
+- changed license to GPL
+- 2.9.15
+
+-------------------------------------------------------------------
+Fri Apr  2 09:14:10 CEST 2004 - jsrain@suse.de
+
+- added missing 'range' directive to directives possible to be
+  added to address pool (#37846)
+- sorting first directives and then options in the list of options
+  to add to a declaration (#37846)
+- 2.9.14
+
+-------------------------------------------------------------------
+Wed Mar 31 10:54:40 CEST 2004 - jsrain@suse.de
+
+- again fixed behavior of some directives (weren't read and saved
+  correctly) (#37265)
+- ask for interface to listn to before running main dialog if no
+  interface is selected (#37417)
+- 2.9.13
+
+-------------------------------------------------------------------
+Tue Mar 30 17:12:23 CEST 2004 - jsrain@suse.de
+
+- fixed grabbing the list of interfaces to listen to (#37534)
+- fixed accidental destroying of list of files to copy to chroot
+  jail (#37281)
+
+-------------------------------------------------------------------
+Tue Mar 30 08:39:29 CEST 2004 - jsrain@suse.de
+
+- fixed import of empty data when preparing autoinstallation (#37179)
+- 2.9.12
+
+-------------------------------------------------------------------
+Mon Mar 29 13:40:08 CEST 2004 - jsrain@suse.de
+
+- add also includes added not using YaST to sysconfig to be copied
+  to chroot (#37281)
+- enabling the wodgets of the DynamicDNS dialog properly (#37282)
+- fixed adding of new TSIG keys
+- fixed writing of some directives (eg. 'filename', 'authoritative')
+  (#37265)
+- 2.9.11
+
+-------------------------------------------------------------------
+Wed Mar 24 12:37:50 CET 2004 - jsrain@suse.cz
+
+- added check box for running DHCP server in chroot jail
+- disabling possibility to change the settings if the DNS service
+  is disabled (#36799)
+- preselect type of declaration to add
+- 2.9.10
+
+-------------------------------------------------------------------
+Mon Mar 22 14:22:10 CET 2004 - jsrain@suse.cz
+
+- updated .desktop file to provide autoinstallation clonning support
+- 2.9.9
+
+-------------------------------------------------------------------
+Thu Mar 18 09:40:14 CET 2004 - jsrain@suse.cz
+
+- addapted to calling all perl and YCP functions as class methods
+  (added $self = shift; ,...)
+
+-------------------------------------------------------------------
+Wed Mar 10 16:25:26 CET 2004 - jsrain@suse.de
+
+- addapted to the new array context - a YCP list is always a
+  reference to a Perl array
+- 2.9.8
+
+-------------------------------------------------------------------
+Wed Mar 10 08:44:13 CET 2004 - jsrain@suse.de
+
+- fixed crash if configuration fiels are missing (#35515)
+- not asking before aborting if nothing was changed (#35516)
+- 2.9.7
+
+-------------------------------------------------------------------
+Tue Mar  9 09:09:59 CET 2004 - jsrain@suse.de
+
+- Require -> Package
+- added AutoPackages suport
+- addded more high-level functions for DHCP adjustments (#33572)
+
+-------------------------------------------------------------------
+Mon Mar  8 14:05:16 CET 2004 - jsrain@suse.de
+
+- fixed import of empty settings (#35441)
+- setting icon
+- 2.9.6
+
+-------------------------------------------------------------------
+Fri Mar  5 15:04:19 CET 2004 - jsrain@suse.de
+
+- typing fixes
+- 2.9.5
+
+-------------------------------------------------------------------
+Mon Mar  1 15:55:34 CET 2004 - jsrain@suse.de
+
+- fixed creating of TSIG keys
+- merged texts from proofread
+- fixed lists of offered options for subnet and host declarations
+- enhanced checking of values od DHCP options (#33571)
+- more strict variable types
+- 2.9.4
+
+-------------------------------------------------------------------
+Tue Feb 24 08:04:54 CET 2004 - jsrain@suse.de
+
+- fixed typo in a DHCP option name (#34902)
+
+-------------------------------------------------------------------
+Mon Feb 23 16:54:09 CET 2004 - jsrain@suse.de
+
+- enhanced Dynamic DNS support
+- fixed log displaying popup
+- 2.9.3
+
+-------------------------------------------------------------------
+Thu Feb 19 11:31:47 CET 2004 - jsrain@suse.de
+
+- removed yast2-packager from neededforbuild
+
+-------------------------------------------------------------------
+Tue Feb 10 15:42:37 CET 2004 - jsrain@suse.de
+
+- fixed testsuite to updated perl-bindings
+- updated helps
+- added DynDNS support
+- autoinstallation updates
+- several other fixes
+- 2.9.2
+
+-------------------------------------------------------------------
+Fri Feb  6 16:07:23 CET 2004 - jsrain@suse.de
+
+- dropped .y2cc file
+- module rewritten to Perl
+- testsuite updates
+- UI improvements
+- 2.9.1
+
+-------------------------------------------------------------------
+Thu Jan 29 15:15:41 CET 2004 - jsrain@suse.de
+
+- created agent for reading/writing /etc/dhcpd.conf file
+
+-------------------------------------------------------------------
+Fri Oct  3 14:24:05 CEST 2003 - jsrain@suse.de
+
+- adapted to Table/Popup stuff split off from CWM.ycp
+- 2.9.0
+
+-------------------------------------------------------------------
+Wed Oct  1 13:07:02 CEST 2003 - jsrain@suse.de
+
+- smarter configuring of firewall (#30783)
+
+-------------------------------------------------------------------
+Thu Sep 18 10:22:42 CEST 2003 - jsrain@suse.de
+
+- closing dialog properly if read aborted (#31249)
+- 2.8.7
+
+-------------------------------------------------------------------
+Wed Sep 17 10:22:43 CEST 2003 - jsrain@suse.de
+
+- added possibility to adapt firewall settings when saving DNS
+  server configuration (#30783)
+- fixed requires (added yast2-packager)
+- 2.8.6
+
+-------------------------------------------------------------------
+Mon Sep 15 10:09:25 CEST 2003 - jsrain@suse.de
+
+- fixed managing of multiple hosts (#30781)
+- 2.8.5
+
+-------------------------------------------------------------------
+Fri Sep  5 08:53:33 CEST 2003 - jsrain@suse.de
+
+- merged texts from proofread
+- added possiblity to specify interfaces to listen to (#30119)
+- 2.8.4
+
+-------------------------------------------------------------------
+Fri Aug 29 08:20:53 CEST 2003 - jsrain@suse.de
+
+- changed strange popup (#29385)
+- 2.8.3
+
+-------------------------------------------------------------------
+Thu Aug 28 09:35:48 CEST 2003 - jsrain@suse.de
+
+- checking if dhcp server is installed (#29423)
+- added .desktop file
+- fixed help text (#29385)
+
+-------------------------------------------------------------------
+Tue Aug 26 14:50:05 CEST 2003 - jsrain@suse.de
+
+- better testsuite
+- updated _auto client
+- 2.8.2
+
+-------------------------------------------------------------------
+Mon Aug 18 12:45:46 CEST 2003 - jsrain@suse.de
+
+- merged texts from proofread
+- 2.8.1
+
+-------------------------------------------------------------------
+Fri Aug 15 08:28:46 CEST 2003 - jsrain@suse.de
+
+- updated to current version of CWM
+- 2.8.0
+
+-------------------------------------------------------------------
+Thu Jun 12 13:28:38 CEST 2003 - jsrain@suse.de
+
+- initial version
+- 2.6.0

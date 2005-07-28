@@ -1,0 +1,128 @@
+/**
+ * File:	include/dhcp-server/routines.ycp
+ * Package:	Configuration of dhcp-server
+ * Summary:	Miscelanous functions for configuration of dhcp-server.
+ * Authors:	Jiri Srain <jsrain@suse.cz>
+ *
+ * $Id$
+ */
+
+{
+
+textdomain "dhcp-server";
+
+/**
+ * Restart the DHCP daemon
+ */
+define void RestartDhcpDaemon () ``{
+    Service::RunInitScript("dhcpd", "restart");
+}
+
+    /**
+     * Merge section id and key together to one identifier
+     * @param type string section type
+     * @param id string section identifier
+     * @return merged section type and id to one string
+     */
+    global define string typeid2key (string type, string id) ``{
+	return sformat ("%1 %2", type, id);
+    }
+
+    /**
+     * Split section type and id to two separate strings
+     * @param key string section type and id merged into one string
+     * @return a map with keys "type" and "id"
+     */
+    global define map<string,string> key2typeid (string key) ``{
+	if (key == " ")
+	{
+	    return $[
+		"type" : "",
+		"id" : "",
+	    ];
+	}
+	if (! regexpmatch (key, "^[^ ]+ .+$"))
+	    return nil;
+	string type = regexpsub (key, "^([^ ]+) .+$", "\\1");
+	string id = regexpsub (key, "^[^ ]+ (.+)$", "\\1");
+	return $[
+	    "type" : type,
+	    "id" : id,
+	];
+    }
+
+    /**
+     * Get children declarations of a declaration
+     * @param type strign declaration type
+     * @param id string declaration id
+     * @return list of items for the tree widget
+     */
+    global define list getItems (string type, string id) ``{
+	list<map> entries = DhcpServer::GetChildrenOfEntry (type, id);
+	if (entries == nil)
+	    return [];
+	list<term>ret = maplist (map e, entries, ``{
+	    string type = e["type"]:"group";
+	    string id = e["id"]:"";
+	    list<map> subentries = DhcpServer::GetChildrenOfEntry (type, id);
+	    string full_id = typeid2key (type, id);
+	    if (size (subentries) > 0)
+	    {
+		return `item (`id (full_id), full_id, true, getItems (type,id));
+	    }
+	    return `item (`id (full_id), full_id);
+	});
+	return ret;
+    }
+
+/**
+ * Abort function
+ * @return blah blah lahjk
+ */
+/*global define boolean Abort() ``{
+    if(AbortFunction != nil)
+	return eval(AbortFunction) == true;
+    return false;
+}*/
+
+    /**
+      * Create new section
+      * @param @param what symbol specifying the section type, `global, `subnet
+      *  or `host
+      * @return map created section
+      */
+    global define map createNewSection (symbol what) ``{
+	if (what == `global)
+	{
+	    return $[
+		"default-lease-time" : 600,
+		"max-lease-time" : 7200,
+		"ddns-update-style" : "none",
+		"ddns-updates" : "off",
+		"log-facility" : "local7",
+		"authoritative" : "",
+	    ];
+	}
+	else if (what == `subnet)
+	{
+	    return $[
+		"subnet" : "",
+		"netmask" : "",
+		"range" : "",
+		"option routers" : "",
+	    ];
+	}
+	else if (what == `host)
+	{
+	    return $[
+		"host" : "",
+		"hardware" : "",
+		"fixed-address" : "",
+	    ];
+	}
+
+	return $[];
+    }
+
+/* EOF */
+}

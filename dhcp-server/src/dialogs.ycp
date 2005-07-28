@@ -1,0 +1,557 @@
+/**
+ * File:	include/dhcp-server/ui.ycp
+ * Package:	Configuration of dhcp-server
+ * Summary:	User interface
+ * Authors:	Jiri Srain <jsrain@suse.cz>
+ *
+ * $Id$
+ */
+
+{
+
+textdomain "dhcp-server";
+
+import "Wizard";
+import "DhcpServer";
+import "CWM";
+
+import "Popup";
+import "Label";
+
+global map<symbol,any> functions = $[
+    `abort : confirmAbort,
+];
+
+/**
+  * Read settings dialog
+  * @return `abort if aborted and `next otherwise
+  */
+global define symbol ReadDialog() ``{
+    y2milestone ("Running read dialog");
+    Wizard::RestoreHelp (HELPS["read"]:"");
+    boolean ret = DhcpServer::Read();
+    if (ret)
+    {
+	return DhcpServer::WasConfigured ()
+	    ? `next
+	    : `wizard;
+    }
+    return `abort;
+}
+
+/**
+  * Write settings dialog
+  * @return `abort if aborted and `next otherwise
+  */
+global define symbol WriteDialog() ``{
+    y2milestone ("Running write dialog");
+    Wizard::RestoreHelp (HELPS["write"]:"");
+    boolean ret = DhcpServer::Write();
+    // yes-no popup
+    if (! ret && Popup::YesNo (_("Saving the configuration failed. Change the settings?")))
+	return `back;
+    return ret ? `next : `abort;
+}
+
+
+/**
+  * Run main dialog
+  * @return symbol for wizard sequencer
+  */
+global define symbol OldMainDialog () ``{
+    y2milestone ("Running main dialog");
+    list<map<string,any> > w = CWM::CreateWidgets (["start", "chroot", "ldap_support", "configtree"], widgets);
+    term contents = `HBox (`HSpacing (2), `VBox (
+	`VSpacing (1),
+	`Left (w[0, "widget"]:`VSpacing (0)),
+	`VSpacing (1),
+	`Left (w[1, "widget"]:`VSpacing (0)),
+	`VSpacing (1),
+	`Left (w[2, "widget"]:`VSpacing (0)),
+	`VSpacing (1),
+	w[3, "widget"]:`VSpacing (0),
+	`VSpacing (1)
+    ), `HSpacing (2));
+    // dialog caption
+    string caption = _("DHCP Server Configuration");
+    string help = CWM::MergeHelps (w);
+
+    Wizard::SetContentsButtons (caption, contents, help,
+	Label::BackButton (), Label::FinishButton ());
+    Wizard::HideBackButton();
+    Wizard::SetAbortButton(`abort, Label::CancelButton() );
+
+    return CWM::Run (w, $[`abort : confirmAbortIfChanged]);
+}
+
+/**
+  * Run dialog for global options
+  * @return symbol for wizard sequencer
+  */
+global define symbol GlobalsDialog () ``{
+    y2milestone ("Running global options dialog");
+    list<map<string,any> > w = CWM::CreateWidgets (["global_table"], widgets);
+    term contents = `HBox (`HSpacing (2), `VBox (
+	`VSpacing (1),
+	w[0, "widget"]:`VSpacing (0),
+	`VSpacing (1)
+    ), `HSpacing (2));
+    // dialog caption
+    string caption = _("Global Options");
+    string help = CWM::MergeHelps (w);
+
+    Wizard::SetContentsButtons (caption, contents, help,
+	Label::BackButton (), Label::OKButton ());
+    Wizard::RestoreAbortButton ();
+
+    return CWM::Run (w, functions);
+}
+
+/**
+  * Run subnet dialog
+  * @return symbol for wizard sequencer
+  */
+global define symbol SubnetDialog () ``{
+    y2milestone ("Running subnet dialog");
+    list<map<string,any> > w = CWM::CreateWidgets (["subnet", "subnet_table",
+	"dyn_dns_button"], widgets);
+    term contents = `HBox (`HSpacing (2), `VBox (
+	`VSpacing (1),
+	w[0, "widget"]:`VSpacing (0),
+	`VSpacing (1),
+	w[1, "widget"]:`VSpacing (0),
+	`VSpacing (1)
+    ), `HSpacing (2));
+    // dialog caption
+    string caption = _("Subnet Configuration");
+    string help = CWM::MergeHelps (w);
+
+    Wizard::SetContentsButtons (caption, contents, help,
+	Label::BackButton (), Label::OKButton ());
+    Wizard::RestoreAbortButton ();
+
+    return CWM::Run (w, functions);
+}
+
+/**
+  * Run host dialog
+  * @return symbol for wizard sequencer
+  */
+global define symbol HostDialog () ``{
+    y2milestone ("Running host dialog");
+    list<map<string,any> > w = CWM::CreateWidgets (["host", "host_table"], widgets);
+    term contents = `HBox (`HSpacing (2), `VBox (
+	`VSpacing (1),
+	`HBox (`HSpacing (2),
+	    w[0, "widget"]:`VSpacing (0),
+	`HSpacing (2)),
+	`VSpacing (1),
+	w[1, "widget"]:`VSpacing (0),
+	`VSpacing (1)
+    ), `HSpacing (2));
+    // dialog caption
+    string caption = _("Host with Fixed Address");
+    string help = CWM::MergeHelps (w);
+
+    Wizard::SetContentsButtons (caption, contents, help,
+	Label::BackButton (), Label::OKButton ());
+    Wizard::RestoreAbortButton ();
+
+    return CWM::Run (w, functions);
+}
+
+/**
+  * Run shared network dialog
+  * @return symbol for wizard sequencer
+  */
+global define symbol SharedNetworkDialog () ``{
+    y2milestone ("Running shared network dialog");
+    list<map<string,any> > w = CWM::CreateWidgets (
+	["shared-network", "shared-network_table"], widgets);
+    term contents = `HBox (`HSpacing (2), `VBox (
+	`VSpacing (1),
+	`HBox (`HSpacing (2),
+	    w[0, "widget"]:`VSpacing (0),
+	`HSpacing (2)),
+	`VSpacing (1),
+	w[1, "widget"]:`VSpacing (0),
+	`VSpacing (1)
+    ), `HSpacing (2));
+    // dialog caption
+    string caption = _("Shared Network");
+    string help = CWM::MergeHelps (w);
+
+    Wizard::SetContentsButtons (caption, contents, help,
+	Label::BackButton (), Label::OKButton ());
+    Wizard::RestoreAbortButton ();
+
+    return CWM::Run (w, functions);
+}
+
+/**
+  * Run address pool dialog
+  * @return symbol for wizard sequencer
+  */
+global define symbol PoolDialog () ``{
+    y2milestone ("Running pool dialog");
+    list<map<string,any> > w = CWM::CreateWidgets (["pool", "pool_table"], widgets);
+    term contents = `HBox (`HSpacing (2), `VBox (
+	`VSpacing (1),
+	`HBox (`HSpacing (2),
+	    w[0, "widget"]:`VSpacing (0),
+	`HSpacing (2)),
+	`VSpacing (1),
+	w[1, "widget"]:`VSpacing (0),
+	`VSpacing (1)
+    ), `HSpacing (2));
+    // dialog caption
+    string caption = _("Pool of Addresses");
+    string help = CWM::MergeHelps (w);
+
+    Wizard::SetContentsButtons (caption, contents, help,
+	Label::BackButton (), Label::OKButton ());
+    Wizard::RestoreAbortButton ();
+
+    return CWM::Run (w, functions);
+    return `back;
+}
+
+/**
+  * Run group dialog
+  * @return symbol for wizard sequencer
+  */
+global define symbol Groupdialog () ``{
+    y2milestone ("Running group dialog");
+    list<map<string,any> > w = CWM::CreateWidgets (["group", "group_table"], widgets);
+    term contents = `HBox (`HSpacing (2), `VBox (
+	`VSpacing (1),
+	`HBox (`HSpacing (2),
+	    w[0, "widget"]:`VSpacing (0),
+	`HSpacing (2)),
+	`VSpacing (1),
+	w[1, "widget"]:`VSpacing (0),
+	`VSpacing (1)
+    ), `HSpacing (2));
+    // dialog caption
+    string caption = _("Group-Specific Options");
+    string help = CWM::MergeHelps (w);
+
+    Wizard::SetContentsButtons (caption, contents, help,
+	Label::BackButton (), Label::OKButton ());
+    Wizard::RestoreAbortButton ();
+
+    return CWM::Run (w, functions);
+}
+
+/**
+  * Run class dialog
+  * @return symbol for wizard sequencer
+  */
+global define symbol ClassDialog () ``{
+    y2milestone ("Running class dialog");
+    list<map<string,any> > w = CWM::CreateWidgets (["class", "class_table"], widgets);
+    term contents = `HBox (`HSpacing (2), `VBox (
+	`VSpacing (1),
+	`HBox (`HSpacing (2),
+	    w[0, "widget"]:`VSpacing (0),
+	`HSpacing (2)),
+	`VSpacing (1),
+	w[1, "widget"]:`VSpacing (0),
+	`VSpacing (1)
+    ), `HSpacing (2));
+    // dialog caption
+    string caption = _("Class");
+    string help = CWM::MergeHelps (w);
+
+    Wizard::SetContentsButtons (caption, contents, help,
+	Label::BackButton (), Label::OKButton ());
+    Wizard::RestoreAbortButton ();
+
+    return CWM::Run (w, functions);
+    return `back;
+}
+
+/**
+  * Run shared network dialog
+  * @return symbol for wizard sequencer
+  */
+global define symbol SectionTypeChoose () ``{
+    y2milestone ("Running section type selection dialog");
+    list parents = [];
+    string par_id = parent_id;
+    string par_type = parent_type;
+    while (par_id != "")
+    {
+	parents = add (parents, par_type);
+	map<string,string> p
+	    = DhcpServer::GetEntryParent (par_type, par_id);
+	par_type = p["type"]:"";
+	par_id = p["id"]:"";
+    }
+    list<string> possible = [ "subnet", "host", "shared-network",
+	"group", "pool", "class" ];
+    if (contains (parents, "class") || contains (parents, "host")
+	 || contains (parents, "pool"))
+    {
+	return `back;
+    }
+    list<string> f = [];
+    if (contains (parents, "subnet"))
+    {
+	f = add (f, "subnet");
+	f = add (f, "shared-network");
+    }
+    if (contains (parents, "shared-network"))
+    {
+	f = add (f, "shared-network");
+    }
+    possible = filter (string s, possible, ``(! contains (f, s)));
+    if (possible == [])
+	return `back;
+
+    map labels = $[
+	// radio button
+	"subnet" : _("&Subnet"),
+	// radio button
+	"host" : _("&Host"),
+	// radio button
+	"shared-network" : _("Shared &Network"),
+	// radio button
+        "group" : _("&Group"),
+	// radio button
+	"pool" : _("&Pool of Addresses"),
+	// radio button
+	"class" : _("&Class"),
+    ];
+
+    term contents = `VBox ();
+    foreach (string p, possible, ``{
+	contents = add (contents, `VSpacing (1));
+	contents = add (contents, `Left (`RadioButton (`id (p), labels[p]:p)));
+    });
+    contents = add (contents, `VSpacing (1));
+    contents = `HBox (`HSpacing (5), contents, `HSpacing (5));
+    contents = `RadioButtonGroup (`id (`entry_type), contents);
+    // frame
+    contents = `Frame (_("Declaration Types"), contents);
+    contents = `HBox (`HStretch (), `VBox (`VStretch (),
+	contents,
+    `VStretch ()), `HStretch ());
+
+    // dialog caption
+    string caption = _("Declaration Type");
+    string help = getSelectDeclarationTypeHelp (possible);
+
+    Wizard::SetContentsButtons (caption, contents, help,
+	Label::BackButton (), Label::NextButton ());
+    Wizard::RestoreAbortButton ();
+    UI::ChangeWidget (`id (possible[0]:nil), `Value, true);
+
+    symbol ret = nil;
+    while (ret == nil)
+    {
+	ret = (symbol)UI::UserInput ();
+	if (ret == `cancel)
+	    ret = `abort;
+	if (ret == `abort && ! confirmAbort ())
+	    ret = nil;
+	if (ret != `next && ret != `abort && ret != `back)
+	    ret = nil;
+    }
+    if (ret == `next)
+    {
+	current_entry_type = (string)UI::QueryWidget (`id (`entry_type),
+	    `CurrentButton);
+    }
+    return ret;
+}
+
+/**
+  * Run interfaces and firewall dialog
+  * @param initial boolean true if running before main dialog
+  * @return symbol for wizard sequencer
+  */
+global define symbol IfacesDialog (boolean initial) ``{
+    y2milestone ("Running interfaces dialog");
+    list<map<string,any> > w = CWM::CreateWidgets (["interfaces", "open_firewall"],widgets);
+    term contents = `HBox (`HStretch (), `VBox (
+	`VStretch (),
+	w[0, "widget"]:`VSpacing (0),
+	`VSpacing (3),
+	`Left (w[1, "widget"]:`VSpacing (0)),
+	`VStretch ()
+    ), `HStretch ());
+    // dialog caption
+    string caption = _("Interface Configuration");
+    string help = CWM::MergeHelps (w);
+    string next_label = initial ? Label::NextButton () : Label::OKButton ();
+
+    Wizard::SetContentsButtons (caption, contents, help,
+	Label::BackButton (), next_label);
+    if (initial)
+    {
+	Wizard::HideBackButton();
+	Wizard::SetAbortButton(`abort, Label::CancelButton() );
+    }
+    else
+    {
+	Wizard::RestoreAbortButton ();
+	Wizard::RestoreBackButton ();
+    }
+
+    return CWM::Run (w, functions);
+}
+
+/**
+  * Run Dynamic DNS dialog
+  * @return symbol for wizard sequencer
+  */
+global define symbol DynDnsDialog () ``{
+    y2milestone ("Running interfaces dialog");
+    list<string> w = ["ddns_enable", "zone", "zone_ip",
+	"reverse_zone", "reverse_ip"];
+    term contents = `HBox (`HStretch (), `VBox (
+	`VStretch (),
+	`Left ("ddns_enable"),
+	`VSpacing (2),
+	`HBox (
+	    "zone",
+	    "zone_ip"
+	),
+	`HBox (
+	    "reverse_zone",
+	    "reverse_ip"
+	),
+	`VStretch ()
+    ), `HStretch ());
+    // dialog caption
+    string caption = _("Interface Configuration");
+
+    return CWM::ShowAndRun ($[
+	"widget_names" : w,
+	"widget_descr" : widgets,
+	"contents" : contents,
+	"caption" :  caption,
+	"back_button" : Label::BackButton (),
+	"next_button" : Label::OKButton (),
+	"fallback_functions" : functions
+    ]);
+}
+
+/**
+  * Run TSIG keys management dialog
+  * @return symbol for wizard sequencer
+  */
+global define symbol RunTsigKeysDialog (boolean called_from_subnet) ``{
+    y2milestone ("Running TSIG keys management dialog");
+
+    list<string> w = ["tsig_keys"];
+
+    term contents = `HBox (`HSpacing (2), `VBox (
+        `VSpacing (1),
+        "tsig_keys",
+        `VSpacing (1)
+    ), `HSpacing (2));
+
+    // dialog caption
+    string caption = _("TSIG Key Management");
+
+    symbol ret = CWM::ShowAndRun ($[
+	"widget_names" : w,
+	"widget_descr" : widgets,
+	"contents" : contents,
+	"caption" :  caption,
+	"back_button" : Label::BackButton (),
+	"next_button" : Label::OKButton (),
+	"fallback_functions" : $[`abort : confirmAbort],
+    ]);
+
+    if (ret == `next && called_from_subnet)
+    {
+	if (size (DhcpServer::ListTSIGKeys ()) == 0)
+	    return `subnet;
+    }
+    return ret;
+}
+
+// fake dialogs - switchers
+
+/**
+  * detect the type of edited declaration
+  * @return symbol for ws
+  */
+global define symbol SelectEditationDialog () ``{
+    y2milestone ("Determining what is selected");
+    if (current_entry_type == "")
+	return `global;
+    if (current_entry_type == "subnet")
+	return `subnet;
+    if (current_entry_type == "host")
+	return `host;
+    if (current_entry_type == "pool")
+	return `pool;
+    if (current_entry_type == "group")
+	return `group;
+    if (current_entry_type == "shared-network")
+	return `shared_network;
+    if (current_entry_type == "class")
+	return `class;
+    y2error ("Unknown declaration was selected");
+    return `back;
+}
+
+/**
+  * Store a section (declaration)
+  * @return symbol for ws, always `next
+  */
+global define symbol SectionStore () ``{
+    if (current_operation == `edit) // existing entry was edited
+    {
+	y2milestone ("Storing changed record");
+	DhcpServer::ChangeEntry (original_entry_type, original_entry_id,
+	    current_entry_type, current_entry_id);
+    }
+    else // new entry was added
+    {
+	y2milestone ("Storing new record");
+	DhcpServer::CreateEntry (current_entry_type, current_entry_id,
+	    parent_type, parent_id);
+    }
+
+    DhcpServer::SetEntryDirectives (current_entry_type, current_entry_id,
+	current_entry_directives);
+    DhcpServer::SetEntryOptions (current_entry_type, current_entry_id,
+	current_entry_options);
+    DhcpServer::SetModified ();
+
+/*    DhcpServer::SetDDNSFileName (current_ddns_key_file);
+    DhcpServer::SetDDNSFileCreate (current_ddns_key_create);*/
+
+    return `next;
+}
+
+/**
+  * Detect if at least one network interface is selected
+  * @return symbol for wizard sequencer
+  */
+global define symbol CheckConfiguredInterfaces () ``{
+    list ifaces_allowed = DhcpServer::GetAllowedInterfaces ();
+    if (size (ifaces_allowed) == 0)
+	return `ifaces;
+    return `main;
+}
+
+/**
+ * Detect if simple configuration dialogs should be started
+ * @return symbol for wizard sequencer
+ */
+global define symbol ConfigTypeSwitch () {
+    if (Mode::config ())
+	return `expert;
+    return DhcpServer::IsConfigurationSimple ()
+	? `simple
+	: `expert;
+}
+
+// EOF
+}

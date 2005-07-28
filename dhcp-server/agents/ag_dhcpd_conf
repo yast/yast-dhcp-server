@@ -1,0 +1,334 @@
+#!/usr/bin/perl -w
+
+use ycp;
+
+$default_filename = "/etc/dhcpd.conf";
+$filename = $default_filename;
+
+@lines = ();
+$group_counter = 0;
+$pool_counter = 0;
+
+@parSed_file = ();
+
+sub get_lines {
+    my $orig_line = "";
+    my $comment_before = "";
+    my $comment_after = "";
+    @lines = ();
+    open (INFILE, "$filename") || return;
+    my $in_quotes = 0;
+    my $line = "";
+    my $finished = 0;
+    my $next_line = undef;
+    my $braces = 0;
+    while (defined ($orig_line))
+    {
+	while (! defined ($orig_line) || $orig_line eq "")
+	{
+	    $orig_line = <INFILE>;
+	    last if (! defined ($orig_line));
+	    chomp ($orig_line);
+	    if ($orig_line =~ /^[ \t]*#.*/)
+	    {
+		$comment_before = "$comment_before\n$orig_line";
+		$orig_line = "";
+	    }
+	}
+	last if (! defined ($orig_line));
+	
+	my $char = substr ($orig_line, 0, 1);
+	if (! $in_quotes)
+	{
+	    if ($char eq "#")
+	    {
+		$comment_after = "$comment_after $orig_line";
+		$orig_line = "";
+		next;
+	    }
+	}
+
+	$line = "$line$char";
+	if ($char eq "\"")
+	{
+	    $in_quotes = 1 - $in_quotes;
+	}
+	elsif (! $in_quotes)
+	{
+	    if ($char eq "}")
+	    {
+		$braces = $braces - 1;
+ 	    }
+	    elsif ($char eq "{")
+	    {
+		if (substr ($line, 0, 7) eq "option "
+		    || $line =~ /^[ \t]*zone[ \t]+/)
+		{
+		    $braces = $braces + 1;
+		}
+	    }
+	    if ($char eq "{" || $char eq "}")
+	    {
+	    }
+
+	    if (($char eq ";" && $braces == 0) || ($char eq "{" && $braces == 0)
+		|| ($char eq "}" && $braces <= 0))
+	    {
+		my $tmp_line = substr ($orig_line, 1);
+		if ($tmp_line =~ /^[ \t]*(#.*)$/)
+		{
+		    $comment_after = "$comment_after $1";
+		    $orig_line = "";
+		}
+		$line =~ s/^[ \t]*([^ \t]+)[ \t]*$/$1/;
+		if ($line =~ /.*;$/)
+		{
+		    $line = substr ($line, 0, length ($line) - 1);
+		}
+		my %next_line = (
+		    "line" => $line,
+		    "comment_before" => $comment_before,
+		    "comment_after" => $comment_after,
+		);
+		if (defined ($line) && $line ne "")
+		{
+		    push @lines, \%next_line;
+		    $comment_before = "";
+		    $comment_after = "";
+		}
+		$line = "";
+		$braces = 0;
+		next if ($orig_line eq "");
+	    }
+	}
+	$orig_line = substr ($orig_line, 1);
+    }
+    close (INFILE);
+}
+
+sub parse_section {
+    my @section = ();
+    while (1) {
+	my $line_ref = shift @lines;
+	last if ! defined ($line_ref);
+	my %line = %{$line_ref};
+	my $line = $line{"line"};
+	my $cb = $line{"comment_before"};
+	$cb = substr ($cb, 1) if (substr ($cb, 0, 1) eq "\n");
+	my $ca = $line{"comment_after"};
+	$ca = substr ($ca, 1) if (substr ($ca, 0, 1) eq " ");
+	last if ($line =~ /^[ \t]*}[ \t;]*$/);
+
+	my $key;
+	my $value;
+	my $type;
+	if ($line =~ /^[ \t]*([^ \t]+.*[^ \t]+)[ \t]*{[ \t]*$/)
+	{
+	    $type = "section";
+	    $key = $1;
+	    $value = parse_section ();
+	    if ($key =~ /^[ \t]*group[ \t]*$/)
+	    {
+		$type = "group";
+	        if ($ca =~ /id=\"([^\"]+)\"/)
+		{
+		    $key = "$1";
+		}
+		else
+		{
+		    $key = "__$group_counter";
+		    $group_counter++;
+		}
+	    }
+	    elsif ($key =~ /^[ \t]*pool[ \t]*$/)
+	    {
+		$type = "pool";
+	        if ($ca =~ /id=\"([^\"]+)\"/)
+		{
+		    $key = "$1";
+		}
+		else
+		{
+		    $key = "__$pool_counter";
+		    $pool_counter++;
+		}
+	    }
+	    else
+	    {
+		($type, $key) = split (/ /, $key, 2);
+	    }
+	}
+	elsif ($line =~ /^[ \t]*option[ \t]+([^ \t]+)[ \t]+([^ \t].*);?[ \t]*$/)
+	{
+	    $type = "option";
+	    $key = $1;
+	    $value = $2;
+	}
+	elsif ($line =~ /^[ \t]*([^ \t]+)[ \t]+([^ \t].*);?[ \t]*$/)
+	{
+	    $type = "directive";
+	    $key = $1;
+	    $value = $2;
+	}
+	elsif ($line =~ /^[ \t]*option[ \t]+([^ \t]+)[ \t]*;?[ \t]*$/)
+	{
+	    $type = "option";
+	    $key = $1;
+	    $value = "__true"
+	}
+	elsif ($line =~ /^[ \t]*([^ \t]+)[ \t]*;?[ \t]*$/)
+	{
+	    $type = "directive";
+	    $key = $1;
+	    $value = "__true";
+	}
+	if ($type ne "")
+	{
+	    my %value = (
+		"type" => $type,
+		"key" => $key,
+		"value" => $value,
+		"comment_before" => $cb,
+		"comment_after" => $ca,
+	    );
+	    push @section, \%value;
+	}
+    }    
+    return \@section;
+}
+
+sub parse_file {
+    @lines = ();
+    $group_counter = 0;
+    $pool_counter = 0;
+
+    get_lines ();
+    $parsed_file_ref = parse_section ();
+    return $parsed_file_ref;
+}
+
+
+sub store_section {
+    my $indent = $_[0];
+    my $sect_ref = $_[1];
+
+    my @sect = @{$sect_ref};
+    foreach my $record_ref (@sect) {
+	my %record = %{$record_ref};
+	my $cb = $record{"comment_before"} || "";
+	my $ca = $record{"comment_after"} || "";
+	my $type = $record{"type"};
+	my $key = $record{"key"};
+	my $value = $record{"value"};
+	my $do_write = 1;
+	if ($value eq "__false")
+	{
+	    $do_write = 0;
+	}
+	elsif ($value eq "__true")
+	{
+	    $value = "";
+	}
+	print OUTFILE "$indent$cb\n" if ($cb ne "");
+	my $suffix = ";";
+	if ($type eq "directive" || $type eq "option")
+	{
+	    if ($value =~ /}[ \t]*$/)
+	    {
+		$suffix = "";
+	    }
+	}
+	if ($type eq "directive")
+	{
+	    if ($do_write)
+	    {
+		print OUTFILE "$indent$key $value$suffix";
+	    }
+	}
+	elsif ($type eq "option")
+	{
+	    if ($do_write)
+	    {
+		my $tmp = "option";
+		print OUTFILE "$indent$tmp $key $value$suffix";
+	    }
+	}
+	else
+	{ #section
+	    if ($type eq "pool" || $type eq "group")
+	    {
+		if (substr ($key, 0, 2) ne "__")
+		{
+		    $ca = "# id=\"$key\"";
+		}
+		$key = "group" if ($type eq "group");
+		$key = "pool" if ($type eq "pool");
+	    }
+	    else
+	    {
+		$key = "$type $key";
+	    }
+	    print OUTFILE "$indent$key {";
+	    print OUTFILE " $ca" if ($ca ne "");
+	    $ca = "";
+	    print OUTFILE "\n";
+	    store_section ("$indent  ", $value);
+	    print OUTFILE "$indent}";
+	}
+
+	print OUTFILE " $ca" if ($ca ne "");
+	print OUTFILE "\n";
+    }
+}
+
+sub store_file {
+    my $file_ref = $_[0];
+    open (OUTFILE, ">$filename");
+    store_section ("", $file_ref);
+    close (OUTFILE);
+}
+
+
+while ( <STDIN> )
+{
+    my ($command, $path, $argument) = ycp::ParseCommand ($_);
+
+    if ($command eq "Write")
+    {
+	if ($path eq "." && ref ($argument) eq "ARRAY")
+	{
+	    my $parsed_file_ref = $argument;
+	    store_file ($parsed_file_ref);
+	    ycp::Return ("true");
+	}
+	elsif ($path eq ".filename" && ! ref ($argument))
+	{
+	    if (defined ($argument))
+	    {
+		$filename = $argument;
+	    }
+	    else
+	    {
+		$filename = $default_filename;
+	    }
+	}
+    }
+    elsif ($command eq "Read")
+    {
+	if ($path eq "." && ! ref ($argument))
+	{
+	    my $parsed_file_ref = parse_file ();
+	    ycp::Return ($parsed_file_ref);
+	}
+    }
+    elsif ($command eq "result")
+    {
+	exit 0;
+    }
+    else
+    {
+	y2error ("Wrong path or arguments");
+	ycp::Return ("false");
+    }
+
+}

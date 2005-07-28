@@ -1,0 +1,33 @@
+@HEADER-COMMENT@
+# neededforbuild yast2-devel-packages yast2-perl-bindings perl-gettext perl-X500-DN perl-Digest-SHA1 perl-Parse-RecDescent
+
+@HEADER@
+Requires: yast2 perl-gettext yast2-perl-bindings bind-utils perl-X500-DN yast2-ldap perl-Digest-SHA1 perl-Parse-RecDescent
+
+BuildArchitectures:	noarch
+
+Summary:	Configuration of dhcp-server
+
+%description
+-
+
+@PREP@
+
+@BUILD@
+
+@INSTALL@
+
+@CLEAN@
+
+%files
+%defattr(-,root,root)
+%dir @yncludedir@/dhcp-server
+@yncludedir@/dhcp-server/*
+@clientdir@/dhcp-server.ycp
+@clientdir@/dhcp-server_*.ycp
+@moduledir@/*
+@desktopdir@/dhcp-server.desktop
+@scrconfdir@/cfg_dhcpd.scr
+@scrconfdir@/etc_dhcpd_conf.scr
+@agentdir@/ag_dhcpd_conf
+%doc @docdir@

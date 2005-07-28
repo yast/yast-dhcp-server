@@ -1,0 +1,246 @@
+/**
+ * File:	include/dhcp-server/ui.ycp
+ * Package:	Configuration of dhcp-server
+ * Summary:	User interface
+ * Authors:	Jiri Srain <jsrain@suse.cz>
+ *
+ * $Id$
+ */
+
+{
+
+textdomain "dhcp-server";
+
+import "Directory";
+import "Wizard";
+import "Sequencer";
+
+any FirstRunSequence() {
+
+    map aliases = $[
+	"cardselection"	: ``( FirstRunDialog ("card_selection",1) ),
+	"globalsettings"  : ``( FirstRunDialog ("global_settings",2) ),
+	"dynamicdhcp"  : ``( FirstRunDialog ("dynamic_dhcp",3) ),
+	"inst_summary" : ``( FirstRunDialog ("inst_summary", 4) ),
+    ];
+
+    map sequence = $[
+	"ws_start" : "cardselection",
+	"cardselection"	: $[
+	    `abort	: `abort,
+	    `next	: "globalsettings"
+	],
+	"globalsettings" : $[
+            `abort      : `abort,
+            `next       : "dynamicdhcp"
+        ],
+	"dynamicdhcp" : $[
+	    `abort	: `abort,
+	    `next	: "inst_summary",
+	],
+	"inst_summary" : $[
+	    `abort	: `abort,
+	    `next	: `next,
+	    `main	: `main,
+	],
+    ];
+
+    any ret = Sequencer::Run(aliases, sequence);
+
+    return ret;
+
+}
+
+/**
+  * Run wizard sequencer
+  * @return `next, `back or `abort
+  */
+global define symbol MainSequence () ``{
+
+    map aliases = $[
+	"configtype_switch"	:[``(ConfigTypeSwitch ()), true ],
+	"commonsetup"		: ``(CommonConfigDialog()),
+	"ifaces_switch"		:[``(CheckConfiguredInterfaces ()), true ],
+	"main"			: ``(OldMainDialog ()),
+	"globals"		: ``(GlobalsDialog ()),
+	"subnet"		: ``(SubnetDialog ()),
+	"host"			: ``(HostDialog ()),
+	"shared-network"	: ``(SharedNetworkDialog ()),
+	"pool"			: ``(PoolDialog ()),
+	"group"			: ``(Groupdialog ()),
+	"class"			: ``(ClassDialog ()),
+	"section_type_choose"	: ``(SectionTypeChoose ()),
+	"interfaces"		: ``(IfacesDialog (false)),
+	"interfaces_initial"	: ``(IfacesDialog (true)),
+	"dyn_dns"		: ``(DynDnsDialog ()),
+	"section_type_select"	:[``(SelectEditationDialog ()), true ],
+	"store"			:[``(SectionStore ()), true ],
+	"tsig_keys"		: ``(RunTsigKeysDialog (false)),
+	"tsig_keys_1"		: ``(RunTsigKeysDialog (true)),
+	"commonsetup"	:   ``( CommonConfigDialog() ),
+    ];
+
+    map sequence = $[
+	"ws_start" : "configtype_switch",
+	"configtype_switch" : $[
+	    `simple		: "commonsetup",
+	    `expert		: "main",
+	],
+        "commonsetup" : $[
+	    `abort		: `abort,
+	    `next		: `next,
+	    `cancel		: `cancel,
+	    `expert		: "ifaces_switch",
+	],
+	"ifaces_switch" : $[
+	    `main		: "main",
+	    `ifaces		: "interfaces_initial",
+	],
+	"interfaces_initial" : $[
+	    `abort		: `abort,
+	    `next		: "main",
+	],
+	"main" : $[
+	    `next		: `next,
+	    `abort		: `abort,
+	    `edit		: "section_type_select",
+	    `add		: "section_type_choose",
+	    `interfaces	: "interfaces",
+	    `tsig_keys	: "tsig_keys",
+	],
+	"tsig_keys" : $[
+	    `next : "main",
+	    `abort : `abort,
+	],
+	"section_type_choose" : $[
+	    `abort		: `abort,
+	    `next		: "section_type_select",
+	],
+	"section_type_select" : $[
+	    `abort		: `abort,
+	    `global		: "globals",
+	    `subnet		: "subnet",
+	    `host		: "host",
+	    `group		: "group",
+	    `pool		: "pool",
+	    `shared_network	: "shared-network",
+	    `class		: "class",
+	],
+	"globals" : $[
+	    `next		: "store",
+	    `abort		: `abort,
+	],
+	"subnet" : $[
+	    `next		: "store",
+	    `abort		: `abort,
+	    `dyn_dns		: "dyn_dns",
+	    `tsig_keys		: "tsig_keys_1",
+	],
+	"host" : $[
+	    `next		: "store",
+	    `abort		: `abort,
+	],
+	"group" : $[
+	    `next		: "store",
+	    `abort		: `abort,
+	],
+	"pool" : $[
+	    `next		: "store",
+	    `abort		: `abort,
+	],
+	"shared-network" : $[
+	    `next		: "store",
+	    `abort		: `abort,
+	],
+	"class" : $[
+	    `next		: "store",
+	    `abort		: `abort,
+	],
+	"store" : $[
+	    `abort		: `abort,
+	    `next		: "main",
+	],
+	"interfaces" : $[
+	    `abort		: `abort,
+	    `next		: "main",
+	],
+	"dyn_dns" : $[
+	    `abort		: `abort,
+	    `next		: "subnet",
+	    `tsig_keys		: "tsig_keys_1"
+	],
+	"tsig_keys_1" : $[
+	    `abort : `abort,
+	    `next : "dyn_dns",
+	    `subnet : "subnet",
+	],
+    ];
+
+    // run wizard sequencer
+    return Sequencer::Run (aliases, sequence);
+}
+
+/**
+  * Whole configuration of dns-server in AI mode
+  * @return sequence result
+  */
+global define symbol DhcpAutoSequence() ``{
+
+    Wizard::CreateDialog();
+    Wizard::SetDesktopIcon("dhcp-server");
+    Wizard::SetContentsButtons("", `VBox (), "",
+	Label::BackButton(), Label::NextButton());
+    symbol ret = MainSequence();
+    UI::CloseDialog();
+    return ret;
+}
+
+/**
+  * Whole configuration of dns-server
+  * @return sequence result
+  */
+global define symbol DhcpSequence() ``{
+    map aliases = $[
+	"read"      : [ ``( ReadDialog() ), true ],
+	"wizard"    :	``( FirstRunSequence () ),
+	"main"      :   ``( MainSequence() ),
+	"write"     : [ ``( WriteDialog() ), true ]
+    ];
+
+    map sequence = $[
+	"ws_start" : "read",
+	"read" : $[
+	    `abort  : `abort,
+	    `next   : "main",
+	    `wizard : "wizard",
+	],
+	"main" : $[
+	    `abort  : `abort,
+	    `next   : "write"
+	],
+	"wizard" : $[
+	    `abort  : `abort,
+	    `next   : "write",
+	    `main   : "main",
+	],
+	"write" : $[
+	    `abort  : `abort,
+	    `next   : `next
+	]
+    ];
+
+    Wizard::CreateDialog();
+    Wizard::SetDesktopIcon("dhcp-server");
+    symbol ret = Sequencer::Run(aliases, sequence);
+
+    UI::CloseDialog();
+    
+    if ( ret == `next )
+    {
+	SCR::Execute (.target.bash, "touch " + Directory::vardir + "/dhcp_server_done_once" );
+    }
+
+    return ret;
+}
+
+}
