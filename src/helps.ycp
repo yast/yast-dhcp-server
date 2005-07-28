@@ -146,8 +146,8 @@ leases IPs to clients.</p>") +
 
 	// Wizard Installation - Step 2 4/9
 _("<p><b>Primary Name Server IP</b> and <b>Secondary Name Server IP</b> 
-offers these name servers to the DHCP clients.
-These values must be IP addresses.</p>") +
+offer these name servers to the DHCP clients.
+These values must be IP addresses.") +
 
 	// Wizard Installation - Step 2 5/9
 _("<p><b>Default Gateway</b> inserts this
@@ -172,7 +172,7 @@ and the client must ask for an IP again.</p>"),
 	"dynamic_dhcp" : _("<p><b><big>IP Address Range</big></b><br>
 Here, set the <b>First IP Address</b> and the <b>Last IP Address</b>
 that should leased to the clients.  These addresses must have the same netmask.
-For instance, 192.168.1.1 and 192.168.1.64</p>") +
+For instance, <tt>192.168.1.1</tt> and <tt>192.168.1.64</tt>.</p>") +
 
 	// Wizard Installation - Step 3 2/3
 	_("<p><b><big>Lease Time</big></b><br>
