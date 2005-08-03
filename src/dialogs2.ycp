@@ -889,7 +889,7 @@ term Common_HostManagementDialog() {
 			// Label of the registered hosts table
                     `Left(`Label(_("Registered Host"))),
                     `Table(`id("registered_hosts_table"), 
-			`opt(`notify, `immediate ),
+			`opt(`notify, `immediate, `vstretch),
 			`header(
 			// Table header item - Name of the host
 			_("Name"), 
@@ -905,16 +905,15 @@ term Common_HostManagementDialog() {
             `Frame( _("List Setup"),
                 `VBox(
                     `HBox(
-                        `HWeight(45,`VBox(
+                        `HWeight(45, `VBox(
                             `HBox(
 				// Textentry label - name of the host
                                 `Left(`TextEntry(`id("hostname"), _("&Name"))),
 				// noneditable textentry
-				// FIXME - fill in real domain, default is just an example
                                 `Left(`TextEntry(`id("domain"), `opt(`disabled), "  "))
                             ),
 				// Textentry label - IP address of the host
-                            `Left(`TextEntry(`id("hostip"), _("&IP Address or Hostname")))
+                            `Left(`TextEntry(`id("hostip"), _("&IP Address")))
                         )),
                         `HWeight(10, `VBox(
                             `HStretch()
@@ -928,7 +927,9 @@ term Common_HostManagementDialog() {
                                     `Left(`RadioButton(`id("ethernet"), _("&Ethernet"), true)),
                                     `Left(`RadioButton(`id("token-ring"), _("&Token Ring")))
                                 )
-                            )
+                            ),
+			    `VSpacing(1),
+			    `VStretch()
                         ))
                     ),
                     `VSpacing(1),
@@ -954,7 +955,7 @@ void HostManagementValidChars ()
 {
     // ValidChars definition for HostManagementDialog
     UI::ChangeWidget(`id( "hostname" ),		`ValidChars, Hostname::ValidChars);
-    UI::ChangeWidget(`id( "hostip" ),		`ValidChars, Hostname::ValidCharsFQ);
+    UI::ChangeWidget(`id( "hostip" ),		`ValidChars, IP::ValidChars4);
     UI::ChangeWidget(`id( "hosthwaddress" ),	`ValidChars, "ABCDEFabcdef0123456789:");
 }
 
@@ -1192,10 +1193,10 @@ symbol HostManagementHandle (string key, map event_descr)
 	    Popup::Error ( _("Enter a host IP.") );
 	    return nil;
 	}
-	else if ( Hostname::CheckFQ ( hostip ) != true )
+	else if ( IP::Check4 ( hostip ) != true )
 	{
 	    UI::SetFocus ( `id ( "hostip" ) );
-	    Popup::Error ( Hostname::ValidFQ () );
+	    Popup::Error ( IP::Valid4 () );
 	    return nil;
 	}
 
@@ -1270,10 +1271,10 @@ symbol HostManagementHandle (string key, map event_descr)
 	    Popup::Error ( _("Enter a host IP.") );
 	    return nil;
 	}
-	else if ( Hostname::CheckFQ ( hostip ) != true )
+	else if ( IP::Check4 ( hostip ) != true )
 	{
 	    UI::SetFocus ( `id ( "hostip" ) );
-	    Popup::Error ( Hostname::ValidFQ () );
+	    Popup::Error ( IP::Valid4 () );
 	    return nil;
 	}
 
