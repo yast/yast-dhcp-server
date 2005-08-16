@@ -361,8 +361,8 @@ Continue?"))) {
 
 	// more than one
 	if (size(ifaces_not_in_fw)>1) {
-	    // TRANSLATORS: popup error message, %1 is list of network interfaces
 	    Report::Error(sformat(
+		// TRANSLATORS: popup error message, %1 is list of network interfaces
 		_("The network interfaces listed below are not mentioned in any firewall zone.
 %1
 Run the YaST firewall configuration to assign them to a zone."),
@@ -372,10 +372,10 @@ Run the YaST firewall configuration to assign them to a zone."),
 	    // FIXME: dialog for adding interfaces into firewall zones
 	// only one
 	} else if (size(ifaces_not_in_fw)>0) {
-	    // TRANSLATORS: popup error message, %1 a network interface name
 	    Report::Error(sformat(
+		// TRANSLATORS: popup error message, %1 a network interface name
 		_("Network interface %1 is not mentioned in any firewall zone.
-Run YaST firewall configuration to assign it to a zone."), ifaces_not_in_fw[0]:""
+Run the YaST firewall configuration to assign it to a zone."), ifaces_not_in_fw[0]:""
 	    ));
 	    //return false;
 	    // FIXME: dialog for adding interfaces into firewall zones

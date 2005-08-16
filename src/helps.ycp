@@ -155,7 +155,7 @@ value as the default route in the routing table of clients.</p>") +
 
 	// Wizard Installation - Step 2 6/9
 _("<p><b>Time Server</b> tells clients to use this server
-for the time synchronization.</p>") +
+for time synchronization.</p>") +
 
 	// Wizard Installation - Step 2 7/9
 _("<p><b>Print Server</b> offers this server as the default print server.</p>") +
@@ -171,7 +171,7 @@ and the client must ask for an IP again.</p>"),
 	// Wizard Installation - Step 3 1/3
 	"dynamic_dhcp" : _("<p><b><big>IP Address Range</big></b><br>
 Here, set the <b>First IP Address</b> and the <b>Last IP Address</b>
-that should leased to the clients.  These addresses must have the same netmask.
+to lease to the clients.  These addresses must have the same netmask.
 For instance, <tt>192.168.1.1</tt> and <tt>192.168.1.64</tt>.</p>") +
 
 	// Wizard Installation - Step 3 2/3

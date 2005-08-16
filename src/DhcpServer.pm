@@ -1395,8 +1395,8 @@ sub Read {
     if (! Mode->test () && ! $ifaces_found) {
 	# TRANSLATORS: error report popup
 	Report->Error (_("This server needs at least one
-configured network device (besides loopback) for its
-proper function.
+configured network device (besides loopback) to
+function properly.
 Configure one.
 
 Aborting now."));
