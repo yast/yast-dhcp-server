@@ -142,6 +142,29 @@
     }
 
     /**
+      * Initialize the settings in the popup
+      * @param opt_id any option id
+      * @param key string option key
+      */
+    global define void quoted_string_init (any opt_id, string key) ``{
+	string value = (string)fetchValue (opt_id, key);
+	if (value != nil)
+	{
+	    // removing quotes around
+	    if (regexpmatch(value, "^\".*\"$")) {
+		value = regexpsub(value, "\"(.*)\"", "\\1");
+
+		// if it was quoted, replacing all >\"< with >"<
+		while (regexpmatch(value, ".*\\\\\".*")) {
+		    value = regexpsub(value, "(.*)\\\\\"(.*)", "\\1\"\\2");
+		}
+	    }
+	    UI::ChangeWidget (`id (key), `Value, value);
+	}
+	UI::SetFocus (`id (key));
+    }
+
+    /**
       * Summary function of a table entry / popup
       * @param opt_id any option id
       * @param key any option key
@@ -169,6 +192,7 @@
 	}
 	return true;
     }
+
 
     /**
       * Redraw selection box widget
@@ -432,6 +456,26 @@
 	return _("Off");
     }
 
+    /**
+      * Validate function of a popup
+      * @param opt_id any option id
+      * @param key any option key
+      * @param event map representing the event that caused validation
+      * @return boolean true if widget settings ok
+      */    
+    global define boolean quoted_string_validate (any opt_id, string key, map event) ``{
+	string value = (string)UI::QueryWidget (`id (key), `Value);
+
+	if (regexpmatch(value, "\"")) {
+	    value = mergestring(splitstring(value, "\""), "\\\"");
+	}
+	
+	UI::ChangeWidget(`id (key), `Value, value);
+
+	// UI::SetFocus (`id (key));
+	return true;
+    }
+
     map<string,string> option_types = $[
 "option all-subnets-local" :  "onoff",
 "option arp-cache-timeout" :  "uint32",
@@ -448,7 +492,7 @@
 "option extensions-path" :  "text",
 "option finger-server" :  "array_ip-address",
 "option font-servers" :  "array_ip-address",
-"option host-name" :  "string",
+"option host-name" :  "quoted_string",
 "option ieee802-3-encapsulation" :  "onoff",
 "option ien116-name-servers" :  "array_ip-address",
 "option impress-servers" :  "array_ip-address",
@@ -663,6 +707,20 @@ all clients*/
       * Get popup description map for an option type
       * @return popup description map
       */
+    global define map quoted_string_widget () ``{
+	return $[
+	    "widget" : `textentry,
+	    "init" : quoted_string_init,
+	    "store" : textWidgetStore,
+	    "validate_type" : `function,
+	    "validate_function" : quoted_string_validate,
+	];
+    }
+
+    /**
+      * Get popup description map for an option type
+      * @return popup description map
+      */
     global define map ip_address_widget () ``{
 	return $[
 	    "validate_type" : `function,
@@ -777,6 +835,7 @@ all clients*/
 	"uint32" : uint32_widget (),
 	"int32" : int32_widget (),
 	"text" : text_widget (),
+	"quoted_string" : quoted_string_widget (),
 	"string" : $["_fill" : ""], // just to make the map non-empty
 	"time" : $["_fill" : ""], // just to make the map non-empty
 	"ip-address" : ip_address_widget (),
