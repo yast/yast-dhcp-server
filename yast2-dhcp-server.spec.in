@@ -1,7 +1,7 @@
 @HEADER-COMMENT@
-# neededforbuild yast2-devel-packages yast2-perl-bindings perl-gettext perl-X500-DN perl-Digest-SHA1 perl-Parse-RecDescent
 
 @HEADER@
+BuildRequires:	perl-Digest-SHA1 perl-X500-DN yast2-devel-packages
 Requires: yast2 perl-gettext yast2-perl-bindings bind-utils perl-X500-DN yast2-ldap perl-Digest-SHA1 perl-Parse-RecDescent
 
 BuildArchitectures:	noarch
