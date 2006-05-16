@@ -1382,7 +1382,7 @@ sub Read {
     }
 
     # Reading current network configuration
-    if (!Mode->autoinst() && !Mode->config()) {
+    if (!Mode->config()) {
 	NetworkDevices->Read();
     }
     my $ifaces_found = 0;
