@@ -34,7 +34,7 @@ define boolean expert_ui = (ProductFeatures::GetFeature ("globals", "ui_mode") =
 
 /* Start of common configuration section */
 
-define list time_combo_items = [
+define list <term> time_combo_items = [
     // combo box item
     `item(`id("days"), _("Days")),
     // combo box item
@@ -44,6 +44,17 @@ define list time_combo_items = [
     // combo box item
     `item(`id("seconds"), _("Seconds"))
 ];
+
+define integer TimeComboLabelLength () {
+    integer max_length = 0;
+    foreach (term combo_item, time_combo_items, {
+	string combo_label = (string) combo_item[1]:" ";
+	integer current_length = size(combo_label);
+	if (current_length > max_length) max_length = current_length;
+    });
+    
+    return max_length;
+}
 
 define integer time2seconds (integer count, string unit) {
     if (unit == "days")
@@ -255,57 +266,56 @@ boolean CardSelectionValidate (string key, map event) {
  * @return term for Get_CommonDialog()
  */
 term Common_GlobalSettingsDialog() {
-// Textentry with primary name server
-string xxx = _("Primary Name Server");
-// Textentry with secondary name server
-xxx = _("Secondary Name Server");
     term ldap = `Empty();
+
     if (expert_ui) ldap = `VBox(
 	// configuration will be saved in ldap?
         `Left(`CheckBox(`id("ldap"), `opt( `notify), _("LDAP Support"), true)),
         `VSpacing(2)
     );
+
     term dialog = `VBox(
 	    ldap,
             `HBox(
-                `HWeight(43, `VBox(
-				// Textentry with name of the domain
+                `VBox(
+		    // Textentry with name of the domain
                     `Left(`TextEntry(`id("domainname"), _("&Domain Name"))),
 
-				// Textentry with IP address of primary name server
+		    // Textentry with IP address of primary name server
                     `Left(`TextEntry(`id("primarydnsip"), _("&Primary Name Server IP"))),
 
-				// Textentry with IP address of secondary name server
+		    // Textentry with IP address of secondary name server
                     `Left(`TextEntry(`id("secondarydnsip"), _("&Secondary Name Server IP"))),
 
-				// Textentry with IP address of default router
+		    // Textentry with IP address of default router
                     `Left(`TextEntry(`id("defaultgw"), _("Default &Gateway (Router) ")))
-                )),
-                `HWeight(14, `VBox(
-                    `HStretch()
-                )),
-                `HWeight(43, `VBox(
-			// Textentry with IP address of time server
+                ),
+		`HSpacing(2),
+                `VBox(
+		    // Textentry with IP address of time server
                     `Left(`TextEntry(`id("timeserver"), _("NTP &Time Server"))),
 
-			// Textentry with IP address of print server
+		    // Textentry with IP address of print server
                     `Left(`TextEntry(`id("printserver"), _("&Print Server"))),
 
-			// Textentry with IP address of WINS (Windows Internet Naming Service) server
+		    // Textentry with IP address of WINS (Windows Internet Naming Service) server
                     `Left(`TextEntry(`id("winsserver"), _("&WINS Server"))),
-                    `HBox(
-			// Textentry with default lease time of IP address from dhcp server    
-                        `Left(`TextEntry(`id("defaultleasetime"), _("Default &Lease Time"))),
-                        `HSpacing(1),
-			// Units for defaultleasetime
-                        `Right(`ComboBox(`id("defaultleasetimeunits"), `opt( `hstretch), "", time_combo_items))
+                    `Left(
+			`HBox(
+			    // Textentry with default lease time of IP address from dhcp server
+                    	    `TextEntry(`id("defaultleasetime"), `opt(`hsquash), _("Default &Lease Time")),
+                	    `HSpacing(0.1),
+			    `MinWidth(
+				TimeComboLabelLength(),
+				// Units for defaultleasetime
+				`ComboBox(`id("defaultleasetimeunits"), `opt(`hsquash), "", time_combo_items)
+			    )
+			)
                     )
-                        
-                ))
+                )
             ),
             `VStretch()
         );
-
 
 
     return dialog;
@@ -617,28 +627,39 @@ term Common_DynamicDHCPDialog() {
 		) ) 
             ),
 	    `VSpacing (1),
-	    // frame
-            `Frame(_("Lease Time"),
-                `VBox(
-                    `HBox(
-                            `HBox(
-					// Textentry label - lease time for IPs in the range
-                                `Left(`TextEntry(`id("defaultleasetime"), _("&Default"))),
-                        		// Combobox - type of units for lease time
-			        `Left(`ComboBox(`id("defaultleasetimeunits"), "",
+            `Frame(
+		// frame label
+		_("Lease Time"),
+                `HBox(
+		    `opt(`hstretch),
+		    `HWeight(
+			// Textentry label - lease time for IPs in the range
+                	3, `TextEntry(`id("defaultleasetime"), `opt(`hsquash), _("&Default"))
+		    ),
+		    `HWeight(
+			2, `MinWidth(
+			    TimeComboLabelLength(),
+                    	    // Combobox - type of units for lease time
+			    `ComboBox(`id("defaultleasetimeunits"), `opt(`hsquash), "",
 				time_combo_items
-                                ))
-                            ),
-                            `HBox(
-				//TextEntryLabel - max. time for leasing of IPs from the range
-                                `Left(`TextEntry(`id("maxleasetime"), _("&Maximum"))),
-				// Combobox - type of units for max lease time
-                                `Left(`ComboBox(`id("maxleasetimeunits"), "",
-				    time_combo_items
-                                 ))
-                            )
-                        )
-                    )
+                    	    )
+			)
+		    ),
+		    `HSpacing(1),
+		    `HWeight(
+			// TextEntryLabel - max. time for leasing of IPs from the range
+			3, `TextEntry(`id("maxleasetime"), `opt(`hsquash), _("&Maximum"))
+		    ),
+		    `HWeight(
+			2, `MinWidth(
+			    TimeComboLabelLength(),
+			    // Combobox - type of units for max lease time
+                    	    `ComboBox(`id("maxleasetimeunits"), `opt(`hsquash), "",
+				time_combo_items
+                    	    )
+			)
+		    )
+                )
             ),
 	    `VStretch()
         );
