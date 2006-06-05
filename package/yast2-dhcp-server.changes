@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Jun  5 11:01:51 CEST 2006 - locilka@suse.cz
+
+- Fixing UI visibility, especially Time Units ComboBox (#181146).
+- 2.13.4
+
+-------------------------------------------------------------------
 Tue May 16 12:35:21 CEST 2006 - locilka@suse.cz
 
 - Call NetworkDevices->Read() also in Mode->autoinst() (#173861).
