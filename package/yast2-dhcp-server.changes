@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Thu Jul 13 11:46:21 CEST 2006 - locilka@suse.cz
+
+- Do not complain about blank DHCPD_INTERFACE in case of
+  (auto)installation. All interfaces will be used instead
+  by the dhcpd (#173861).
+- 2.13.5
+
+-------------------------------------------------------------------
 Mon Jun  5 11:01:51 CEST 2006 - locilka@suse.cz
 
 - Fixing UI visibility, especially Time Units ComboBox (#181146).

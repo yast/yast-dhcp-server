@@ -25,6 +25,7 @@ import "CWMServiceStart";
 import "ProductFeatures";
 import "NetworkDevices";
 import "Report";
+import "Mode";
 
 include "dhcp-server/helps.ycp";
 include "dhcp-server/widgets.ycp";

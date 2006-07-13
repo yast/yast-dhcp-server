@@ -215,7 +215,7 @@ _("<p>To remove a host, select it and click <b>Delete from List</b>.</p>"),
       * @param possible list of declarations that can be selected
       * @return string the help
       */
-    global define string getSelectDeclarationTypeHelp (list possible) ``{
+    define string getSelectDeclarationTypeHelp (list possible) ``{
 	// help text 1/7
 	string ret = _("<p>Select the type of declaration to add.</p>");
 
