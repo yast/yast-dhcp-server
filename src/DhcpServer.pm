@@ -1502,7 +1502,11 @@ configured yet. Create a new configuration?");
     if (scalar (@allowed_interfaces) == 0)
     {
 	y2milestone ("No interface was set to listen to!");
-	$was_configured = 0;
+	# Bugzilla 173861
+	# Permit empty list of interfaces
+	if (!Mode->autoinst() && !Mode->installation()) {
+	    $was_configured = 0;
+	}
     }
     if (scalar (keys (%{SCR->Read (".target.stat", Directory->vardir () . "/dhcp_server_done_once") || {}})) == 0)
     {
