@@ -1659,7 +1659,15 @@ sub Write {
     Progress->NextStage ();
 
     SCR->Write (".sysconfig.dhcpd.DHCPD_RUN_CHROOTED", $chroot ? "yes" : "no");
+
     my $ifaces_list = join (" ", @allowed_interfaces);
+    # in (auto)installation only
+    if ((Mode->autoinst() || Mode->installation()) && scalar(@allowed_interfaces) == 0) {
+	# bug #173861
+	# " " means ANY interface
+	y2warning("Activating \" \" for DHCPD_INTERFACE");
+	$ifaces_list = " ";
+    }    
     SCR->Write (".sysconfig.dhcpd.DHCPD_INTERFACE", $ifaces_list);
     SCR->Write (".sysconfig.dhcpd", undef);
 
