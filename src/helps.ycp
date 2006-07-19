@@ -128,8 +128,12 @@ Specify forward and reverse zones to update. For both, also specify
 their primary name server. If the name server runs on the same host as the DHCP
 server, you can leave the fields empty.</p>"),
 
-	// Wizard Installation - Step 1
-	"card_selection" : _("<p><b><big>Network Card Selection</big></b><br>
+	// Wizard Installation - Step 1 (version for expert UI)
+	"card_selection_expert" : _("<p><b><big>Network Card Selection</big></b><br>
+Select one or more of listed network cards to use for the DHCP server.</p>"),
+
+	// Wizard Installation - Step 1 (version for simple UI)
+	"card_selection_simple" : _("<p><b><big>Network Card Selection</big></b><br>
 Select one of listed network cards to use for the DHCP server.</p>"),
 
 	// Wizard Installation - Step 2 1/9

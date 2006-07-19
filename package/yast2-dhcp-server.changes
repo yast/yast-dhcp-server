@@ -1,4 +1,17 @@
 -------------------------------------------------------------------
+Tue Jul 18 15:43:26 CEST 2006 - locilka@suse.cz
+
+- Card selection dialog changed to provide buttons [Select] and
+  [Unselect] and table header item to Selected to better reflect
+  the status of the network interfaces that are selected for
+  DHCP Server to run on.
+- These buttons are enabled or disabled by the current status of
+  the selected interface. Active interface can be deactivated only
+  and vice versa.
+- Different help for expert and simple UI in the Card Selection
+  dialog.
+
+-------------------------------------------------------------------
 Thu Jul 13 11:46:21 CEST 2006 - locilka@suse.cz
 
 - Do not complain about blank DHCPD_INTERFACE in case of

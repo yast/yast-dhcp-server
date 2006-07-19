@@ -21,6 +21,7 @@
     import "Popup";
     import "TablePopup";
     import "SuSEFirewall";
+    import "Mode";
 
 
 // pre-declarations
