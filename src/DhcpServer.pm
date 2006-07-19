@@ -1337,7 +1337,7 @@ sub AutoPackages {
 
     return {
 	"install" => ["dhcp-server"],
-	"remote" => [],
+	"remove" => [],
     }
 }
 
