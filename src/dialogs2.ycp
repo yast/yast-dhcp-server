@@ -120,9 +120,10 @@ term Common_CardSelectionDialog() {
 		`Left( `Label( _("Network Cards for DHCP Server") ) ),
                 `Table (
 		    `id("nic_selection"),
+		    `opt(`notify, `immediate),
 		    `header (
 			// TRANSLATORS: table header item
-			_("Active"),
+			_("Selected"),
 			// TRANSLATORS: table header item
 			_("Interface Name"),
 			// TRANSLATORS: table header item
@@ -134,13 +135,29 @@ term Common_CardSelectionDialog() {
 		)
             ),
 	    `HBox (
-		`PushButton(`id("add"), Label::AddButton()),
-		`PushButton(`id("remove"), Label::RemoveButton())
+		// TRANSLATORS: a push-button
+		`PushButton(`id("add"),    _("&Select")),
+		// TRANSLATORS: a push-button
+		`PushButton(`id("remove"), _("&Unselect"))
 	    ),
 	    `VStretch()
         );
 
     return dialog;
+}
+
+void SetInterfacesTableButtons () {
+    string current_item = (string) UI::QueryWidget(`id("nic_selection"), `CurrentItem);
+
+    // The currently selected item is active, can be deactivated
+    if ((boolean) DhcpServerUI::ifaces[current_item, "active"]:nil == true) {
+	UI::ChangeWidget(`id("add"),    `Enabled, false);
+	UI::ChangeWidget(`id("remove"), `Enabled, true);
+    // and vice versa
+    } else {
+	UI::ChangeWidget(`id("add"),    `Enabled, true);
+	UI::ChangeWidget(`id("remove"), `Enabled, false);
+    }
 }
 
 void RedrawInterfacesTable () {
@@ -154,10 +171,13 @@ void RedrawInterfacesTable () {
 	    settings["ipaddr"]:""
 	));
     });
+
     UI::ChangeWidget(`id("nic_selection"), `Items, table_items);
     if (current_item_iface != nil) {
 	UI::ChangeWidget(`id("nic_selection"), `CurrentItem, current_item_iface);
     }
+    
+    SetInterfacesTableButtons();
 }
 
 void CardSelectionInit (string key)
@@ -202,6 +222,8 @@ void CardSelectionInit (string key)
 symbol CardSelectionHandle (string key, map event) {
     string item_id = (string) UI::QueryWidget(`id("nic_selection"), `CurrentItem);
 
+    SetInterfacesTableButtons();
+
     current_item_iface = item_id;
 
     if (expert_ui) {
@@ -221,6 +243,7 @@ symbol CardSelectionHandle (string key, map event) {
 	    DhcpServerUI::ifaces[item_id,"active"] = false;
 	}
     }
+
     RedrawInterfacesTable();
 
     return nil;
@@ -304,12 +327,12 @@ term Common_GlobalSettingsDialog() {
                     `Left(
 			`HBox(
 			    // Textentry with default lease time of IP address from dhcp server
-                    	    `TextEntry(`id("defaultleasetime"), `opt(`hsquash), _("Default &Lease Time")),
+                    	    `HSquash(`TextEntry(`id("defaultleasetime"), _("Default &Lease Time"))),
                 	    `HSpacing(0.1),
 			    `MinWidth(
 				TimeComboLabelLength(),
 				// Units for defaultleasetime
-				`ComboBox(`id("defaultleasetimeunits"), `opt(`hsquash), "", time_combo_items)
+				`HSquash(`ComboBox(`id("defaultleasetimeunits"), _("&Units"), time_combo_items))
 			    )
 			)
                     )
@@ -635,13 +658,13 @@ term Common_DynamicDHCPDialog() {
 		    `opt(`hstretch),
 		    `HWeight(
 			// Textentry label - lease time for IPs in the range
-                	3, `TextEntry(`id("defaultleasetime"), `opt(`hsquash), _("&Default"))
+                	3, `TextEntry(`id("defaultleasetime"), _("&Default"))
 		    ),
 		    `HWeight(
 			2, `MinWidth(
 			    TimeComboLabelLength(),
                     	    // Combobox - type of units for lease time
-			    `ComboBox(`id("defaultleasetimeunits"), `opt(`hsquash), "",
+			    `ComboBox(`id("defaultleasetimeunits"), _("&Units"),
 				time_combo_items
                     	    )
 			)
@@ -649,13 +672,13 @@ term Common_DynamicDHCPDialog() {
 		    `HSpacing(1),
 		    `HWeight(
 			// TextEntryLabel - max. time for leasing of IPs from the range
-			3, `TextEntry(`id("maxleasetime"), `opt(`hsquash), _("&Maximum"))
+			3, `TextEntry(`id("maxleasetime"), _("&Maximum"))
 		    ),
 		    `HWeight(
 			2, `MinWidth(
 			    TimeComboLabelLength(),
 			    // Combobox - type of units for max lease time
-                    	    `ComboBox(`id("maxleasetimeunits"), `opt(`hsquash), "",
+                    	    `ComboBox(`id("maxleasetimeunits"), `opt(`hsquash), _("Uni&ts"),
 				time_combo_items
                     	    )
 			)
@@ -1519,7 +1542,7 @@ map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
 	"store"		: CardSelectionStore,
 	"validate_type"	: `function,
 	"validate_function"	: CardSelectionValidate,
-	"help"		: HELPS["card_selection"]:"",
+	"help"		: (expert_ui ? HELPS["card_selection_expert"]:"" : HELPS["card_selection_simple"]:""),
     ],
     "global_settings" : $[
 	"widget"	: `custom,
