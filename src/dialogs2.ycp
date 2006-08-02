@@ -186,8 +186,13 @@ void CardSelectionInit (string key)
 
     foreach (string iface, NetworkDevices::List(""), {
 	if (iface != "" && !issubstring(iface, "lo") && !issubstring(iface, "sit")) {
+	    string device_name = NetworkDevices::GetValue(iface, "NAME");
+	    if (size(device_name) > 40) {
+		device_name = substring (device_name, 0, 37) + "...";
+	    }
+	    
 	    DhcpServerUI::ifaces[iface] = $[
-		"device" : NetworkDevices::GetValue(iface, "NAME"),
+		"device" : device_name,
 		"ipaddr" : (NetworkDevices::GetValue(iface, "BOOTPROTO") == "dhcp" ?
 		    // TRANSLATORS: Table items; Informs that the IP is a DHCP Address
 		    _("DHCP address")

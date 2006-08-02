@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Aug  2 11:34:37 CEST 2006 - locilka@suse.cz
+
+- Limit displayed interface name to 40 characters.
+- 2.13.6
+
+-------------------------------------------------------------------
 Tue Jul 18 15:43:26 CEST 2006 - locilka@suse.cz
 
 - Card selection dialog changed to provide buttons [Select] and
