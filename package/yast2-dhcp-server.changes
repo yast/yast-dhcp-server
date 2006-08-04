@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Aug  4 12:35:36 CEST 2006 - mvidner@suse.cz
+
+- Removed a Perl search path that is added elsewhere already
+  and here just breaks compilation in some cases (#197099).
+
+-------------------------------------------------------------------
 Wed Aug  2 11:34:37 CEST 2006 - locilka@suse.cz
 
 - Limit displayed interface name to 40 characters.

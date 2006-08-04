@@ -109,8 +109,6 @@ YaST::YCP::Import ("Progress");
 YaST::YCP::Import ("Report");
 YaST::YCP::Import ("SuSEFirewall");
 
-use lib "/usr/share/YaST2/modules";
-
 ##-------------------------------------------------------------------------
 ##----------------- TSIG Key Management routines --------------------------
 
