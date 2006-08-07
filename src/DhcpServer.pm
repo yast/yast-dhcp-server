@@ -90,6 +90,7 @@ my @deleted_include_files = ();
 
 my @original_allowed_interfaces = ();
 
+my $dns_server_available = 0;
 
 YaST::YCP::Import ("SCR");
 YaST::YCP::Import ("CWMTsigKeys");
@@ -108,6 +109,7 @@ YaST::YCP::Import ("Popup");
 YaST::YCP::Import ("Progress");
 YaST::YCP::Import ("Report");
 YaST::YCP::Import ("SuSEFirewall");
+YaST::YCP::Import ("DnsServerAPI");
 
 ##-------------------------------------------------------------------------
 ##----------------- TSIG Key Management routines --------------------------
@@ -1353,6 +1355,8 @@ sub Read {
 	__("Read firewall settings"),
 	# progress stage
 	__("Read DHCP server settings"),
+	# progress stage
+	__("Read DNS server settings"),
     ],
     [
 	# progress step
@@ -1362,7 +1366,9 @@ sub Read {
 	# progress step
 	__("Reading DHCP server settings..."),
 	# progress step
-	__("Finished")
+	__("Reading DNS server settings..."),
+	# progress step
+	__("Finished"),
     ],
     ""
     );
@@ -1545,6 +1551,13 @@ configured yet. Create a new configuration?");
 
     Progress->NextStage ();
 
+    $dns_server_available = DnsServerAPI->IsServiceConfigurableExternally();
+    if ($dns_server_available) {
+	DnsServerAPI->Read();
+    }
+
+    Progress->NextStage ();
+
     return "true";
 }
 
@@ -1563,6 +1576,8 @@ sub Write {
 	__("Write firewall settings"),
 	# progress stage
 	__("Restart DHCP server"),
+	# progress stage
+	__("Write DNS server settings"),
     ], [
 	# progress step
 	__("Writing DHCP server settings..."),
@@ -1571,7 +1586,9 @@ sub Write {
 	# progress step
 	__("Restarting DHCP server..."),
 	# progress step
-	__("Finished")
+	__("Writing DNS server settings..."),
+	# progress step
+	__("Finished"),
     ],
     ""
     );
@@ -1696,6 +1713,12 @@ sub Write {
     }
 
     Progress->NextStage ();
+
+    if ($dns_server_available) {
+	if (! DnsServerAPI->Write()) {
+	    $ok = 0;
+	}
+    }
 
     return Boolean ($ok);
 }

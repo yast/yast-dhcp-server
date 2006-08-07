@@ -26,6 +26,7 @@ import "ProductFeatures";
 import "NetworkDevices";
 import "Report";
 import "Mode";
+import "Netmask";
 
 include "dhcp-server/helps.ycp";
 include "dhcp-server/widgets.ycp";
@@ -644,16 +645,35 @@ term Common_DynamicDHCPDialog() {
                 `Frame (_("IP Address Range") ,
 		    `VBox(
 		    `HBox (
-			// TRANSLATORS: informative text entry (filled up, disabled)
-			`TextEntry( `id("current_network"), _("Current &Network") ),
-			// TRANSLATORS: informative text entry (filled up, disabled)
-			`TextEntry( `id("current_netmask"), _("Current Net&mask") )
+			`HWeight (2,
+			    // TRANSLATORS: informative text entry (filled up, disabled)
+			    `TextEntry( `id("current_network"), _("Current &Network") )
+			),
+			`HWeight (2,
+			    // TRANSLATORS: informative text entry (filled up, disabled)
+			    `TextEntry( `id("current_netmask"), _("Current Net&mask") )
+			),
+			`HWeight (1,
+			    // TRANSLATORS: informative text entry (filled up, disabled)
+			    `TextEntry( `id("current_bits"),    _("Netmask Bi&ts"))
+			)
 		    ),
-			// text entry
-		    `Left( `TextEntry ( `id ("from_ip"), _("&First IP Address") ) ),
-			// text entry
-		    `Left( `TextEntry ( `id ("to_ip"), _("&Last IP Address") ) )
-		) ) 
+		    `HBox (
+			`VBox (
+			    // text entry
+			    `Left( `TextEntry ( `id ("from_ip"), _("&First IP Address") ) ),
+			    // text entry
+			    `Left( `TextEntry ( `id ("to_ip"), _("&Last IP Address") ) )
+			),
+			`VBox (
+			    // text entry
+			    `Left( `TextEntry ( `id ("from_ip_min"), _("Min&imal IP Address") ) ),
+			    // text entry
+			    `Left( `TextEntry ( `id ("to_ip_max"), _("Ma&ximal IP Address") ) )
+			)
+		    )
+		    )
+		) 
             ),
 	    `VSpacing (1),
             `Frame(
@@ -733,10 +753,42 @@ void DynamicDHCPInit (string key)
 	"netmask" : m["netmask"]:"",
     ];
 
+    integer netmask_bits = Netmask::ToBits(m["netmask"]:"255.255.255.255");
+
     UI::ChangeWidget( `id("current_network"), `Value, m["network"]:"");
     UI::ChangeWidget( `id("current_network"), `Enabled, false);
     UI::ChangeWidget( `id("current_netmask"), `Value, m["netmask"]:"");
     UI::ChangeWidget( `id("current_netmask"), `Enabled, false);
+    UI::ChangeWidget( `id("current_bits"),    `Value, tostring (netmask_bits));
+    UI::ChangeWidget( `id("current_bits"),    `Enabled, false);
+
+    // Computing minimal and maximal IPs
+    string current_network = IP::ComputeNetwork (m["network"]:"", m["netmask"]:"255.255.255.255");
+    string network_binary  = IP::IPv4ToBits (current_network);
+
+    // Computing minimal IP
+    string ipv4_min = regexpsub (network_binary, "^(.*).$", "\\11");
+    ipv4_min = IP::BitsToIPv4 (ipv4_min);
+
+    // Computing maximal IP
+    string ipv4_max = substring (network_binary, 0, netmask_bits);
+    ipv4_max = ipv4_max + "11111111111111111111111111111111";
+    ipv4_max = substring (ipv4_max, 0, 32);
+    ipv4_max = IP::BitsToIPv4 (ipv4_max);
+    while (regexpmatch(ipv4_max, "255")) {
+	// 255 is reserved
+	ipv4_max = regexpsub(ipv4_max, "^(.*)255(.*)$", "\\1254\\2");
+    }
+
+    y2milestone("Network: %1, Min. IP: %2, Max. IP: %3", m["network"]:"", ipv4_min, ipv4_max);
+
+    UI::ChangeWidget( `id("from_ip_min"), `Enabled, false);
+    UI::ChangeWidget( `id("to_ip_max"),   `Enabled, false);
+    if (ipv4_min != nil && ipv4_max != nil) {
+	UI::ChangeWidget( `id("from_ip_min"), `Value, ipv4_min);
+	UI::ChangeWidget( `id("to_ip_max"), `Value,   ipv4_max);
+    }
+    
 
     y2milestone ("Id to lookup: %1", id );
 
@@ -935,8 +987,8 @@ IP %1 does not match the network %2/%3."),
 
 term Common_HostManagementDialog() {
     term dialog = `VBox(
-            `VBox(
-			// Label of the registered hosts table
+    	    `VBox (
+		    // Label of the registered hosts table
                     `Left(`Label(_("Registered Host"))),
                     `Table(`id("registered_hosts_table"), 
 			`opt(`notify, `immediate, `vstretch),
@@ -949,53 +1001,54 @@ term Common_HostManagementDialog() {
 			_("Hardware Address"), 
 			// Network type of the host
 			_("Type")))
-                ),
+            ),
 
-		// Frame label - configuration of particular host
-            `Frame( _("List Setup"),
-                `VBox(
-                    `HBox(
-                        `HWeight(45, `VBox(
-                            `HBox(
-				// Textentry label - name of the host
-                                `Left(`TextEntry(`id("hostname"), _("&Name"))),
-				// noneditable textentry
-                                `Left(`TextEntry(`id("domain"), `opt(`disabled), "  "))
-                            ),
+	    // Frame label - configuration of particular host
+            `VSquash (`Frame( _("List Setup"),
+                `VBox (
+                    `Top (`HBox (
+			`Top (
+			    `VBox (
+                        	`HBox (
+				    // Textentry label - name of the host
+                            	    `Left (`TextEntry(`id("hostname"), _("&Name"))),
+				    // noneditable textentry
+                            	    `Left (`TextEntry(`id("domain"), `opt(`disabled), "  "))
+                        	),
 				// Textentry label - IP address of the host
-                            `Left(`TextEntry(`id("hostip"), _("&IP Address")))
-                        )),
-                        `HWeight(10, `VBox(
-                            `HStretch()
-                        )),
-                        `HWeight(45, `VBox(
+                        	`Left (`TextEntry(`id("hostip"), _("&IP Address")))
+                    	    )
+			),
+
+			`HSpacing(2),
+
+                        `Top(
+			    `VBox(
 				// Textentry label - hardware (mac) address of the host
-                            `Left(`TextEntry(`id("hosthwaddress"), _("&Hardware Address"))),
+                        	`Left (`TextEntry(`id("hosthwaddress"), _("&Hardware Address"))),
 				// Radiobutton label - network type of the host
-                            `RadioButtonGroup(`id("network_type"), 
-                                `HBox(
-                                    `Left(`RadioButton(`id("ethernet"), _("&Ethernet"), true)),
-                                    `Left(`RadioButton(`id("token-ring"), _("&Token Ring")))
-                                )
-                            ),
-			    `VSpacing(1),
-			    `VStretch()
-                        ))
-                    ),
+                        	`RadioButtonGroup (`id("network_type"), 
+                            	    `HBox(
+                                	`Left (`RadioButton(`id("ethernet"), _("&Ethernet"), true)),
+                                	`Left (`RadioButton(`id("token-ring"), _("&Token Ring")))
+                            	    )
+                        	)
+                    	    )
+			)
+                    )),
                     `VSpacing(1),
-                    `HBox(
-				// Pushbutton label - add host into list
-                        `HSquash(`Left(`PushButton(`id("addhost"), Label::AddButton ()))),
+		    `Top (`Left (`HBox (
+			// Pushbutton label - add host into list
+                        `Left (`PushButton(`id("addhost"), Label::AddButton ())),
                         `HSpacing(1),
-				// Pushbutton label - change host in list
-                        `HSquash(`Left(`PushButton(`id("edithost"), _("C&hange in List")))),
+			// Pushbutton label - change host in list
+                        `Left (`PushButton(`id("edithost"), _("C&hange in List"))),
                         `HSpacing(1),
-				// Pushbutton label - delete host from list
-                        `Left(`PushButton(`id("deletehost"), _("Dele&te from List"))),
-                        `HStretch()
-                    )
+			// Pushbutton label - delete host from list
+                        `Left (`PushButton(`id("deletehost"), _("Dele&te from List")))
+            	    )))
                 )
-            )
+            ))
         );
 
     return dialog;
