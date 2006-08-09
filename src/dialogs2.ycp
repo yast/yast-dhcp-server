@@ -1192,19 +1192,16 @@ boolean CheckMacAddrFormat () {
 	UI::QueryWidget ( `id ("hosthwaddress"), `Value );
     string addr_type
 	= (string) UI::QueryWidget ( `id ("network_type"), `CurrentButton );
-    string regexp = nil;
     if (addr_type == "ethernet" || addr_type == "token-ring")
     {
-	regexp = "[0-9a-fA-F]{2,2}";
-	regexp = sformat ("(%1:){5,5}%1", regexp);
-    }
-    if (regexp != nil && ! regexpmatch (hosthwaddress, regexp))
-    {
-	UI::SetFocus (`id ("hosthwaddress"));
-	Report::Error (
+	 if( !Address::CheckMAC(hosthwaddress))
+      {
+	  UI::SetFocus (`id ("hosthwaddress"));
+	  Report::Error (
 	    // error popup
-	    _("The hardware address is invalid."));
-	return false;
+	      _("The hardware address is invalid.\n") + Address::ValidMAC());
+	  return false;
+      }
     }
     return true;
 }
