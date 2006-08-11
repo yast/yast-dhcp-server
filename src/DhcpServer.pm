@@ -173,6 +173,12 @@ sub ListUsedKeys {
 ##-------------------------------------------------------------------------
 ##----------------- various routines --------------------------------------
 
+BEGIN {$TYPEINFO{IsDnsServerAvailable} = [ "function", "boolean" ];}
+sub IsDnsServerAvailable () {
+    # returns current status - is DNS Server available to be configured?
+    return $dns_server_available;
+}
+
 sub InitTSIGKeys {
     my $self = shift;
 
@@ -1348,7 +1354,7 @@ sub Read {
     # Dhcp-server read dialog caption
     my $caption = __("Initializing DHCP Server Configuration");
 
-    Progress->New( $caption, " ", 3, [
+    Progress->New( $caption, " ", 4, [
 	# progress stage
 	__("Check the environment"),
 	# progress stage
@@ -1569,7 +1575,7 @@ sub Write {
     my $caption = __("Saving DHCP Server Configuration");
 
     # We do not set help text here, because it was set outside
-    Progress->New($caption, " ", 3, [
+    Progress->New($caption, " ", 4, [
 	# progress stage
 	__("Write DHCP server settings"),
 	# progress stage

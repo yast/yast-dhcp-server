@@ -30,6 +30,8 @@ import "Netmask";
 
 include "dhcp-server/helps.ycp";
 include "dhcp-server/widgets.ycp";
+include "dhcp-server/dns-server-management.ycp";
+include "dhcp-server/dns-server-wizard.ycp";
 
 /* Using expert UI */
 define boolean expert_ui = (ProductFeatures::GetFeature ("globals", "ui_mode") == "expert");
@@ -364,6 +366,21 @@ void GlobalSettingsValidChars ()
     UI::ChangeWidget(`id( "defaultleasetime" ),	`ValidChars, "0123456789");
 }
 
+string CurrentDomainName () {
+    string current_domain_name = "";
+
+    foreach (map<string,string> opt, DhcpServer::GetEntryOptions ("",""), {
+	if (opt["key"]:nil == "domain-name") {
+	    current_domain_name = opt["value"]:"";
+	    if (regexpmatch (current_domain_name, "^[ \t]*\".*\"[ \t]*$"))
+		current_domain_name = regexpsub (current_domain_name, "^[ \t]*\"(.*)\"[ \t]*$", "\\1");
+	    break;
+	}
+    });
+
+    return current_domain_name;
+}
+
 void GlobalSettingsInit (string key)
 {
     // get the global options
@@ -644,6 +661,7 @@ term Common_DynamicDHCPDialog() {
 		// frame
                 `Frame (_("IP Address Range") ,
 		    `VBox(
+
 		    `HBox (
 			`HWeight (2,
 			    // TRANSLATORS: informative text entry (filled up, disabled)
@@ -658,6 +676,9 @@ term Common_DynamicDHCPDialog() {
 			    `TextEntry( `id("current_bits"),    _("Netmask Bi&ts"))
 			)
 		    ),
+
+		    `VSpacing(1),
+
 		    `HBox (
 			`VBox (
 			    // text entry
@@ -672,6 +693,7 @@ term Common_DynamicDHCPDialog() {
 			    `Left( `TextEntry ( `id ("to_ip_max"), _("Ma&ximal IP Address") ) )
 			)
 		    )
+
 		    )
 		) 
             ),
@@ -710,7 +732,8 @@ term Common_DynamicDHCPDialog() {
 		    )
                 )
             ),
-	    `VStretch()
+	    `VStretch(),
+	    `ReplacePoint (`id (`dns_advanced), `Empty())
         );
 
     return dialog;
@@ -747,13 +770,16 @@ void DynamicDHCPInit (string key)
     string interface = ifaces_allowed[0]:nil;
     map m = DhcpServer::GetInterfaceInformation (interface);
     string id = m["network"]:"" + " netmask " + m["netmask"]:"";
+    string zone_name = CurrentDomainName();
 
     current_dynamic_dhcp = $[
 	"network" : m["network"]:"",
 	"netmask" : m["netmask"]:"",
+	"domain"  : zone_name,
     ];
 
     integer netmask_bits = Netmask::ToBits(m["netmask"]:"255.255.255.255");
+    current_dynamic_dhcp["netmask_bits"] = tostring(netmask_bits);
 
     UI::ChangeWidget( `id("current_network"), `Value, m["network"]:"");
     UI::ChangeWidget( `id("current_network"), `Enabled, false);
@@ -766,6 +792,19 @@ void DynamicDHCPInit (string key)
     string current_network = IP::ComputeNetwork (m["network"]:"", m["netmask"]:"255.255.255.255");
     string network_binary  = IP::IPv4ToBits (current_network);
 
+    current_dynamic_dhcp["current_network"] = current_network;
+    current_dynamic_dhcp["network_binary"]  = network_binary;
+
+    if (IP::Check(current_network)) {
+	current_dynamic_dhcp["reverse_domain"] = DnsServerAPI::GetReverseIPforIPv4 (
+	    current_network
+	);
+	if (regexpmatch(current_dynamic_dhcp["reverse_domain"]:"", "\.$"))
+	    current_dynamic_dhcp["reverse_domain"] = regexpsub (
+		current_dynamic_dhcp["reverse_domain"]:"", "(.*)\.$", "\\1"
+	    );
+    }
+
     // Computing minimal IP
     string ipv4_min = regexpsub (network_binary, "^(.*).$", "\\11");
     ipv4_min = IP::BitsToIPv4 (ipv4_min);
@@ -774,11 +813,9 @@ void DynamicDHCPInit (string key)
     string ipv4_max = substring (network_binary, 0, netmask_bits);
     ipv4_max = ipv4_max + "11111111111111111111111111111111";
     ipv4_max = substring (ipv4_max, 0, 32);
+    // changing the last bit not to be >1< (reserved for broadcast)
+    ipv4_max = regexpsub (ipv4_max, "(.*)1$", "\\10");
     ipv4_max = IP::BitsToIPv4 (ipv4_max);
-    while (regexpmatch(ipv4_max, "255")) {
-	// 255 is reserved
-	ipv4_max = regexpsub(ipv4_max, "^(.*)255(.*)$", "\\1254\\2");
-    }
 
     y2milestone("Network: %1, Min. IP: %2, Max. IP: %3", m["network"]:"", ipv4_min, ipv4_max);
 
@@ -787,6 +824,9 @@ void DynamicDHCPInit (string key)
     if (ipv4_min != nil && ipv4_max != nil) {
 	UI::ChangeWidget( `id("from_ip_min"), `Value, ipv4_min);
 	UI::ChangeWidget( `id("to_ip_max"), `Value,   ipv4_max);
+	
+	current_dynamic_dhcp["ipv4_min"] = ipv4_min;
+	current_dynamic_dhcp["ipv4_max"] = ipv4_max;
     }
     
 
@@ -836,6 +876,84 @@ void DynamicDHCPInit (string key)
     UI::ChangeWidget ( `id ("maxleasetimeunits"), `Value, unit );
 
     DynamicDHCPValidChars ();
+    
+    // Synchronize DNS Server -- init
+    map <string, map <string, string> > all_zones = DnsServerAPI::GetZones();
+    list <term> possible_dns_actions = [];
+
+    // zone is not maintained by the DNS server
+    if (all_zones[zone_name]:nil == nil) {
+	possible_dns_actions = [
+	    `item(`id(`dns_advanced_from_scratch), _("Create New DNS Zone from Scratch"))
+	];
+
+    // zone is maintained and it is a 'master'
+    } else if (all_zones[zone_name,"type"]:nil == "master") {
+	possible_dns_actions = [
+	    `item(`id(`dns_advanced_from_scratch), _("Create New DNS Zone from Scratch")),
+	    `item(`id(`dns_advanced_edit_current), _("Edit Current DNS Zone"))
+	];
+
+    // zone is maintained but it is not a 'master'
+    } else {
+	possible_dns_actions = [
+	    `item(`id(`dns_advanced_zone_info), _("Get Current Zone Information"))
+	];
+    }
+
+    UI::ReplaceWidget (`id(`dns_advanced), `MenuButton (
+	`id(`dns_advanced_menu),
+	_("&Synchronize DNS Server..."),
+	possible_dns_actions
+    ));
+
+    UI::ChangeWidget (`id (`dns_advanced_menu), `Enabled, DhcpServer::IsDnsServerAvailable());
+}
+
+boolean DynamicDHCPValidate (string key, map event);
+
+symbol DynamicDHCPHandle (string key, map event) {
+    if (key != "dynamic_dhcp") return nil;
+
+    // Only these IDs are handled
+    if (
+	event["ID"]:nil != `dns_advanced_edit_current
+	&&
+	event["ID"]:nil != `dns_advanced_from_scratch
+	&&
+	event["ID"]:nil != `dns_advanced_zone_info
+    ) return nil;
+
+    // Show DNS Zone Information
+    if (event["ID"]:nil == `dns_advanced_zone_info) {
+	Report::Message (sformat (
+	    _("The current DNS Zone %1 is not a type 'master'.
+Which means that you cannot change it here."),
+	    current_settings["domain"]:""
+	));
+
+    // Run the DNS Wizard - Zone from Scratch
+    } else if (event["ID"]:nil == `dns_advanced_from_scratch) {
+	if (! DynamicDHCPValidate(nil, nil)) {
+	    y2milestone("Dynamic DHCP Validation failed, Not managing DNS Server");
+	    return nil;
+	}
+
+	y2milestone("Running DNS wizard -- Creating zone from scratch");
+	RunNewDNSServerWizard(current_dynamic_dhcp);
+
+    // Edit the current DNS Zone - for experts
+    } else if (event["ID"]:nil == `dns_advanced_edit_current) {
+	if (! DynamicDHCPValidate(nil, nil)) {
+	    y2milestone("Dynamic DHCP Validation failed, Not managing DNS Server");
+	    return nil;
+	}
+
+	y2milestone("Managing DNS Server");
+	ManageDNSServer(current_dynamic_dhcp);
+    }
+    
+    return nil;
 }
 
 void DynamicDHCPStore (string key, map event)
@@ -976,6 +1094,10 @@ IP %1 does not match the network %2/%3."),
 	);
 	return false;
     }
+
+    
+    current_dynamic_dhcp["from_ip"] = from_ip;
+    current_dynamic_dhcp["to_ip"]   = to_ip;
 
     return true;
 }
@@ -1615,6 +1737,7 @@ map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
 	"init"		: DynamicDHCPInit,
 	"validate_type"	: `function,
 	"validate_function"	: DynamicDHCPValidate,
+	"handle"	: DynamicDHCPHandle,
 	"store"		: DynamicDHCPStore,
 	"help"		: HELPS["dynamic_dhcp"]:"",
     ],
