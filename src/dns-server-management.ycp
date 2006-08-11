@@ -1,0 +1,940 @@
+/**
+ * File:	include/dhcp-server/dns-server-management.ycp
+ * Package:	Configuration of dhcp-server
+ * Summary:	Synchronization with DNS Server
+ * Authors:	Lukas Ocilka <lukas.ocilka@suse.cz>
+ *
+ * $Id:$
+ */
+
+{
+
+    textdomain "dhcp-server";
+
+    import "Wizard";
+    import "DhcpServer";
+    import "DnsServerAPI";
+    import "DnsServer";
+    import "Report";
+    import "Popup";
+    import "Label";
+    import "DnsServerPunycode";
+    import "Confirm";
+    import "IP";
+    import "Hostname";
+
+    boolean modified = false;
+    
+    list <map <string, string> > dns_server_managed_records = [];
+
+    /**
+     * @struct $[
+     *     "current_network" : "192.168.0.0",
+     *     "domain"          : "example.com",
+     *     "from_ip"         : "192.168.10.2",
+     *     "to_ip"           : "192.168.15.254"
+     *     "ipv4_max"        : "192.168.13.254",
+     *     "ipv4_min"        : "192.168.0.1",
+     *     "netmask"         : "255.255.240.0",
+     *     "netmask_bits"    : "20",
+     *     "network"         : "192.168.0.0",
+     *     "network_binary"  : "11000000101010000000000000000000",
+     * ]
+     */
+    map <string, string> current_settings = $[];
+
+    // --> Helper Functions
+
+    boolean GetModified() {
+	return modified;
+    }
+    
+    void SetModified () {
+	modified = true;
+    }
+    
+    void ResetModified () {
+	modified = false;
+    }
+
+    // Converts DNS record to relative one
+    string ToRelativeName (string absolute_name, string zone_name) {
+	if (absolute_name == nil || zone_name == nil) {
+	    return nil;
+	}
+	
+	string remove_this_to_be_relative = "." + zone_name + ".";
+	string relative_name = regexpsub(absolute_name, "(.*)" + remove_this_to_be_relative, "\\1");
+	if ((relative_name != nil) && (! regexpmatch(relative_name, "\\."))) {
+	    return relative_name;
+	}
+	
+	return absolute_name;
+    }
+
+    boolean IPisInRangeOfIPs (string & ipv4, string & first_ip, string & last_ip) {
+	// Checking delta between first_ip and last_ip
+	list <integer> ipv4_list = maplist (string ip_part, splitstring(ipv4, "."), {
+	    return tointeger(ip_part);
+	});
+	list <integer> first_ip_list = maplist (string ip_part, splitstring(first_ip, "."), {
+	    return tointeger(ip_part);
+	});
+	list <integer> last_ip_list = maplist (string ip_part, splitstring(last_ip, "."), {
+	    return tointeger(ip_part);
+	});
+	
+	// Computing deltas
+	// 195(.168.0.1) - 192(.11.0.58) => 3
+	integer address_1_1 = (ipv4_list[0]:0 - first_ip_list[0]:0);
+	integer address_1_2 = (ipv4_list[1]:0 - first_ip_list[1]:0);
+	integer address_1_3 = (ipv4_list[2]:0 - first_ip_list[2]:0);
+	integer address_1_4 = (ipv4_list[3]:0 - first_ip_list[3]:0);
+
+	integer address_2_1 = (last_ip_list[0]:0 - ipv4_list[0]:0);
+	integer address_2_2 = (last_ip_list[1]:0 - ipv4_list[1]:0);
+	integer address_2_3 = (last_ip_list[2]:0 - ipv4_list[2]:0);
+	integer address_2_4 = (last_ip_list[3]:0 - ipv4_list[3]:0);
+		
+	boolean range_status = nil;
+
+	// Firstly, checking the IPv4 and the first address in the range
+	// IPv4 must be bigger or equal to it
+	if (ipv4 == first_ip) {
+	    range_status = true;
+
+	// first chunk is either smaller or bigger than zero
+	} else if (address_1_1 < 0 || address_1_1 > 0) {
+	    // bigger means that the IP range is correct
+	    range_status = (address_1_1 > 0);
+
+	// if they are equal, check the very next chunk...
+	} else if (address_1_2 < 0 || address_1_2 > 0) {
+	    range_status = (address_1_2 > 0);
+
+	} else if (address_1_3 < 0 || address_1_3 > 0) {
+	    range_status = (address_1_3 > 0);
+
+	} else if (address_1_4 < 0 || address_1_4 > 0) {
+	    range_status = (address_1_4 > 0);
+
+	// what else?
+	} else {
+	    y2error("Unknown match IP: %1 First: %2", ipv4_list, first_ip_list);
+	    range_status = false;
+	}
+	
+	// First checking didn't match
+	if (! range_status) return false;
+
+	// Secondly, checking the IPv4 and the last address in the range
+	// IPv4 must be smaller or equal to it
+	if (ipv4 == last_ip) {
+	    range_status = true;
+
+	// first chunk is either smaller or bigger than zero
+	} else if (address_2_1 < 0 || address_2_1 > 0) {
+	    // bigger means that the IP range is correct
+	    range_status = (address_2_1 > 0);
+
+	// if they are equal, check the very next chunk...
+	} else if (address_2_2 < 0 || address_2_2 > 0) {
+	    range_status = (address_2_2 > 0);
+
+	} else if (address_2_3 < 0 || address_2_3 > 0) {
+	    range_status = (address_2_3 > 0);
+
+	} else if (address_2_4 < 0 || address_2_4 > 0) {
+	    range_status = (address_2_4 > 0);
+
+	// what else?
+	} else {
+	    y2error("Unknown match IP: %1 Last: %2", ipv4_list, last_ip_list);
+	    range_status = false;
+	}
+	
+	return range_status;
+    }
+
+    // <-- Helper Functions
+
+    // --> Add / Delete - DNS Functions
+
+    boolean RemoveDNSRangeWorker (string first_ip, string last_ip) {
+	string zone_name = current_settings["domain"]:"";
+	
+	string hostname = nil;
+	string ipv4     = nil;
+
+	integer removed = 0;
+	list <map <any, any> > all_zones = DnsServer::FetchZones();
+	
+	integer zone_counter = -1;
+	boolean zone_found   = false;
+
+	map <any, any> filtered_zone = $[];
+	foreach (map <any, any> one_zone, all_zones, {
+	    zone_counter = zone_counter + 1;
+	    if (one_zone["zone"]:nil == zone_name) {
+		zone_found = true;
+		break;
+	    }
+	});
+	if (! zone_found) {
+	    y2error("Cannot find zone %1", zone_name);
+	}
+
+	list <map <string, string> > zone_records = (list <map <string, string> >) all_zones[zone_counter, "records"]:[];
+
+	// Filter out DNS records that match the rule
+	zone_records = filter (map <string, string> one_record, zone_records, {
+	    // Only "A"
+	    if (one_record["type"]:"" != "A") return true;
+
+	    hostname = one_record["key"]:"";
+	    ipv4     = one_record["value"]:"";
+
+	    // Only non-empty "key" and "value"
+	    if (hostname == "" || ipv4 == "") return true;
+
+	    if (!IP::Check4(ipv4)) {
+		// leaving wrong definition in the zone
+		y2warning("Not a valid IP '%1'", ipv4);
+		return true;
+	    }
+
+	    // Current IP doesn't match the range
+	    if (! IPisInRangeOfIPs(ipv4, first_ip, last_ip)) return true;
+
+	    // Remove from zone
+	    removed = removed + 1;
+	    return false;
+	});
+	
+	all_zones[zone_counter, "records"] = zone_records;
+
+	DnsServer::StoreZones(all_zones);
+
+	return (removed > 0);
+    }
+    
+    boolean AddDNSRangeWorker (string hostname_base, integer hostname_start, string first_ip, string last_ip) {
+	if (regexpmatch(hostname_base, "%i")) {
+	    hostname_base = regexpsub(hostname_base, "^(.*)%i(.*)", "\\1%1\\2");
+	} else if (regexpmatch(hostname_base, "%d")) {
+	    hostname_base = regexpsub(hostname_base, "^(.*)%d(.*)", "\\1%1\\2");
+	} else {
+	    hostname_base = hostname_base + "%1";
+	}
+	y2milestone("Hostname base: %1", hostname_base);
+
+	if (hostname_start == nil) hostname_start = 0;
+
+	list <integer> first_ip_list = maplist (string ip_part, splitstring(first_ip, "."), {
+	    return tointeger(ip_part);
+	});
+	list <integer> last_ip_list = maplist (string ip_part, splitstring(last_ip, "."), {
+	    return tointeger(ip_part);
+	});
+	y2milestone("Creating range: %1 - %2", first_ip, last_ip);
+
+	// list of hostnames for next punycode translation
+	list <string> hostnames = [];
+	// list of IPs matching these hostnames (by index)
+	list <string> ips       = [];
+
+	integer hostname_counter = hostname_start - 1;
+	integer index_counter    = -1;
+	
+	// Generating hostnames and IPs
+	while (first_ip_list[0]:1 <= last_ip_list[0]:0) {
+	    while (first_ip_list[1]:1 <= last_ip_list[1]:0) {
+		while (first_ip_list[2]:1 <= last_ip_list[2]:0) {
+		    while (first_ip_list[3]:1 <= last_ip_list[3]:0) {
+			hostname_counter = hostname_counter + 1;
+			index_counter    = index_counter    + 1;
+			
+			hostnames[index_counter] = sformat (hostname_base, hostname_counter);
+			ips[index_counter]       = sformat (
+						    "%1.%2.%3.%4",
+							first_ip_list[0]:0,
+							first_ip_list[1]:0,
+							first_ip_list[2]:0,
+							first_ip_list[3]:0
+						    );
+
+			first_ip_list[3] = first_ip_list[3]:0 + 1;
+		    }
+		    first_ip_list[2] = first_ip_list[2]:0 + 1;
+		    first_ip_list[3] = 0;
+		}
+		first_ip_list[1] = first_ip_list[1]:0 + 1;
+		first_ip_list[2] = 0;
+	    }
+	    first_ip_list[1] = 0;
+	    first_ip_list[0] = first_ip_list[0]:0 + 1;
+	}
+
+	// Writing records into the DNS Server
+	if (hostname_counter > 0) {
+	    hostnames = DnsServerPunycode::EncodePunycodes(hostnames);
+
+	    index_counter = -1;	    
+	    foreach (string one_hostname, hostnames, {
+		index_counter = index_counter + 1;
+		
+		DnsServerAPI::AddZoneRR (
+		    current_settings["domain"]:"", "A", one_hostname, ips[index_counter]:""
+		);
+	    });
+	    
+	    SetModified();
+	}
+
+	return true;
+    }
+
+    // <-- Add / Delete - DNS Functions
+
+    // --> Edit Zone
+
+    void RedrawRRsTable () {
+	string zone_name = current_settings["domain"]:"";
+
+	list <map <string, string> > zone_records = DnsServerAPI::GetZoneRRs(zone_name);
+
+	// show the dialog 
+	boolean show_progress_dialog = (zone_records[200]:nil != nil);
+	if (show_progress_dialog) UI::OpenDialog(`Label(_("Regenerating DNS zone entries...")));
+
+	// later used when deleting records
+	dns_server_managed_records = [];
+
+	list <string> punycode_translations = [];
+	integer counter = -1;
+	string record_key = "";
+	zone_records = filter (map <string, string> one_record, zone_records, {
+	    record_key = ToRelativeName (one_record["key"]:"", zone_name);
+	    // record for the entire zone
+	    if (one_record["key"]:"" == zone_name + ".") record_key = "";
+
+	    // Only "A" records and non-empty "key"
+	    if (one_record["type"]:nil == "A" && record_key != "" && record_key != nil) {
+		counter = counter + 1;
+		punycode_translations[counter] = record_key;
+		dns_server_managed_records[counter] = $[ "name" : record_key, "ip" : one_record["value"]:"" ];
+		
+		return true;
+	    } else {
+		return false;
+	    }
+	});
+	
+	punycode_translations = DnsServerPunycode::DocodeDomainNames(punycode_translations);
+
+	counter = -1;
+	list <term> items = maplist (map <string, string> one_record, zone_records, {
+	    counter = counter + 1;
+	    return `item(`id(counter), punycode_translations[counter]:"", one_record["value"]:"");
+	});
+
+	// Free Willy!
+	zone_records = [];
+	punycode_translations = [];
+	
+	// progress dialog
+	if (show_progress_dialog) UI::CloseDialog();
+
+	items = sort (term x, term y, items, ``(x[1]:"" < y[1]:""));
+	UI::ChangeWidget(`id("zone_table"), `Items, items);
+    }
+
+    boolean AddDNSDialog () {
+	UI::OpenDialog (`VBox (
+	    `MarginBox (1, 1, `Frame (
+		_("Add New DNS Record"),
+		`VBox (
+		    `TextEntry (`id ("new_hostname"), _("&Hostname")),
+		    `TextEntry (`id ("new_ip"),       _("&IP Address"))
+		)
+	    )),
+	    `HBox (
+		`PushButton (`id(`ok), Label::OKButton()),
+		`HSpacing (1),
+		`PushButton (`id(`cancel), Label::CancelButton())
+	    )
+	));
+	
+	UI::ChangeWidget (`id ("new_ip"), `ValidChars, IP::ValidChars4);
+	
+	boolean func_ret = false;
+	any ret = nil;
+	while (true) {
+	    ret = UI::UserInput();
+	    
+	    if (ret == `ok) {
+		string new_hostname = (string) UI::QueryWidget (`id("new_hostname"), `Value);
+		new_hostname = DnsServerPunycode::EncodeDomainName(new_hostname);
+		if (! Hostname::Check(new_hostname)) {
+		    UI::SetFocus(`id("new_hostname"));
+		    Report::Error(_("Invalid hostname.") + "\n\n" + Hostname::ValidHost());
+		    continue;
+		}
+
+		string new_ip = (string) UI::QueryWidget (`id("new_ip"), `Value);
+		if (! IP::Check4(new_ip)) {
+		    UI::SetFocus(`id("new_ip"));
+		    Report::Error(_("Invalid IP address.") + "\n\n" + IP::Valid4());
+		    continue;
+		}
+		
+		func_ret = DnsServerAPI::AddZoneRR (
+		    current_settings["domain"]:"", "A", new_hostname, new_ip
+		);
+		SetModified();
+		
+		break;
+	    } else {
+		break;
+	    }
+	}
+	
+	UI::CloseDialog();
+	return func_ret;
+    }
+    
+
+    
+    boolean CheckDNSRange (string first_ip, string last_ip) {
+	// range in binary form
+	string first_ip_bin = IP::IPv4ToBits(first_ip);
+	string last_ip_bin  = IP::IPv4ToBits(last_ip);
+	
+	// they have to be defined
+	if (first_ip_bin == nil || last_ip_bin == nil) {
+	    Report::Error(sformat(
+		_("Internal error\nCannot create IP range from %1 and %2"),
+		first_ip, last_ip
+	    ));
+	    return false;
+	}
+	
+	// network mask in binary form
+	integer bits = tointeger(current_settings["netmask_bits"]:nil);
+	string  network_bits = current_settings["network_binary"]:nil;
+	// first x bits from network in binary form
+	network_bits = substring(network_bits, 0, bits);
+	y2milestone("Network Mask: %1", network_bits);
+	
+	// doest the first IP match the current network?
+	string first_ip_mask = substring(first_ip_bin, 0, bits);
+	// network bits must be the same in both IP and Network
+	if (first_ip_mask != network_bits) {
+	    Report::Error(
+		sformat(_("IP Address %1 does not match\nthe current network %2/%3"),
+		first_ip, current_settings["network"]:"", current_settings["netmask"]:""
+	    ));
+	    UI::SetFocus(`id("first_ip"));
+	    return false;
+	}
+	
+	// does the second IP match the current network?
+	string last_ip_mask  = substring(last_ip_bin, 0, bits);
+	// network bits must be the same in both IP and Network
+	if (last_ip_mask != network_bits) {
+	    Report::Error (
+		sformat(_("IP Address %1 does not match\nthe current network %2/%3"),
+		last_ip, current_settings["network"]:"", current_settings["netmask"]:""
+	    ));
+	    UI::SetFocus(`id("last_ip"));
+	    return false;
+	}
+	
+	// the Address part of IPs
+	first_ip_bin = substring (first_ip_bin, bits);
+	last_ip_bin  = substring (last_ip_bin, bits);
+	y2milestone("First IP: %1", first_ip_bin);
+	y2milestone("Last IP:  %1", last_ip_bin);
+	
+	// the Address part of the DHCP range
+	string fist_ip_dhcp = IP::IPv4ToBits(current_settings["from_ip"]:"");
+	string last_ip_dhcp = IP::IPv4ToBits(current_settings["to_ip"]:"");
+	fist_ip_dhcp = substring(fist_ip_dhcp, bits);
+	last_ip_dhcp = substring(last_ip_dhcp, bits);
+	
+	// isn't the first IP bigger than the last one?
+	if (tointeger(first_ip_bin) > tointeger(last_ip_bin)) {
+	    Report::Error (_("The last IP address must be higher than the first one."));
+	    return false;
+	}
+	
+	// isn't the first IP out of the current DHCP range?
+	if (tointeger(first_ip_bin) < tointeger(fist_ip_dhcp) || tointeger(fist_ip_dhcp) > tointeger(last_ip_dhcp)) {
+	    Report::Error (sformat (
+		_("The IP Address %1 is out of the current\ndynamic DHCP range %2 - %3"),
+		first_ip, current_settings["from_ip"]:"", current_settings["to_ip"]:""
+	    ));
+	    return false;
+	}
+
+	// isn't the last IP out of the current DHCP range?
+	if (tointeger(last_ip_bin) < tointeger(fist_ip_dhcp) || tointeger(last_ip_dhcp) > tointeger(last_ip_dhcp)) {
+	    Report::Error (sformat (
+		_("The IP Address %1 is\nout of the current\ndynamic DHCP range %2 - %3"),
+		last_ip, current_settings["from_ip"]:"", current_settings["to_ip"]:""
+	    ));
+	    return false;
+	}
+	
+	return true;
+    }
+
+    boolean AddDNSRangeDialog () {
+	UI::OpenDialog (`VBox (
+	    `MarginBox (1, 1, `Frame (
+		_("Add New DNS Records Range"),
+		`VBox (
+		    `HBox (
+			`HWeight (1, `TextEntry (`id ("current_range_min"), _("Min&imal IP Address"))),
+			`HWeight (1, `TextEntry (`id ("current_range_max"), _("Ma&ximal IP Address")))
+		    ),
+		    `HBox (
+			`HWeight (2, `TextEntry (`id ("hostname_base"), _("&Hostname Base"))),
+			`HWeight (1, `TextEntry (`id ("hostname_start"), _("&Start")))
+		    ),
+		    `HBox (
+			`HWeight (1, `TextEntry (`id ("first_ip"), _("&First IP Address"))),
+			`HWeight (1, `TextEntry (`id ("last_ip"),  _("&Last IP Address")))
+		    )
+		)
+	    )),
+	    `HBox (
+		`PushButton (`id(`ok), Label::OKButton()),
+		`HSpacing (1),
+		`PushButton (`id(`cancel), Label::CancelButton())
+	    )
+	));
+	
+	UI::ChangeWidget (`id("current_range_min"), `Value, current_settings["from_ip"]:"");
+	UI::ChangeWidget (`id("current_range_max"), `Value, current_settings["to_ip"]:"");
+	
+	// FIXME: default
+	UI::ChangeWidget (`id("hostname_base"),  `Value, "dhcp-%i");
+	UI::ChangeWidget (`id("hostname_start"), `Value, "0");
+	
+	UI::ChangeWidget (`id("current_range_min"), `Enabled, false);
+	UI::ChangeWidget (`id("current_range_max"), `Enabled, false);
+
+	UI::ChangeWidget (`id ("first_ip"),       `ValidChars, IP::ValidChars4);
+	UI::ChangeWidget (`id ("last_ip"),        `ValidChars, IP::ValidChars4);
+	UI::ChangeWidget (`id ("hostname_start"), `ValidChars, "0123456789");
+	
+	// Predefining possible values
+	UI::ChangeWidget (`id ("first_ip"), `Value, current_settings["from_ip"]:"");
+	UI::ChangeWidget (`id ("last_ip"),  `Value, current_settings["to_ip"]:"");
+	
+	boolean func_ret = false;
+	any ret = nil;
+	while (true) {
+	    ret = UI::UserInput();
+	    
+	    if (ret == `ok) {
+		string hostname_base = (string) UI::QueryWidget (`id("hostname_base"), `Value);
+		hostname_base = hostname_base;
+		y2milestone("Entered hostname base: %1", hostname_base);
+
+		string hostname_base_check = hostname_base;
+		if (hostname_base_check != "" && hostname_base_check != nil) {
+		    // integer listed
+		    if (regexpmatch(hostname_base_check, "%i")) {
+			hostname_base_check = regexpsub(hostname_base_check, "^(.*)%i(.*)", "\\10\\2");
+		    // other integer listed
+		    } else if (regexpmatch(hostname_base_check, "%d")) {
+			hostname_base_check = regexpsub(hostname_base_check, "^(.*)%d(.*)", "\\10\\2");
+		    // add something
+		    } else {
+			hostname_base_check = hostname_base_check + "0";
+		    }
+		    
+		    hostname_base_check = DnsServerPunycode::EncodeDomainName(hostname_base_check);
+		}
+		y2milestone("Checking hostname base: %1", hostname_base_check);
+		
+		// Checking the hostname base
+		if (hostname_base_check == "" || hostname_base_check == nil || ! Hostname::Check(hostname_base_check)) {
+		    UI::SetFocus(`id ("hostname_base"));
+		    Report::Error(_("Invalid hostname.") + "\n\n" + Hostname::ValidHost());
+		    continue;
+		}
+
+		string first_ip = (string) UI::QueryWidget (`id("first_ip"), `Value);
+		if (! IP::Check4(first_ip)) {
+		    UI::SetFocus(`id("first_ip"));
+		    Report::Error(_("Invalid IP address.") + "\n\n" + IP::Valid4());
+		    continue;
+		}
+
+		string last_ip = (string) UI::QueryWidget (`id("last_ip"), `Value);
+		if (! IP::Check4(last_ip)) {
+		    UI::SetFocus(`id("last_ip"));
+		    Report::Error(_("Invalid IP address.") + "\n\n" + IP::Valid4());
+		    continue;
+		}
+
+		string hostname_start_s = (string) UI::QueryWidget (`id("hostname_start"), `Value);
+		integer hostname_start = 0;
+		if (regexpmatch(hostname_start_s, "^[0123456789]+$")) {
+		    hostname_start = tointeger(hostname_start_s);
+		}
+		
+		if (! CheckDNSRange(first_ip, last_ip)) continue;
+		
+		UI::OpenDialog(`Label(
+		    sformat(_("Adding DHCP range %1 - %2 into DNS server..."), first_ip, last_ip)
+		));
+		func_ret = AddDNSRangeWorker(hostname_base, hostname_start, first_ip, last_ip);
+		UI::CloseDialog();
+		
+		break;
+	    } else {
+		break;
+	    }
+	}
+	
+	UI::CloseDialog();
+	return func_ret;
+    }
+
+    boolean RemoveDNSRangeDialog () {
+	UI::OpenDialog (`VBox (
+	    `MarginBox (1, 1, `Frame (
+		_("Remove DNS Records in Range"),
+		`HBox (
+		    `HWeight (1, `TextEntry (`id ("first_ip"), _("&First IP Address"))),
+		    `HWeight (1, `TextEntry (`id ("last_ip"),  _("&Last IP Address")))
+		)
+	    )),
+	    `HBox (
+		`PushButton (`id(`ok), Label::OKButton()),
+		`HSpacing (1),
+		`PushButton (`id(`cancel), Label::CancelButton())
+	    )
+	));
+	
+	UI::ChangeWidget (`id ("first_ip"), `ValidChars, IP::ValidChars4);
+	UI::ChangeWidget (`id ("last_ip"),  `ValidChars, IP::ValidChars4);
+	
+	// Predefining initial values
+	UI::ChangeWidget (`id ("first_ip"), `Value, current_settings["from_ip"]:"");
+	UI::ChangeWidget (`id ("last_ip"),  `Value, current_settings["to_ip"]:"");
+	
+	boolean func_ret = false;
+	any ret = nil;
+	while (true) {
+	    ret = UI::UserInput();
+	    
+	    if (ret == `ok) {
+		string first_ip = (string) UI::QueryWidget (`id("first_ip"), `Value);
+		if (! IP::Check4(first_ip)) {
+		    UI::SetFocus(`id("first_ip"));
+		    Report::Error(_("Invalid IP address.") + "\n\n" + IP::Valid4());
+		    continue;
+		}
+
+		string last_ip = (string) UI::QueryWidget (`id("last_ip"), `Value);
+		if (! IP::Check4(last_ip)) {
+		    UI::SetFocus(`id("last_ip"));
+		    Report::Error(_("Invalid IP address.") + "\n\n" + IP::Valid4());
+		    continue;
+		}
+		
+		// Checking delta between first_ip and last_ip
+		list <integer> first_ip_list = maplist (string ip_part, splitstring(first_ip, "."), {
+		    return tointeger(ip_part);
+		});
+		list <integer> last_ip_list = maplist (string ip_part, splitstring(last_ip, "."), {
+		    return tointeger(ip_part);
+		});
+		
+		// Computing deltas
+		// 195(.168.0.1) - 192(.11.0.58) => 3
+		integer address_1 = (last_ip_list[0]:0 - first_ip_list[0]:0);
+		integer address_2 = (last_ip_list[1]:0 - first_ip_list[1]:0);
+		integer address_3 = (last_ip_list[2]:0 - first_ip_list[2]:0);
+		integer address_4 = (last_ip_list[3]:0 - first_ip_list[3]:0);
+		
+		boolean range_status = nil;
+		// first chunk is either smaller or bigger than zero
+		if (address_1 < 0 || address_1 > 0) {
+		    // bigger means that the IP range is correct
+		    range_status = (address_1 > 0);
+
+		// if they are equal, check the very next chunk...
+		} else if (address_2 < 0 || address_2 > 0) {
+		    range_status = (address_2 > 0);
+
+		} else if (address_3 < 0 || address_3 > 0) {
+		    range_status = (address_3 > 0);
+
+		} else if (address_4 < 0 || address_4 > 0) {
+		    range_status = (address_4 > 0);
+
+		// addresses are the same
+		} else {
+		    range_status = false;
+		}
+
+		if (!range_status) {
+		    Report::Error (_("The last IP address must be higher than the first one."));
+		    continue;
+		}
+				
+		UI::OpenDialog(`Label(
+		    sformat(
+			_("Removing range of records %1 - %2 from DNS server..."),
+			first_ip, last_ip
+		    )
+		));
+		y2milestone("Removing DNS range %1 - %2", first_ip, last_ip);
+		func_ret = RemoveDNSRangeWorker(first_ip, last_ip);
+		UI::CloseDialog();
+		
+		break;
+	    } else {
+		break;
+	    }
+	}
+	
+	UI::CloseDialog();
+	return (func_ret == false ? false:true);
+    }
+    
+    void DeleteDNSDialog () {
+	integer current_item = (integer) UI::QueryWidget(`id("zone_table"), `CurrentItem);
+	if (current_item == nil) {
+	    return nil;
+	}
+	
+	if (! Confirm::DeleteSelected()) {
+	    return nil;
+	}
+
+	map <string, string> delete_item = dns_server_managed_records[current_item]:$[];
+	boolean success = DnsServerAPI::RemoveZoneRR (
+	    current_settings["domain"]:"",
+	    "A",
+	    delete_item["name"]:"",
+	    delete_item["ip"]:""
+	);
+	SetModified();
+	y2milestone("Removing: %1 / %2 from %3 -> %4",
+	    delete_item["name"]:"", delete_item["ip"]:"", current_settings["domain"]:"", success
+	);
+	
+	RedrawRRsTable();
+    }
+
+    void CheckDNSZone () {
+	y2error("FIXME: !!!!!!!!!!!!!");
+	return nil;
+    }
+
+    boolean RunDNSWizardFromScratch () {
+	y2error("FIXME: ...");
+	return false;
+    }
+
+    // Returns whether the DNS Should be stored
+    // or reverted back
+    boolean HandleDNSDialog () {
+	boolean dialog_ret = true;
+
+	symbol ret = nil;
+	while (true) {
+	    map event = UI::WaitForEvent();
+	    ret = (symbol) event["ID"]:nil;
+	    
+	    // Timeout
+	    if (ret == `timeout) {
+		continue;
+
+	    // [ OK ] or [ Next ]
+	    } else if (ret == `ok || ret == `next) {
+		dialog_ret = true;
+		break;
+
+	    // Adding new record
+	    } else if (ret == `add) {
+		if (AddDNSDialog()) RedrawRRsTable();
+		continue;
+
+	    } else if (ret == `delete) {
+		DeleteDNSDialog();
+		continue;
+
+	    // [ Cancel ] or [ Back ]
+	    } else if (ret == `cancel || ret == `back) {
+		if (! GetModified()) {
+		    dialog_ret = true;
+		    break;
+		}
+		
+		// TRANSLATORS: popup question - canceling dns sync. with dhcp
+		if (Popup::YesNo(_("All changes made in DNS Server will be lost.
+
+Are you sure you want to cancel this operation?"))) {
+		    // Changes currently made will be reverted
+		    y2milestone("Cancel... Recent changes in DNS will be reverted");
+		    dialog_ret = false;
+		    break;
+		} else {
+		    continue;
+		}
+
+	    // Adding DHCP Range
+	    } else if (ret == `add_range) {
+		if (AddDNSRangeDialog()) RedrawRRsTable();
+		continue;
+
+	    // Checking the zone and reporting result
+	    } else if (ret == `check_zone) {
+		CheckDNSZone();
+	    
+	    // Removing all A records with IPs that match the current range
+	    } else if (ret == `remove_range) {
+		if (RemoveDNSRangeDialog()) RedrawRRsTable();
+
+	    // Running a Wizard Sequence (Editing zone from scratch)
+	    } else if (ret == `run_wizard) {
+		if (RunDNSWizardFromScratch()) RedrawRRsTable();
+
+	    // the rest
+	    } else {
+		y2error("Unknown input: %1", ret);
+		continue;
+	    }
+	}
+	
+	return dialog_ret;
+    }
+
+    term DNSServerDialogContents () {
+	return `VBox (
+	    `HBox (
+		`TextEntry(`id("current_zone"),    _("&Domain")),
+		`TextEntry(`id("current_network"), _("&Network")),
+		`TextEntry(`id("current_netmask"), _("Net&mask"))
+	    ),
+	    `HBox (
+		`HWeight(1, `TextEntry(`id("info_min_ip"), _("&First IP Address"))),
+		`HWeight(1, `TextEntry(`id("info_max_ip"), _("&Last IP Address"))),
+		`HWeight(1, `Empty())
+	    ),
+	    `Table (
+		`id("zone_table"),
+		`header (
+		    // TRANSLATORS: table header item
+		    _("Hostname"),
+		    // TRANSLATORS: table header item
+		    _("Assigned IP")
+		),
+		[]
+	    ),
+	    `HBox (
+		`PushButton(`id (`add), _("&Add...")),
+		`HSpacing(1),
+		`PushButton(`id (`delete), Label::DeleteButton()),
+		`HSpacing(1),
+		`MenuButton(
+		    `id ("dns_menu"),
+		    _("&Special Tasks"), [
+			`item (`id (`add_range),    _("Add DNS Records for DHCP Range")),
+			`item (`id (`remove_range), _("Remove DNS Records for Range")),
+			`item (`id (`run_wizard),   _("Run Wizard to Rewrite the DNS Zone from Scratch")),
+			`item (`id (`check_zone),   _("Check Zone"))
+		    ]
+		)
+	    )
+	);
+    }
+
+    // Init DNS / DHCP Dialog
+    void InitDNSServerConfiguration (map <string, string> current_settings) {
+	y2milestone("%1", current_settings);
+
+	UI::ChangeWidget(`id("current_zone"),    `Value, current_settings["domain"]:"");
+	UI::ChangeWidget(`id("current_network"), `Value, current_settings["current_network"]:"");
+	UI::ChangeWidget(`id("current_netmask"), `Value, current_settings["netmask"]:"");
+	UI::ChangeWidget(`id("info_min_ip"),     `Value, current_settings["from_ip"]:"");
+	UI::ChangeWidget(`id("info_max_ip"),     `Value, current_settings["to_ip"]:"");
+
+	UI::ChangeWidget(`id("current_zone"),    `Enabled, false);
+	UI::ChangeWidget(`id("current_network"), `Enabled, false);
+	UI::ChangeWidget(`id("current_netmask"), `Enabled, false);
+	UI::ChangeWidget(`id("info_min_ip"),     `Enabled, false);
+	UI::ChangeWidget(`id("info_max_ip"),     `Enabled, false);
+    }
+
+    // Checks whether the current zone is maintained by the DNS Server (master)
+    // Initializes zone records and lists them in the table
+    //
+    boolean InitZoneRecords (string zone_name) {
+	map <string, map<string, string> > all_zones = DnsServerAPI::GetZones();
+
+	if (all_zones[zone_name]:nil == nil) {
+	    y2error ("Zone %1 is not maintained by this DNS Server, cannot edit...", zone_name);
+
+	    return false;
+	}
+
+	if (all_zones["zone_name","type"]:"master" != "master") {
+	    y2error("Zone %1 is type %2", zone_name, all_zones["zone_name","type"]:nil);
+
+	    return false;
+	}
+	
+	y2milestone("Zone '%1' editable, initializing...", zone_name);
+	RedrawRRsTable();
+	
+	return true;
+    }
+
+    // Manages the synchronization with DNS Server
+    boolean ManageDNSServer (map <string, string> param_current_settings) {
+	// init the internal variable
+	current_settings = param_current_settings;
+    
+	string caption = _("DHCP Server: Synchronization with DNS Server");
+    
+	Wizard::CreateDialog();
+	Wizard::HideAbortButton();
+
+	Wizard::SetContentsButtons (
+	    caption, DNSServerDialogContents(),
+	    _("FIXME: help text"),
+	    Label::CancelButton(), Label::OKButton()
+	);
+	Wizard::SetDesktopIcon("dhcp-server");
+
+	InitDNSServerConfiguration(current_settings);
+	
+	if (InitZoneRecords(current_settings["domain"]:"")) {
+	    // Save the current DNS configuration before editing
+	    map saved_conf = DnsServer::Export();
+
+	    if (! HandleDNSDialog()) {
+		y2milestone("Reverting changes made in DNS Server by DHCP Server");
+		DnsServer::Import(saved_conf);
+	    }
+	} else {
+	    y2milestone("Unable to continue, returning back from DNS Dialog...");
+	}
+	
+	Wizard::CloseDialog();
+	return true;
+    }
+
+    // <-- Edit Zone
+
+// EOF
+}
