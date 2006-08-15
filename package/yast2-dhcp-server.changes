@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Tue Aug 15 16:49:16 CEST 2006 - locilka@suse.cz
+
+- Adding more functionality into the Sync-with-DNS wizard.
+
+-------------------------------------------------------------------
 Fri Aug 11 11:57:09 CEST 2006 - locilka@suse.cz
 
 - Added initial version of Sync-with-DNS support.

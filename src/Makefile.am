@@ -21,6 +21,7 @@ ynclude_DATA =			\
 	commandline.ycp		\
 	misc.ycp		\
 	dns-server-wizard.ycp	\
+	dns-server-dialogs.ycp	\
 	dns-server-management.ycp
 
 desktop_DATA =                  \
