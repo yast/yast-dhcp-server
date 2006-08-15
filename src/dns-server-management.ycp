@@ -22,6 +22,9 @@
     import "Confirm";
     import "IP";
     import "Hostname";
+    
+    include "dhcp-server/helps.ycp";
+    include "dhcp-server/dns-server-dialogs.ycp";
 
     boolean modified = false;
     
@@ -70,90 +73,6 @@
 	}
 	
 	return absolute_name;
-    }
-
-    boolean IPisInRangeOfIPs (string & ipv4, string & first_ip, string & last_ip) {
-	// Checking delta between first_ip and last_ip
-	list <integer> ipv4_list = maplist (string ip_part, splitstring(ipv4, "."), {
-	    return tointeger(ip_part);
-	});
-	list <integer> first_ip_list = maplist (string ip_part, splitstring(first_ip, "."), {
-	    return tointeger(ip_part);
-	});
-	list <integer> last_ip_list = maplist (string ip_part, splitstring(last_ip, "."), {
-	    return tointeger(ip_part);
-	});
-	
-	// Computing deltas
-	// 195(.168.0.1) - 192(.11.0.58) => 3
-	integer address_1_1 = (ipv4_list[0]:0 - first_ip_list[0]:0);
-	integer address_1_2 = (ipv4_list[1]:0 - first_ip_list[1]:0);
-	integer address_1_3 = (ipv4_list[2]:0 - first_ip_list[2]:0);
-	integer address_1_4 = (ipv4_list[3]:0 - first_ip_list[3]:0);
-
-	integer address_2_1 = (last_ip_list[0]:0 - ipv4_list[0]:0);
-	integer address_2_2 = (last_ip_list[1]:0 - ipv4_list[1]:0);
-	integer address_2_3 = (last_ip_list[2]:0 - ipv4_list[2]:0);
-	integer address_2_4 = (last_ip_list[3]:0 - ipv4_list[3]:0);
-		
-	boolean range_status = nil;
-
-	// Firstly, checking the IPv4 and the first address in the range
-	// IPv4 must be bigger or equal to it
-	if (ipv4 == first_ip) {
-	    range_status = true;
-
-	// first chunk is either smaller or bigger than zero
-	} else if (address_1_1 < 0 || address_1_1 > 0) {
-	    // bigger means that the IP range is correct
-	    range_status = (address_1_1 > 0);
-
-	// if they are equal, check the very next chunk...
-	} else if (address_1_2 < 0 || address_1_2 > 0) {
-	    range_status = (address_1_2 > 0);
-
-	} else if (address_1_3 < 0 || address_1_3 > 0) {
-	    range_status = (address_1_3 > 0);
-
-	} else if (address_1_4 < 0 || address_1_4 > 0) {
-	    range_status = (address_1_4 > 0);
-
-	// what else?
-	} else {
-	    y2error("Unknown match IP: %1 First: %2", ipv4_list, first_ip_list);
-	    range_status = false;
-	}
-	
-	// First checking didn't match
-	if (! range_status) return false;
-
-	// Secondly, checking the IPv4 and the last address in the range
-	// IPv4 must be smaller or equal to it
-	if (ipv4 == last_ip) {
-	    range_status = true;
-
-	// first chunk is either smaller or bigger than zero
-	} else if (address_2_1 < 0 || address_2_1 > 0) {
-	    // bigger means that the IP range is correct
-	    range_status = (address_2_1 > 0);
-
-	// if they are equal, check the very next chunk...
-	} else if (address_2_2 < 0 || address_2_2 > 0) {
-	    range_status = (address_2_2 > 0);
-
-	} else if (address_2_3 < 0 || address_2_3 > 0) {
-	    range_status = (address_2_3 > 0);
-
-	} else if (address_2_4 < 0 || address_2_4 > 0) {
-	    range_status = (address_2_4 > 0);
-
-	// what else?
-	} else {
-	    y2error("Unknown match IP: %1 Last: %2", ipv4_list, last_ip_list);
-	    range_status = false;
-	}
-	
-	return range_status;
     }
 
     // <-- Helper Functions
@@ -402,136 +321,10 @@
 	UI::CloseDialog();
 	return func_ret;
     }
-    
-
-    
-    boolean CheckDNSRange (string first_ip, string last_ip) {
-	// range in binary form
-	string first_ip_bin = IP::IPv4ToBits(first_ip);
-	string last_ip_bin  = IP::IPv4ToBits(last_ip);
-	
-	// they have to be defined
-	if (first_ip_bin == nil || last_ip_bin == nil) {
-	    Report::Error(sformat(
-		_("Internal error\nCannot create IP range from %1 and %2"),
-		first_ip, last_ip
-	    ));
-	    return false;
-	}
-	
-	// network mask in binary form
-	integer bits = tointeger(current_settings["netmask_bits"]:nil);
-	string  network_bits = current_settings["network_binary"]:nil;
-	// first x bits from network in binary form
-	network_bits = substring(network_bits, 0, bits);
-	y2milestone("Network Mask: %1", network_bits);
-	
-	// doest the first IP match the current network?
-	string first_ip_mask = substring(first_ip_bin, 0, bits);
-	// network bits must be the same in both IP and Network
-	if (first_ip_mask != network_bits) {
-	    Report::Error(
-		sformat(_("IP Address %1 does not match\nthe current network %2/%3"),
-		first_ip, current_settings["network"]:"", current_settings["netmask"]:""
-	    ));
-	    UI::SetFocus(`id("first_ip"));
-	    return false;
-	}
-	
-	// does the second IP match the current network?
-	string last_ip_mask  = substring(last_ip_bin, 0, bits);
-	// network bits must be the same in both IP and Network
-	if (last_ip_mask != network_bits) {
-	    Report::Error (
-		sformat(_("IP Address %1 does not match\nthe current network %2/%3"),
-		last_ip, current_settings["network"]:"", current_settings["netmask"]:""
-	    ));
-	    UI::SetFocus(`id("last_ip"));
-	    return false;
-	}
-	
-	// the Address part of IPs
-	first_ip_bin = substring (first_ip_bin, bits);
-	last_ip_bin  = substring (last_ip_bin, bits);
-	y2milestone("First IP: %1", first_ip_bin);
-	y2milestone("Last IP:  %1", last_ip_bin);
-	
-	// the Address part of the DHCP range
-	string fist_ip_dhcp = IP::IPv4ToBits(current_settings["from_ip"]:"");
-	string last_ip_dhcp = IP::IPv4ToBits(current_settings["to_ip"]:"");
-	fist_ip_dhcp = substring(fist_ip_dhcp, bits);
-	last_ip_dhcp = substring(last_ip_dhcp, bits);
-	
-	// isn't the first IP bigger than the last one?
-	if (tointeger(first_ip_bin) > tointeger(last_ip_bin)) {
-	    Report::Error (_("The last IP address must be higher than the first one."));
-	    return false;
-	}
-	
-	// isn't the first IP out of the current DHCP range?
-	if (tointeger(first_ip_bin) < tointeger(fist_ip_dhcp) || tointeger(fist_ip_dhcp) > tointeger(last_ip_dhcp)) {
-	    Report::Error (sformat (
-		_("The IP Address %1 is out of the current\ndynamic DHCP range %2 - %3"),
-		first_ip, current_settings["from_ip"]:"", current_settings["to_ip"]:""
-	    ));
-	    return false;
-	}
-
-	// isn't the last IP out of the current DHCP range?
-	if (tointeger(last_ip_bin) < tointeger(fist_ip_dhcp) || tointeger(last_ip_dhcp) > tointeger(last_ip_dhcp)) {
-	    Report::Error (sformat (
-		_("The IP Address %1 is\nout of the current\ndynamic DHCP range %2 - %3"),
-		last_ip, current_settings["from_ip"]:"", current_settings["to_ip"]:""
-	    ));
-	    return false;
-	}
-	
-	return true;
-    }
 
     boolean AddDNSRangeDialog () {
-	UI::OpenDialog (`VBox (
-	    `MarginBox (1, 1, `Frame (
-		_("Add New DNS Records Range"),
-		`VBox (
-		    `HBox (
-			`HWeight (1, `TextEntry (`id ("current_range_min"), _("Min&imal IP Address"))),
-			`HWeight (1, `TextEntry (`id ("current_range_max"), _("Ma&ximal IP Address")))
-		    ),
-		    `HBox (
-			`HWeight (2, `TextEntry (`id ("hostname_base"), _("&Hostname Base"))),
-			`HWeight (1, `TextEntry (`id ("hostname_start"), _("&Start")))
-		    ),
-		    `HBox (
-			`HWeight (1, `TextEntry (`id ("first_ip"), _("&First IP Address"))),
-			`HWeight (1, `TextEntry (`id ("last_ip"),  _("&Last IP Address")))
-		    )
-		)
-	    )),
-	    `HBox (
-		`PushButton (`id(`ok), Label::OKButton()),
-		`HSpacing (1),
-		`PushButton (`id(`cancel), Label::CancelButton())
-	    )
-	));
-	
-	UI::ChangeWidget (`id("current_range_min"), `Value, current_settings["from_ip"]:"");
-	UI::ChangeWidget (`id("current_range_max"), `Value, current_settings["to_ip"]:"");
-	
-	// FIXME: default
-	UI::ChangeWidget (`id("hostname_base"),  `Value, "dhcp-%i");
-	UI::ChangeWidget (`id("hostname_start"), `Value, "0");
-	
-	UI::ChangeWidget (`id("current_range_min"), `Enabled, false);
-	UI::ChangeWidget (`id("current_range_max"), `Enabled, false);
-
-	UI::ChangeWidget (`id ("first_ip"),       `ValidChars, IP::ValidChars4);
-	UI::ChangeWidget (`id ("last_ip"),        `ValidChars, IP::ValidChars4);
-	UI::ChangeWidget (`id ("hostname_start"), `ValidChars, "0123456789");
-	
-	// Predefining possible values
-	UI::ChangeWidget (`id ("first_ip"), `Value, current_settings["from_ip"]:"");
-	UI::ChangeWidget (`id ("last_ip"),  `Value, current_settings["to_ip"]:"");
+	// from shared dialogs
+	CreateUI_DNSRangeDialog (current_settings["from_ip"]:"", current_settings["to_ip"]:"");
 	
 	boolean func_ret = false;
 	any ret = nil;
@@ -539,60 +332,22 @@
 	    ret = UI::UserInput();
 	    
 	    if (ret == `ok) {
-		string hostname_base = (string) UI::QueryWidget (`id("hostname_base"), `Value);
-		hostname_base = hostname_base;
-		y2milestone("Entered hostname base: %1", hostname_base);
+		map <string, any> validated = ValidateAddDNSRangeDialog (current_settings);
 
-		string hostname_base_check = hostname_base;
-		if (hostname_base_check != "" && hostname_base_check != nil) {
-		    // integer listed
-		    if (regexpmatch(hostname_base_check, "%i")) {
-			hostname_base_check = regexpsub(hostname_base_check, "^(.*)%i(.*)", "\\10\\2");
-		    // other integer listed
-		    } else if (regexpmatch(hostname_base_check, "%d")) {
-			hostname_base_check = regexpsub(hostname_base_check, "^(.*)%d(.*)", "\\10\\2");
-		    // add something
-		    } else {
-			hostname_base_check = hostname_base_check + "0";
-		    }
-		    
-		    hostname_base_check = DnsServerPunycode::EncodeDomainName(hostname_base_check);
-		}
-		y2milestone("Checking hostname base: %1", hostname_base_check);
-		
-		// Checking the hostname base
-		if (hostname_base_check == "" || hostname_base_check == nil || ! Hostname::Check(hostname_base_check)) {
-		    UI::SetFocus(`id ("hostname_base"));
-		    Report::Error(_("Invalid hostname.") + "\n\n" + Hostname::ValidHost());
-		    continue;
-		}
+		if (validated == nil) continue;
 
-		string first_ip = (string) UI::QueryWidget (`id("first_ip"), `Value);
-		if (! IP::Check4(first_ip)) {
-		    UI::SetFocus(`id("first_ip"));
-		    Report::Error(_("Invalid IP address.") + "\n\n" + IP::Valid4());
-		    continue;
-		}
-
-		string last_ip = (string) UI::QueryWidget (`id("last_ip"), `Value);
-		if (! IP::Check4(last_ip)) {
-		    UI::SetFocus(`id("last_ip"));
-		    Report::Error(_("Invalid IP address.") + "\n\n" + IP::Valid4());
-		    continue;
-		}
-
-		string hostname_start_s = (string) UI::QueryWidget (`id("hostname_start"), `Value);
-		integer hostname_start = 0;
-		if (regexpmatch(hostname_start_s, "^[0123456789]+$")) {
-		    hostname_start = tointeger(hostname_start_s);
-		}
-		
-		if (! CheckDNSRange(first_ip, last_ip)) continue;
-		
 		UI::OpenDialog(`Label(
-		    sformat(_("Adding DHCP range %1 - %2 into DNS server..."), first_ip, last_ip)
+		    sformat(
+			_("Adding DHCP range %1 - %2 into DNS server..."),
+			validated["first_ip"]:"", validated["last_ip"]:""
+		)
 		));
-		func_ret = AddDNSRangeWorker(hostname_base, hostname_start, first_ip, last_ip);
+		func_ret = AddDNSRangeWorker (
+		    (string)  validated["hostname_base"]:"",
+		    (integer) validated["hostname_start"]:0,
+		    (string)  validated["first_ip"]:"",
+		    (string)  validated["last_ip"]:""
+		);
 		UI::CloseDialog();
 		
 		break;
