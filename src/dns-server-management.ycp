@@ -137,82 +137,6 @@
 	return (removed > 0);
     }
     
-    boolean AddDNSRangeWorker (string hostname_base, integer hostname_start, string first_ip, string last_ip) {
-	if (regexpmatch(hostname_base, "%i")) {
-	    hostname_base = regexpsub(hostname_base, "^(.*)%i(.*)", "\\1%1\\2");
-	} else if (regexpmatch(hostname_base, "%d")) {
-	    hostname_base = regexpsub(hostname_base, "^(.*)%d(.*)", "\\1%1\\2");
-	} else {
-	    hostname_base = hostname_base + "%1";
-	}
-	y2milestone("Hostname base: %1", hostname_base);
-
-	if (hostname_start == nil) hostname_start = 0;
-
-	list <integer> first_ip_list = maplist (string ip_part, splitstring(first_ip, "."), {
-	    return tointeger(ip_part);
-	});
-	list <integer> last_ip_list = maplist (string ip_part, splitstring(last_ip, "."), {
-	    return tointeger(ip_part);
-	});
-	y2milestone("Creating range: %1 - %2", first_ip, last_ip);
-
-	// list of hostnames for next punycode translation
-	list <string> hostnames = [];
-	// list of IPs matching these hostnames (by index)
-	list <string> ips       = [];
-
-	integer hostname_counter = hostname_start - 1;
-	integer index_counter    = -1;
-	
-	// Generating hostnames and IPs
-	while (first_ip_list[0]:1 <= last_ip_list[0]:0) {
-	    while (first_ip_list[1]:1 <= last_ip_list[1]:0) {
-		while (first_ip_list[2]:1 <= last_ip_list[2]:0) {
-		    while (first_ip_list[3]:1 <= last_ip_list[3]:0) {
-			hostname_counter = hostname_counter + 1;
-			index_counter    = index_counter    + 1;
-			
-			hostnames[index_counter] = sformat (hostname_base, hostname_counter);
-			ips[index_counter]       = sformat (
-						    "%1.%2.%3.%4",
-							first_ip_list[0]:0,
-							first_ip_list[1]:0,
-							first_ip_list[2]:0,
-							first_ip_list[3]:0
-						    );
-
-			first_ip_list[3] = first_ip_list[3]:0 + 1;
-		    }
-		    first_ip_list[2] = first_ip_list[2]:0 + 1;
-		    first_ip_list[3] = 0;
-		}
-		first_ip_list[1] = first_ip_list[1]:0 + 1;
-		first_ip_list[2] = 0;
-	    }
-	    first_ip_list[1] = 0;
-	    first_ip_list[0] = first_ip_list[0]:0 + 1;
-	}
-
-	// Writing records into the DNS Server
-	if (hostname_counter > 0) {
-	    hostnames = DnsServerPunycode::EncodePunycodes(hostnames);
-
-	    index_counter = -1;	    
-	    foreach (string one_hostname, hostnames, {
-		index_counter = index_counter + 1;
-		
-		DnsServerAPI::AddZoneRR (
-		    current_settings["domain"]:"", "A", one_hostname, ips[index_counter]:""
-		);
-	    });
-	    
-	    SetModified();
-	}
-
-	return true;
-    }
-
     // <-- Add / Delete - DNS Functions
 
     // --> Edit Zone
@@ -324,7 +248,7 @@
 
     boolean AddDNSRangeDialog () {
 	// from shared dialogs
-	CreateUI_DNSRangeDialog (current_settings["from_ip"]:"", current_settings["to_ip"]:"");
+	CreateUI_DNSRangeDialog (current_settings["from_ip"]:"", current_settings["to_ip"]:"", $[]);
 	
 	boolean func_ret = false;
 	any ret = nil;
@@ -343,11 +267,15 @@
 		)
 		));
 		func_ret = AddDNSRangeWorker (
+		    (string)  current_settings["domain"]:"",
+		    (string)  current_settings["domain"]:"",
+		    "A", // adding 'A' records
 		    (string)  validated["hostname_base"]:"",
-		    (integer) validated["hostname_start"]:0,
+		    (integer) validated["hostname_start"]:1,
 		    (string)  validated["first_ip"]:"",
 		    (string)  validated["last_ip"]:""
 		);
+		SetModified();
 		UI::CloseDialog();
 		
 		break;

@@ -25,16 +25,322 @@
     include "dhcp-server/helps.ycp";
     include "dhcp-server/dns-server-dialogs.ycp";
 
+    /* ********************************************************************* */
+
     // --> Internal Variables
     
     map <string, string> current_dhcp_settings = $[];
 
     map <string, any> create_new_zone = $[];
 
-    // used for editing current nameservers
+    // used for editing or removing current nameservers
     map <string, list <string> > translated_nameservers = $[];
     
+    // used for editing or removing current ranges
+    list <map <string, any> > used_ranges = [];
+    
     // <-- Internal Variables
+
+    /* ********************************************************************* */
+
+    // --> Helper functions
+
+    boolean IsDNSZoneMaintained (string zone_name) {
+	if (zone_name == nil) {
+	    y2error("Undefined zone name");
+	    return nil;
+	}
+
+	map <string, map <string, string> > all_zones = DnsServerAPI::GetZones();
+
+	boolean ret = false;
+	foreach (string one_zone_name, map <string, string> one_zone, all_zones, {
+	    if (one_zone_name == zone_name) {
+		ret = true;
+		break;
+	    }
+	});
+
+	return ret;
+    }
+
+    void Wizard_StoreNewZoneDialog () {
+	// sets whether the reverse zone will be created too
+	create_new_zone["create_reverse_zone"] = (boolean) UI::QueryWidget(`id(`create_also_reverse_zone), `Value);
+    }
+    
+    boolean Wizard_DeleteNSDialog () {
+	string row_id = (string) UI::QueryWidget (`id("name_servers"), `CurrentItem);
+	    
+	string selected_ns = translated_nameservers[row_id, 1]:"";
+	string selected_ip = translated_nameservers[row_id, 2]:"";
+
+	create_new_zone["name_servers"] = filter (
+	    list <string> one,
+	    create_new_zone["name_servers"]:[],
+	{
+	    return (one[0]:"" != selected_ns || one[1]:"" != selected_ip);
+	});
+	
+	return true;
+    }
+    
+    boolean Wizard_DeleteResourceRecordsDialogDialog () {
+	integer row_id = (integer) UI::QueryWidget (`id("dhcp_records"), `CurrentItem);
+	map <string, any> filter_range = used_ranges[row_id]:$[];
+	
+	create_new_zone["ranges"] = filter (
+	    map <string, any> one,
+	    create_new_zone["ranges"]:[],
+	{
+	    return (
+		one["base"]:"" != filter_range["base"]:"" ||
+		one["start"]:1 != filter_range["start"]:1 ||
+		one["from"]:"" != filter_range["from"]:"" ||
+		one["to"]:""   != filter_range["to"]:""
+	    );
+	});
+	
+	return true;
+    }
+
+    boolean Wizard_AddEditNSDialog (boolean edit_current_ns) {
+	string caption = _("&Add New Name Server");
+	string selected_ns = "";
+	string selected_ip = "";
+
+	if (edit_current_ns) {
+	    caption = _("&Edit Name Server");
+	    string row_id = (string) UI::QueryWidget (`id("name_servers"), `CurrentItem);
+	    
+	    selected_ns = translated_nameservers[row_id, 0]:"";
+	    selected_ip = translated_nameservers[row_id, 1]:"";
+	}
+	
+	UI::OpenDialog (
+	    `VBox (
+		`TextEntry (`id("nameserver"), caption,         selected_ns),
+		`TextEntry (`id("ip"),         _("Server &IP"), selected_ip),
+		`VSpacing (1),
+		`HBox (
+		    `PushButton (`id(`ok),     Label::OKButton()),
+		    `PushButton (`id(`cancel), Label::CancelButton())
+		)
+	    )
+	);
+	UI::ChangeWidget (`id("ip"), `ValidChars, IP::ValidChars4);
+	
+	boolean ret_val = false;
+	any ret = nil;
+	while (true) {
+	    ret = UI::UserInput();
+
+	    if (ret == `cancel) {
+		ret_val = false;
+		break;
+	    } else if (ret == `ok) {
+		// new values
+		string new_selected_ns = (string) UI::QueryWidget (`id("nameserver"), `Value);
+		string new_selected_ip = (string) UI::QueryWidget (`id("ip"),         `Value);
+		
+		if (new_selected_ns != "") {
+		    new_selected_ns = DnsServerPunycode::EncodeDomainName(new_selected_ns);
+		}
+
+		string hostname_check = new_selected_ns;
+		if (regexpmatch(hostname_check, "\.$")) {
+		    hostname_check = regexpsub (hostname_check, "(.*)\.$", "\\1");
+		}
+
+		if (!Hostname::CheckDomain(hostname_check)) {
+		    UI::SetFocus (`id("nameserver"));
+		    Report::Error("Invalid hostname." + "\n\n" + Hostname::ValidDomain());
+		    continue;
+		}
+
+		// not a final dot
+		if (! regexpmatch (new_selected_ns, "\\.$")) {
+		    // absolute name, add a dot
+		    if (regexpmatch(new_selected_ns, "\\.")) {
+			new_selected_ns = new_selected_ns + ".";
+		    // relative name, add a domain name
+		    } else {
+			new_selected_ns = new_selected_ns + "." + current_dhcp_settings["domain"]:"" + ".";
+		    }
+		}
+
+		// IP is only optional
+		if (new_selected_ip != "" && !IP::Check4(new_selected_ip)) {
+		    UI::SetFocus (`id("ip"));
+		    Report::Error ("Invalid IP address." + "\n\n" + IP::Valid4());
+		    continue;
+		}
+		
+		// IP is optional when the server is external
+		if (
+		    new_selected_ip == "" &&
+		    regexpmatch (new_selected_ns, "\." + current_dhcp_settings["domain"]:"" + "\.$")
+		) {
+		    UI::SetFocus (`id("ip"));
+		    if (! Popup::YesNo(_("No IP address provided for a Name Server in the current DNS Zone.
+This might not work because every Name Server needs its name and IP defined
+somewhere and the current zone is the only place where it can be.
+
+Are you sure you want to use the current settins?"))) continue;
+		}
+
+		// in case of `edit
+		create_new_zone["name_servers"] = filter (
+		    list <string> one,
+		    create_new_zone["name_servers"]:[],
+		{
+		    return (one[0]:"" != selected_ns || one[1]:"" != selected_ip);
+		});
+		
+		// FIXME: check if already exists
+		create_new_zone["name_servers"] = add (create_new_zone["name_servers"]:[],
+		    [new_selected_ns, new_selected_ip]
+		);
+		
+		ret_val = true;
+	    
+		break;
+	    }
+	}
+	
+	UI::CloseDialog();
+
+	return ret_val;
+    }
+    
+    boolean CheckRangeAgainsAllRanges (map <string, any> & new_range, list <map <string, any> > all_ranges) {
+	boolean ret = true;
+
+	string new_range_from = new_range["from"]:"";
+	string new_range_to   = new_range["to"]:"";
+	
+	if (new_range_from == "" || new_range_to == "") {
+	    y2error("Wrong definition of new range: %1", new_range);
+	    return false;
+	}
+
+	// $[ "base":"dhcp-%i", "from":"192.168.10.1", "start":1, "to":"192.168.10.254" ]
+	foreach (map <string, any> one_range, all_ranges, {
+	    string range_from = one_range["from"]:"";
+	    string range_to   = one_range["to"]:"";
+	
+	    if (
+		IPisInRangeOfIPs (new_range_from, range_from, range_to) ||
+		IPisInRangeOfIPs (new_range_to,   range_from, range_to)
+	    ) {
+		if (Popup::YesNo (sformat (
+		    _("This new range of DNS entries is already covered by
+another one (%1 - %2).
+
+Do you really want to use the new one?"),
+		    one_range["from"]:"",
+		    one_range["to"]:""
+		))) {
+		    ret = true;
+		    break;
+		} else {
+		    ret = false;
+		    break;
+		}
+	    }
+	});
+
+	return ret;
+    }
+
+    boolean Wizard_AddEditResourceRecordsDialog (boolean edit_current_rr) {
+	string caption = _("&Add New Name Server");
+
+	map <string, any> old_range = $[];
+
+	if (edit_current_rr) {
+	    integer row_id = (integer) UI::QueryWidget (`id("dhcp_records"), `CurrentItem);
+	    
+	    old_range = used_ranges[row_id]:$[];
+	}
+
+	// opens a dialog
+	CreateUI_DNSRangeDialog (
+	    current_dhcp_settings["from_ip"]:"",
+	    current_dhcp_settings["to_ip"]:"",
+	    old_range
+	);
+	
+	boolean func_ret = false;
+	symbol ret = nil;
+	while (true) {
+	    ret = (symbol) UI::UserInput();
+	    
+	    if (ret == `cancel) {
+		func_ret = false;
+		break;
+	    } else if (ret == `ok) {
+		map <string, any> validated = ValidateAddDNSRangeDialog (current_dhcp_settings);
+		if (validated == nil) continue;
+
+		// map with new range
+		map <string, any> new_range = $[
+		    "base"  : validated["hostname_base"]:"",
+		    "start" : validated["hostname_start"]:1,
+		    "from"  : validated["first_ip"]:"",
+		    "to"    : validated["last_ip"]:"",
+		];
+
+		// filter out old range (in case of edit)
+		if (old_range != $[]) {
+		    create_new_zone["ranges"] = filter (map <string, any> one, create_new_zone["ranges"]:[], {
+			return (
+			    one["base"]:"" != old_range["base"]:nil  ||
+			    one["start"]:1 != old_range["start"]:nil ||
+			    one["from"]:"" != old_range["from"]:nil  ||
+			    one["to"]:""   != old_range["to"]:nil
+			);
+		    });
+		}
+		
+		// Checks whether a new range doesn't conflict with another one
+		if (! CheckRangeAgainsAllRanges (
+		    new_range,
+		    (list <map <string, any> >) create_new_zone["ranges"]:[]
+		)) {
+		    // cancelled, add the filtered-out range again
+		    create_new_zone["ranges"] = add (create_new_zone["ranges"]:[], old_range);
+		    continue;
+		}
+		
+		// Adding new range definition
+		create_new_zone["ranges"] = add (create_new_zone["ranges"]:[], new_range);
+	    
+		func_ret = true;
+		break;
+	    }
+	}
+	
+	UI::CloseDialog();
+	
+	return func_ret;
+    }
+    
+    boolean CheckNumberOfNameServers () {
+	if (size(create_new_zone["name_servers"]:[]) == 0) {
+	    Report::Error (
+		_("At least one Name Server must be defined.")
+	    );
+	
+	    return false;
+	}
+	
+	return true;
+    }
+
+    // <-- Helper functions
+
+    /* ********************************************************************* */
 
     // --> Definition of Dialogs
 
@@ -161,9 +467,31 @@
 	    contents,
 	    "FIXME: help",
 	    Label::BackButton(),
-	    Label::AcceptButton()
+	    Label::NextButton()
 	);
     }
+    
+    void Wizard_CreateNewZoneSummaryDialog () {
+	string caption = _("DHCP Server: DNS Records - Summary");
+	
+	term contents = `VBox (
+	    `RichText (`id ("summary"), "")
+	);
+	
+	Wizard::SetContentsButtons (
+	    caption,
+	    contents,
+	    "FIXME: help",
+	    Label::BackButton(),
+	    Label::AcceptButton()
+	);	
+    }
+
+    // <-- Definition of Dialogs
+
+    /* ********************************************************************* */
+
+    // Init Dialog Functions -->
     
     void Wizard_InitNewZoneDialog_ReverseZone () {
 	// reverse zone is selected to be created
@@ -278,10 +606,17 @@
 	counter = -1;
 	list <term> items = maplist (map <string, any> one_range, create_new_zone["ranges"]:[], {
 	    counter = counter + 1;
+	    
+	    used_ranges[counter] = $[
+		"base"  : one_range["base"]:"",
+		"start" : one_range["start"]:1,
+		"from"  : one_range["from"]:"",
+		"to"    : one_range["to"]:"",
+	    ];
 	    return `item (
 		`id (counter),
 		basenames[counter]:"",
-		one_range["start"]:0,
+		one_range["start"]:1,
 		one_range["from"]:"",
 		one_range["to"]:""
 	    );
@@ -289,244 +624,69 @@
 	
 	items = sort (term x, term y, items, ``(x[3]:"" < y[3]:""));
 	UI::ChangeWidget (`id ("dhcp_records"), `Items, items);
-    }
-
-    void Wizard_StoreNewZoneDialog () {
-	// sets whether the reverse zone will be created too
-	create_new_zone["create_reverse_zone"] = (boolean) UI::QueryWidget(`id(`create_also_reverse_zone), `Value);
-    }
-    
-    boolean Wizard_DeleteNSDialog () {
-	string row_id = (string) UI::QueryWidget (`id("name_servers"), `CurrentItem);
-	    
-	string selected_ns = translated_nameservers[row_id, 1]:"";
-	string selected_ip = translated_nameservers[row_id, 2]:"";
-
-	create_new_zone["name_servers"] = filter (
-	    list <string> one,
-	    create_new_zone["name_servers"]:[],
-	{
-	    return (one[0]:"" != selected_ns || one[1]:"" != selected_ip);
-	});
 	
-	return true;
-    }
-    
-    boolean Wizard_AddEditNSDialog (boolean edit_current_ns) {
-	string caption = _("&Add New Name Server");
-	string selected_ns = "";
-	string selected_ip = "";
-
-	if (edit_current_ns) {
-	    caption = _("&Edit Name Server");
-	    string row_id = (string) UI::QueryWidget (`id("name_servers"), `CurrentItem);
-	    
-	    selected_ns = translated_nameservers[row_id, 0]:"";
-	    selected_ip = translated_nameservers[row_id, 1]:"";
+	if (counter > -1) {
+	    UI::ChangeWidget( `id(`edit_dhcp),   `Enabled, true);
+	    UI::ChangeWidget( `id(`delete_dhcp), `Enabled, true);
+	} else {
+	    UI::ChangeWidget( `id(`edit_dhcp),   `Enabled, false);
+	    UI::ChangeWidget( `id(`delete_dhcp), `Enabled, false);
 	}
+    }
+
+    void Wizard_InitNewZoneSummaryDialog () {
+	string summary = "";
 	
-	UI::OpenDialog (
-	    `VBox (
-		`TextEntry (`id("nameserver"), caption,         selected_ns),
-		`TextEntry (`id("ip"),         _("Server &IP"), selected_ip),
-		`VSpacing (1),
-		`HBox (
-		    `PushButton (`id(`ok),     Label::OKButton()),
-		    `PushButton (`id(`cancel), Label::CancelButton())
-		)
-	    )
+	// zone name
+	summary = summary + "<p>" + sformat (
+	    _("<b>Zone Name:</b> %1"), current_dhcp_settings["domain"]:""
 	);
-	UI::ChangeWidget (`id("ip"), `ValidChars, IP::ValidChars4);
-	
-	boolean ret_val = false;
-	any ret = nil;
-	while (true) {
-	    ret = UI::UserInput();
 
-	    if (ret == `cancel) {
-		ret_val = false;
-		break;
-	    } else if (ret == `ok) {
-		// new values
-		string new_selected_ns = (string) UI::QueryWidget (`id("nameserver"), `Value);
-		string new_selected_ip = (string) UI::QueryWidget (`id("ip"),         `Value);
-		
-		if (new_selected_ns != "") {
-		    new_selected_ns = DnsServerPunycode::EncodeDomainName(new_selected_ns);
-		}
+	if (IsDNSZoneMaintained(current_dhcp_settings["domain"]:nil))
+	    summary = summary + " " + _("(Current zone will be replaced by the new one)");
 
-		string hostname_check = new_selected_ns;
-		if (regexpmatch(hostname_check, "\.$")) {
-		    hostname_check = regexpsub (hostname_check, "(.*)\.$", "\\1");
-		}
+	summary = summary + "</p>\n";
 
-		if (!Hostname::CheckDomain(hostname_check)) {
-		    UI::SetFocus (`id("nameserver"));
-		    Report::Error("Invalid hostname." + "\n\n" + Hostname::ValidDomain());
-		    continue;
-		}
-
-		// not a final dot
-		if (! regexpmatch (new_selected_ns, "\\.$")) {
-		    // absolute name, add a dot
-		    if (regexpmatch(new_selected_ns, "\\.")) {
-			new_selected_ns = new_selected_ns + ".";
-		    // relative name, add a domain name
-		    } else {
-			new_selected_ns = new_selected_ns + "." + current_dhcp_settings["domain"]:"" + ".";
-		    }
-		}
-
-		// IP is only optional
-		if (new_selected_ip != "" && !IP::Check4(new_selected_ip)) {
-		    UI::SetFocus (`id("ip"));
-		    Report::Error("Invalid IP address." + "\n\n" + IP::Valid4());
-		    continue;
-		}
-		
-		// IP is optional when the server is external
-		if (
-		    new_selected_ip == "" &&
-		    regexpmatch(new_selected_ns, "\." + current_dhcp_settings["domain"]:"" + "\.$")
-		) {
-		    UI::SetFocus (`id("ip"));
-		    if (! Popup::YesNo(_("No IP address provided for a Name Server in the current DNS Zone.
-This might not work because every Name Server needs its name and IP defined
-somewhere and the current zone is the only place where it can be.
-
-Are you sure you want to use the current settins?"))) continue;
-		}
-
-		// in case of `edit
-		create_new_zone["name_servers"] = filter (
-		    list <string> one,
-		    create_new_zone["name_servers"]:[],
-		{
-		    return (one[0]:"" != selected_ns || one[1]:"" != selected_ip);
-		});
-		
-		create_new_zone["name_servers"] = add (create_new_zone["name_servers"]:[],
-		    [new_selected_ns, new_selected_ip]
-		);
-		
-		ret_val = true;
-	    
-		break;
-	    }
-	}
-	
-	UI::CloseDialog();
-
-	return ret_val;
-    }
-    
-    boolean CheckRangeAgainsAllRanges (map <string, any> & new_range, list <map <string, any> > all_ranges) {
-	boolean ret = true;
-
-	string new_range_from = new_range["from"]:"";
-	string new_range_to   = new_range["to"]:"";
-	
-	if (new_range_from == "" || new_range_to == "") {
-	    y2error("Wrong definition of new range: %1", new_range);
-	    return false;
-	}
-
-	// $[ "base":"dhcp-%i", "from":"192.168.10.1", "start":0, "to":"192.168.10.254" ]
-	foreach (map <string, any> one_range, all_ranges, {
-	    string range_from = one_range["from"]:"";
-	    string range_to   = one_range["to"]:"";
-	
-	    if (
-		IPisInRangeOfIPs (new_range_from, range_from, range_to) ||
-		IPisInRangeOfIPs (new_range_to,   range_from, range_to)
-	    ) {
-		if (Popup::YesNo (sformat (
-		    _("This new range of DNS entries is already covered by
-another one (%1 - %2).
-
-Do you really want to use the new one?"),
-		    one_range["from"]:"",
-		    one_range["to"]:""
-		))) {
-		    ret = true;
-		    break;
-		} else {
-		    ret = false;
-		    break;
-		}
-	    }
-	});
-
-	return ret;
-    }
-
-    boolean Wizard_AddEditResourceRecordsDialog (boolean edit_current_rr) {
-	string caption = _("&Add New Name Server");
-
-	if (edit_current_rr) {
-	    string row_id = (string) UI::QueryWidget (`id("name_servers"), `CurrentItem);
-	}
-
-	// opens a dialog
-	CreateUI_DNSRangeDialog (
-	    current_dhcp_settings["from_ip"]:"",
-	    current_dhcp_settings["to_ip"]:""
-	);
-	
-	boolean func_ret = false;
-	symbol ret = nil;
-	while (true) {
-	    ret = (symbol) UI::UserInput();
-	    
-	    if (ret == `cancel) {
-		func_ret = false;
-		break;
-	    } else if (ret == `ok) {
-		map <string, any> validated = ValidateAddDNSRangeDialog (current_dhcp_settings);
-		if (validated == nil) continue;
-
-		map <string, any> new_range = $[
-		    "base"  : validated["hostname_base"]:"",
-		    "start" : validated["hostname_start"]:0,
-		    "from"  : validated["first_ip"]:"",
-		    "to"    : validated["last_ip"]:"",
-		];
-		
-		// Checks whether a new range doesn't conflict with another one
-		if (! CheckRangeAgainsAllRanges (
-		    new_range,
-		    (list <map <string, any> >) create_new_zone["ranges"]:[]
-		)) continue;
-		
-		// Adding new range definition
-		create_new_zone["ranges"] = add (
-		    create_new_zone["ranges"]:[],
-		    new_range
-		);
-	    
-		func_ret = true;
-		break;
-	    }
-	}
-	
-	UI::CloseDialog();
-	
-	return func_ret;
-    }
-    
-    boolean CheckNumberOfNameServers () {
-	if (size(create_new_zone["name_servers"]:[]) == 0) {
-	    Report::Error (
-		_("At least one Name Server must be defined.")
+	// reverse zone name
+	if (create_new_zone["create_reverse_zone"]:true) {
+	    summary = summary + "<p>" + sformat (
+		_("<b>Reverse Zone Name:</b> %1"), current_dhcp_settings["reverse_domain"]:""
 	    );
-	
-	    return false;
+
+	    if (IsDNSZoneMaintained(current_dhcp_settings["reverse_domain"]:nil))
+		summary = summary + " " + _("(Current zone will be replaced by the new one)");
+
+	    summary = summary + "</p>\n";
 	}
-	
-	return true;
+
+	// name servers
+	summary = summary + "<p><b>" + _("Zone Name Servers:") + "</b><ul>\n";
+	foreach (list <string> ns, create_new_zone["name_servers"]:[], {
+	    summary = summary + "<li>" + sformat (
+		_("Hostname: %1, IP: %2"),
+		ns[0]:"",
+		(ns[1]:"" == "" ? _("Not defined"):ns[1]:"")
+	    ) + "</li>\n";
+	});
+	summary = summary + "</ul></p>\n";
+
+	// dhcp ranges
+	summary = summary + "<p><b>" + _("Ranges of DNS Hosts:") + "</b><ul>\n";
+	foreach (map <string, any> range, create_new_zone["ranges"]:[], {
+	    summary = summary + "<li>" + sformat (
+		_("Range: %1 - %2<br />Hostname Base: %3, Starting with: %4"),
+		range["from"]:"", range["to"]:"",
+		range["base"]:"", range["start"]:1
+	    ) + "</li>\n";
+	});
+	summary = summary + "</ul></p>\n";
+
+	UI::ChangeWidget (`id ("summary"), `Value, summary);
     }
 
-    // <-- Definition of Dialogs
+    // <-- Init Dialog Functions
+
+    /* ********************************************************************* */
 
     // --> Wizard Dialogs
     
@@ -577,6 +737,9 @@ Do you really want to use the new one?"),
 		y2error("Unexpecetd ret: %1", ret);
 	    }
 	}
+
+	// free the memory
+	translated_nameservers = $[];
 	
 	return (symbol) ret;
     }
@@ -592,15 +755,42 @@ Do you really want to use the new one?"),
 	    y2milestone("Ret: %1", ret);
 	    
 	    if (ret == `next) {
+		if (size (create_new_zone["ranges"]:[]) == 0) {
+		    Report::Error(_("At least one DNS record must be set."));
+		    continue;
+		}
 		break;
 	    } else if (ret == `back) {
 		break;
 	    } else if (ret == `add_dhcp) {
 		if (Wizard_AddEditResourceRecordsDialog(false)) Wizard_InitZoneResourceRecordsDialog();
 	    } else if (ret == `edit_dhcp) {
-		y2milestone ("FIXME: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+		if (Wizard_AddEditResourceRecordsDialog(true)) Wizard_InitZoneResourceRecordsDialog();
 	    } else if (ret == `delete_dhcp) {
-		y2milestone ("FIXME: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+		if (Wizard_DeleteResourceRecordsDialogDialog()) Wizard_InitZoneResourceRecordsDialog();
+	    } else {
+		y2error("Unexpected ret: %1", ret);
+	    }
+	}
+	
+	// free the memory
+	used_ranges = [];
+	
+	return (symbol) ret;
+    }
+
+    symbol Wizard_NewZoneSummaryDialog () {
+	Wizard_CreateNewZoneSummaryDialog ();
+	Wizard_InitNewZoneSummaryDialog ();
+
+	any ret = nil;
+	while (true) {
+	    ret = UI::UserInput();
+
+	    if (ret == `next) {
+		break;
+	    } else if (ret == `back) {
+		break;
 	    } else {
 		y2error("Unexpected ret: %1", ret);
 	    }
@@ -610,6 +800,195 @@ Do you really want to use the new one?"),
     }
     
     // <-- Wizard Dialogs
+
+    /* ********************************************************************* */
+    
+    // --> Creating Zones
+
+    string CreateDNSZonesAndFillThemUp () {
+	string errors = "";
+
+	string zone = current_dhcp_settings["domain"]:"";
+
+	/* Base Zone */
+	// Remove Base zone if exists
+	y2milestone("Creating zone: %1", zone);
+	if (IsDNSZoneMaintained (zone)) {
+	    y2milestone("Removing zone %1", zone);
+	    DnsServerAPI::RemoveZone (zone);
+	    if (IsDNSZoneMaintained (zone)) {
+		errors = errors + sformat (
+		    _("Cannot remove current zone %1."), zone
+		) + "\n";
+		y2error("Cannot remove zone %1", zone);
+
+		return errors;
+	    }
+	}
+
+	// Create Base zone
+	DnsServerAPI::AddZone(zone, "master", $[]);
+	if (! IsDNSZoneMaintained (zone)) {
+		errors = errors + sformat (
+		    _("Cannot create zone %1."), zone
+		) + "\n";
+		y2error("Cannot create zone %1", zone);
+
+		return errors;
+	}
+
+	// Add Name Servers
+	foreach (list <string> one_ns, create_new_zone["name_servers"]:[], {
+	    y2milestone("Adding NS record: %1 into %2", one_ns[0]:"", zone);
+	    DnsServerAPI::AddZoneNameServer (zone, one_ns[0]:"");
+	    if (
+		one_ns[1]:"" != "" &&
+		regexpmatch (one_ns[0]:"", "\." + zone + "\.$")
+	    ) {
+		y2milestone("Adding A record for NS record (%1 -A-> %2)", one_ns[0]:"", one_ns[1]:"");
+		DnsServerAPI::AddZoneRR (zone, "A", one_ns[0]:"", one_ns[1]:"");
+	    }
+	});
+	// Checking added name servers
+	if (size (DnsServerAPI::GetZoneNameServers(zone)) != size (create_new_zone["name_servers"]:[])) {
+	    errors = errors + sformat (_("Cannot add Name Servers into zone %1."), zone) + "\n";
+	    return errors;
+	}
+
+	// Create DHCPrange records
+	boolean some_errors = false;
+	foreach (map <string, any> one_range, create_new_zone["ranges"]:[], {
+	    y2milestone("Creating DNS Range: %1", one_range);
+	    if (! AddDNSRangeWorker (
+		zone,
+		zone,
+		"A", // adding 'A' records
+		one_range["base"]:"",
+		one_range["start"]:1,
+		one_range["from"]:"",
+		one_range["to"]:"")
+	    ) {
+		errors = errors + _("Cannot add zone DNS records.");
+		some_errors = true;
+		break;
+	    }
+	});
+	if (some_errors) return errors;
+
+	// Do not create reverse zone
+	if (! create_new_zone["create_reverse_zone"]:true) return errors;
+
+	string reverse_zone = current_dhcp_settings["reverse_domain"]:"";
+	
+	/* Reverse Zone */
+	// Remove Reverse zone if exists
+	if (IsDNSZoneMaintained (reverse_zone)) {
+	    y2milestone("Removing zone %1", reverse_zone);
+	    DnsServerAPI::RemoveZone (reverse_zone);
+	    if (IsDNSZoneMaintained (reverse_zone)) {
+		errors = errors + sformat (
+		    _("Cannot remove zone current zone %1."), reverse_zone
+		) + "\n";
+		y2error("Cannot remove zone %1", reverse_zone);
+
+		return errors;
+	    }
+	}
+
+	// Create Reverse zone
+	y2milestone("Creating zone: %1", reverse_zone);
+	DnsServerAPI::AddZone(reverse_zone, "master", $[]);
+	if (! IsDNSZoneMaintained (reverse_zone)) {
+		errors = errors + sformat (
+		    _("Cannot create reverse zone %1."), reverse_zone
+		) + "\n";
+		y2error("Cannot create zone %1", reverse_zone);
+
+		return errors;
+	}
+
+	// Add Name Servers
+	foreach (list <string> one_ns, create_new_zone["name_servers"]:[], {
+	    y2milestone("Adding NS record: %1 into %2", one_ns[0]:"", reverse_zone);
+	    DnsServerAPI::AddZoneNameServer (reverse_zone, one_ns[0]:"");
+	    // A records were already added into the Base zone
+	});
+	// Checking added name servers
+	if (size (DnsServerAPI::GetZoneNameServers(reverse_zone)) != size (create_new_zone["name_servers"]:[])) {
+	    errors = errors + sformat (_("Cannot add Name Servers into zone %1."), reverse_zone) + "\n";
+	    return errors;
+	}
+
+	// Create DHCPrange Reverse records
+	foreach (map <string, any> one_range, create_new_zone["ranges"]:[], {
+	    y2milestone("Creating DNS Range: %1", one_range);
+	    if (! AddDNSRangeWorker (
+		reverse_zone,
+		zone,
+		"PTR", // adding 'PTR' records
+		one_range["base"]:"",
+		one_range["start"]:1,
+		one_range["from"]:"",
+		one_range["to"]:"")
+	    ) {
+		errors = errors + _("Cannot add zone DNS records.");
+		some_errors = true;
+		break;
+	    }
+	});
+
+	return errors;
+    }
+
+    symbol Wizard_CreateZoneDialog () {
+	UI::OpenDialog(`Label(_("Creating DNS Zone...")));
+
+	y2milestone("Creating new zone... (backing-up old settings)");
+
+	// backup old settings for now
+	map current_settings = DnsServer::Export();
+	
+	symbol ret = `next;
+	// Creating zones and records
+	string errors = CreateDNSZonesAndFillThemUp();
+
+	UI::CloseDialog();
+
+	// Checking if successful
+	if (errors != "") {
+	    // restore previous settings
+	    UI::OpenDialog (`Label (_("Restoring previous DNS settings...")));
+	    y2milestone("Creation failed, Restoring previous DNS settings...");
+	    DnsServer::Import (current_settings);
+	    current_settings = $[];
+	    UI::CloseDialog();
+
+	    if (Popup::YesNo (sformat (
+		_("There were some errors during DNS zone creation:
+
+%1
+Do you want to return to the Wizard?"), errors
+	    ))) {
+		y2milestone("User decided to run through Wizard again");
+		ret = `wizard_again;
+	    } else {
+		y2milestone("User decided to leave the Wizard");
+		ret = `next;
+	    }
+	} else {
+	    ret = `next;
+	    y2milestone("Creation was successful");
+	    Report::Message (_("The DNS zone was sucessfully created."));
+	}
+	
+	return ret;
+    }
+
+    // <-- Creating Zones
+
+    /* ********************************************************************* */
+
+    // --> Wizard Workflow
 
     symbol RunNewDNSServerWizard (map <string, string> dhcp_settings) {
 	// internal client variable init
@@ -631,7 +1010,9 @@ Do you really want to use the new one?"),
 	map aliases = $[
 	    "new_zone"          : ``( Wizard_NewZoneDialog() ),
 	    "zone_name_servers" : ``( Wizard_ZoneNameServersDialog() ),
-	    "zone_rrs"          : ``( Wizard_ZoneResourceRecordsDialog() )
+	    "zone_rrs"          : ``( Wizard_ZoneResourceRecordsDialog() ),
+	    "new_zone_summary"  : ``( Wizard_NewZoneSummaryDialog() ),
+	    "create_zone"       : ``( Wizard_CreateZoneDialog() ),
 	];
 	
 	map sequence = $[
@@ -646,31 +1027,46 @@ Do you really want to use the new one?"),
 	    ],
 	    "zone_rrs" : $[
 		`abort : `abort,
-		`next  : `next,
+		`next  : "new_zone_summary",
 	    ],
+	    "new_zone_summary" : $[
+		`abort : `abort,
+		`next  : "create_zone",
+	    ],
+	    "create_zone" : $[
+		// if the creation fails, user can decide
+		// to run through the Wizard again
+		`wizard_again : "new_zone",
+		`abort        : `abort,
+		`next         : `next,
+	    ]
 	];
     
 	Wizard::CreateDialog();
-	Wizard::SetDesktopIcon("dhcp-server");
+	Wizard::SetDesktopIcon ("dhcp-server");
 
 	map dns_server_settings = DnsServer::Export();
-	symbol ret = Sequencer::Run(aliases, sequence);
+	symbol ret = Sequencer::Run (aliases, sequence);
 	if (ret != `next) {
 	    y2milestone("Ret: %1, Restoring DNS Server settings...", ret);
-	    DnsServer::Import(dns_server_settings);
+	    DnsServer::Import (dns_server_settings);
 	}
 
 	Wizard::CloseDialog();
 	
 	return ret;
     }
+
+    // <-- Wizard Workflow
+
+    /* ********************************************************************* */
     
 //    // FIXME: ... !!!
 //    import "Progress";
 //    Progress::set(false);
 //    DnsServer::Read();
-//    y2milestone ("%1", RunNewDNSServerWizard($["current_network":"192.168.0.0", "domain":"example.com", "from_ip":"192.168.10.1", "ipv4_max":"192.168.15.254", "ipv4_min":"192.168.0.1", "netmask":"255.255.240.0", "netmask_bits":"20", "network":"192.168.0.0", "network_binary":"11000000101010000000000000000000", "reverse_domain":"0.0.168.192.in-addr.arpa", "to_ip":"192.168.10.254"]));
-//    // DnsServer::Write();
+//    y2milestone ("%1", RunNewDNSServerWizard($["current_network":"192.168.0.0", "domain":"example.com", "from_ip":"192.168.10.1", "ipv4_max":"192.168.15.254", "ipv4_min":"192.168.0.1", "netmask":"255.255.240.0", "netmask_bits":"20", "network":"192.168.0.0", "network_binary":"11000000101010000000000000000000", "reverse_domain":"168.192.in-addr.arpa", "to_ip":"192.168.10.254"]));
+//    DnsServer::Write();
 //    // FIXME: ... !!!
     
 // EOF

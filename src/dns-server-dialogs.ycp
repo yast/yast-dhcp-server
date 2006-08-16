@@ -16,8 +16,16 @@
     import "Report";
     import "DnsServerPunycode";
     import "Hostname";
+    import "DnsServerAPI";
 
-    void CreateUI_DNSRangeDialog (string range_min, string range_max) {
+    void CreateUI_DNSRangeDialog (string range_min, string range_max, map <string, any> old_range) {
+	// old_range: $[
+	//     "base"  : "dhcp-%",
+	//     "start" : 0,
+	//     "from"  : "192.168.10.1",
+	//     "to"    : "192.168.10.100"
+	// ]
+
 	UI::OpenDialog (`VBox (
 	    `MarginBox (1, 1, `Frame (
 		_("Add New DNS Records Range"),
@@ -47,8 +55,8 @@
 	UI::ChangeWidget (`id("current_range_max"), `Value, range_max);
 	
 	// FIXME: default
-	UI::ChangeWidget (`id("hostname_base"),  `Value, "dhcp-%i");
-	UI::ChangeWidget (`id("hostname_start"), `Value, "0");
+	UI::ChangeWidget (`id("hostname_base"),  `Value, old_range["base"]:"dhcp-%i");
+	UI::ChangeWidget (`id("hostname_start"), `Value, tostring (old_range["start"]:1));
 	
 	UI::ChangeWidget (`id("current_range_min"), `Enabled, false);
 	UI::ChangeWidget (`id("current_range_max"), `Enabled, false);
@@ -58,8 +66,8 @@
 	UI::ChangeWidget (`id ("hostname_start"), `ValidChars, "0123456789");
 	
 	// Predefining possible values
-	UI::ChangeWidget (`id ("first_ip"), `Value, range_min);
-	UI::ChangeWidget (`id ("last_ip"),  `Value, range_max);
+	UI::ChangeWidget (`id ("first_ip"), `Value, old_range["from"]:range_min);
+	UI::ChangeWidget (`id ("last_ip"),  `Value, old_range["to"]:range_max);
     }
 
     boolean CheckDNSRange (string first_ip, string last_ip, map <string, string> & current_d_settings) {
@@ -146,6 +154,7 @@
 	return true;
     }
 
+    // FIXME: validate DNS range against current DHCP range
     map <string, any> ValidateAddDNSRangeDialog (map <string, string> & current_d_settings) {
 	map <string, any> ret = nil;
 
@@ -293,5 +302,113 @@
 	
 	return range_status;
     }
+
+    boolean AddDNSRangeWorker (
+	string domain,
+	string hostname_domain,
+	string record_type,
+	string hostname_base,
+	integer hostname_start,
+	string first_ip,
+	string last_ip
+    ) {
+	if (! contains(["A", "PTR"], record_type)) {
+	    y2error("Record type %1 is not handled by this function", record_type);
+	    return false;
+	}
+
+	if (regexpmatch(hostname_base, "%i")) {
+	    hostname_base = regexpsub(hostname_base, "^(.*)%i(.*)", "\\1%1\\2");
+	} else if (regexpmatch(hostname_base, "%d")) {
+	    hostname_base = regexpsub(hostname_base, "^(.*)%d(.*)", "\\1%1\\2");
+	} else {
+	    hostname_base = hostname_base + "%1";
+	}
+	y2milestone("Hostname base: %1", hostname_base);
+
+	if (hostname_start == nil) hostname_start = 0;
+
+	list <integer> first_ip_list = maplist (string ip_part, splitstring(first_ip, "."), {
+	    return tointeger(ip_part);
+	});
+	list <integer> last_ip_list = maplist (string ip_part, splitstring(last_ip, "."), {
+	    return tointeger(ip_part);
+	});
+	y2milestone("Creating range: %1 - %2", first_ip, last_ip);
+
+	// list of hostnames for next punycode translation
+	list <string> hostnames = [];
+	// list of IPs matching these hostnames (by index)
+	list <string> ips       = [];
+
+	integer hostname_counter = hostname_start - 1;
+	integer index_counter    = -1;
+	
+	// Generating hostnames and IPs
+	while (first_ip_list[0]:1 <= last_ip_list[0]:0) {
+	    while (first_ip_list[1]:1 <= last_ip_list[1]:0) {
+		while (first_ip_list[2]:1 <= last_ip_list[2]:0) {
+		    while (first_ip_list[3]:1 <= last_ip_list[3]:0) {
+			hostname_counter = hostname_counter + 1;
+			index_counter    = index_counter    + 1;
+			
+			hostnames[index_counter] = sformat (hostname_base, hostname_counter);
+			
+			if (record_type == "A") {
+			    ips[index_counter] =   sformat (
+							"%1.%2.%3.%4",
+							first_ip_list[0]:0,
+							first_ip_list[1]:0,
+							first_ip_list[2]:0,
+							first_ip_list[3]:0
+						    );
+			} else if (record_type == "PTR") {
+			    ips[index_counter] =   sformat (
+							"%1.%2.%3.%4.in-addr.arpa.",
+							first_ip_list[3]:0,
+							first_ip_list[2]:0,
+							first_ip_list[1]:0,
+							first_ip_list[0]:0
+						    );
+			}
+
+			first_ip_list[3] = first_ip_list[3]:0 + 1;
+		    }
+		    first_ip_list[2] = first_ip_list[2]:0 + 1;
+		    first_ip_list[3] = 0;
+		}
+		first_ip_list[1] = first_ip_list[1]:0 + 1;
+		first_ip_list[2] = 0;
+	    }
+	    first_ip_list[1] = 0;
+	    first_ip_list[0] = first_ip_list[0]:0 + 1;
+	}
+
+	// Writing records into the DNS Server
+	if (hostname_counter > 0) {
+	    hostnames = DnsServerPunycode::EncodePunycodes (hostnames);
+
+	    index_counter = -1;	    
+	    foreach (string one_hostname, hostnames, {
+		index_counter = index_counter + 1;
+		
+		if (record_type == "A") {
+		    DnsServerAPI::AddZoneRR (
+			domain, "A", one_hostname, ips[index_counter]:""
+		    );
+		} else if (record_type == "PTR") {
+		    DnsServerAPI::AddZoneRR (
+			domain,
+			"PTR",
+			ips[index_counter]:"",
+			one_hostname + "." + hostname_domain + "."
+		    );
+		}
+	    });
+	}
+
+	return true;
+    }
+
 // EOF
 }

@@ -795,14 +795,24 @@ void DynamicDHCPInit (string key)
     current_dynamic_dhcp["current_network"] = current_network;
     current_dynamic_dhcp["network_binary"]  = network_binary;
 
+    // generating reverse zone
     if (IP::Check(current_network)) {
-	current_dynamic_dhcp["reverse_domain"] = DnsServerAPI::GetReverseIPforIPv4 (
-	    current_network
-	);
-	if (regexpmatch(current_dynamic_dhcp["reverse_domain"]:"", "\.$"))
-	    current_dynamic_dhcp["reverse_domain"] = regexpsub (
-		current_dynamic_dhcp["reverse_domain"]:"", "(.*)\.$", "\\1"
-	    );
+	// 10.20.60.2  / 255.255.255.0 -> 60.20.10.in-addr.arpa
+	// 135.14.80.2 / 255.255.240.0 -> 14.135.in-addr.arpa
+	// 10.20.60.2  / 255.128.0.0   -> 10.in-addr.arpa
+
+	string reverse_zone = "";
+
+	// only 255's are valid for a reverse zone
+	integer network_bytes = netmask_bits / 8;
+	list <string> network_split = splitstring (current_network, ".");
+	while (network_bytes > 0) {
+	    network_bytes = network_bytes - 1;
+	    reverse_zone = reverse_zone + network_split[network_bytes]:"" + ".";
+	}
+	reverse_zone = reverse_zone + "in-addr.arpa";
+	
+	current_dynamic_dhcp["reverse_domain"] = reverse_zone;
     }
 
     // Computing minimal IP
