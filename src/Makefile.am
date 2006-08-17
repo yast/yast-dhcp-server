@@ -20,6 +20,7 @@ ynclude_DATA =			\
 	options.ycp		\
 	commandline.ycp		\
 	misc.ycp		\
+	dns-helps.ycp		\
 	dns-server-wizard.ycp	\
 	dns-server-dialogs.ycp	\
 	dns-server-management.ycp

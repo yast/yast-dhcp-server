@@ -1,0 +1,98 @@
+/**
+ * File:	include/dhcp-server/dns-helps.ycp
+ * Package:	Configuration of dhcp-server
+ * Summary:	Help texts for DNS-Related dialogs
+ * Authors:	Lukas Ocilka <lukas.ocilka@novell.com>
+ *
+ * $Id:$
+ */
+
+{
+
+    textdomain "dhcp-server";
+
+    map <string, string> DNS_HELPS = $[
+	// TRANSLATORS: DNS Wizard - step 1 (part 1)
+	"wizard-zones" : _("<p><big><b>DNS Wizard</b></big><br />
+This wizard will help you to simply create a new DNS zone
+directly from the DHCP Server Configuration. This DNS zone is important
+if you want to identify your DHCP clients also by their hostname. The DNS zone
+translates names to IP addresses assigned to them. You can also
+create a reverse zone that translates IP addresses to their names.</p>") + 
+
+	// TRANSLATORS: DNS Wizard - step 1 (part 2)
+	_("<p>You can neither change the <b>New Zone Name</b> nor <b>Reverse Zone Name</b>
+because they are taken from your current DHCP Server and network settings.</p>") +
+
+	// TRANSLATORS: DNS Wizard - step 1 (part 3)
+	_("<p>Select the <b>Create Also Reverse Zone</b> check-box if you want
+to create a zone that would contain reverse entries to the main DNS zone.</p>"),
+
+	// TRANSLATORS: DNS Wizard - step 2 (part 1)
+	"wizard-nameservers" : _("<p><big><b>Name Servers</b></big><br />
+Name servers are needed for the proper DNS server functionality.
+They administer all the DNS zone records.</p>") +
+
+	// TRANSLATORS: DNS Wizard - step 2 (part 2)
+	_("<p><big><b>DNS Queries</b></big><br />
+Every DNS query that has to find out, e.g., an IP address for some
+hostname inside a DNS zone, firstly asks the parent zone
+(e.g., <tt>com</tt> for <tt>example.com</tt>) for the current zone
+name servers, and secondly it sends a DNS query to these name servers to get
+the reply containing the wanted IP address.<br />
+That is also why you should mention the current DNS server hostname as one of
+the zone name servers.</p>") +
+
+	// TRANSLATORS: DNS Wizard - step 2 (part 3)
+	_("To add a <b>New Name Server</b>, click <b>Add...</b>, fill-up the form
+and then click <b>OK</b>. If the new name server name is included in the current
+DNS zone, enter also its IP address. It is mandatory because it will be used
+during the zone creation.") +
+
+	// TRANSLATORS: DNS Wizard - step 2 (part 4)
+	_("To edit or delete an entry, select it and click
+the appropriate <b>Edit</b> or <b>Delete</b> button."),
+
+	// TRANSLATORS: DNS Wizard - step 3 (part 1)
+	"wizard-ranges" : _("<p><big><b>DNS Records</b></big><br />
+Here you define DNS hostnames for all DHCP clients. You do not need to define
+all hostnames one by one. You only set one or more simple rules how
+the hostnames are created. These rules define ranges of used IP addresses,
+and string that is used to generate hostnames for a range.</p>") +
+
+	// TRANSLATORS: DNS Wizard - step 3 (part 2)
+	_("<p><big><b>Range of DNS Records</b></big><br />
+For example, you can create set of hostnames from <tt>dhcp-133-a</tt>
+to <tt>dhcp-233-a</tt> with IP addresses from <tt>192.168.5.88</tt>
+to <tt>192.168.5.188</tt>.</p>") +
+
+	// TRANSLATORS: DNS Wizard - step 3 (part 3)
+	_("<p>To add a <b>New Range of DNS Records</b>, click <b>Add...</b>,
+fill-up the form and click <b>OK</b>.</p>") +
+
+	// TRANSLATORS: DNS Wizard - step 3 (part 4)
+	_("<p><big><b>Adding New Range of DNS Records</b></big><br />
+The <b>First IP Address</b> defines
+the starting address of the range, the <b>Last IP Address</b> defines
+the last one. <b>Hostname Base</b> is a string that sets how hostnames
+will be created (e.g., <tt>dhcp-%i</tt>, <tt>e25-%i-a</tt>).
+<tt>%i</tt> will be replaced by the number of host in range.
+If no <tt>%i</tt> is defined, the number is added at the end of the
+string. <tt>%i</tt> can be used only once in one <b>Hostname Base</b>.
+<b>Start</b> defines the first number that is used for the first
+hostname. Hostnames are created one by one incrementally.</p>") +
+
+	// TRANSLATORS: DNS Wizard - step 3 (part 5)
+	_("To edit or delete an entry, select it and click
+the appropriate <b>Edit</b> or <b>Delete</b> button."),
+
+	// TRANSLATORS: DNS Wizard - summary
+	"wizard-summary" : _("<p>Here you can see summarized everything
+you have entered in a configuration wizard before. Click <b>Accept</b>
+to get the configuration written into the DNS Server. After that, you
+will still be able to cancel all the configuration by clicking
+the <b>Abort</b> in the DHCP server configuration.</p>"),
+    ];
+
+/* EOF */
+}
