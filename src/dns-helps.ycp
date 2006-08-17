@@ -86,12 +86,15 @@ hostname. Hostnames are created one by one incrementally.</p>") +
 	_("To edit or delete an entry, select it and click
 the appropriate <b>Edit</b> or <b>Delete</b> button."),
 
-	// TRANSLATORS: DNS Wizard - summary
+	// TRANSLATORS: DNS Wizard - summary (part 1)
 	"wizard-summary" : _("<p>Here you can see summarized everything
-you have entered in a configuration wizard before. Click <b>Accept</b>
-to get the configuration written into the DNS Server. After that, you
-will still be able to cancel all the configuration by clicking
-the <b>Abort</b> in the DHCP server configuration.</p>"),
+you have entered in a configuration wizard before.</p>") +
+
+	// TRANSLATORS: DNS Wizard - summary (part 2)
+	_("<p>Click <b>Accept</b> to get the configuration written
+into the DNS Server. After that, you will still be able to cancel
+all the configuration by clicking the <b>Abort</b> in the DHCP server
+configuration.</p>"),
     ];
 
 /* EOF */

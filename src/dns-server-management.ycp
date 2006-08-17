@@ -25,6 +25,7 @@
     
     include "dhcp-server/dns-helps.ycp";
     include "dhcp-server/dns-server-dialogs.ycp";
+    include "dhcp-server/dns-server-wizard.ycp";
 
     boolean modified = false;
     
@@ -423,7 +424,13 @@
     }
 
     boolean RunDNSWizardFromScratch () {
-	y2error("FIXME: ...");
+	symbol ret = RunNewDNSServerWizard(current_settings);
+
+	if (ret == `next) {
+	    SetModified();
+	    return true;
+	}
+	
 	return false;
     }
 
