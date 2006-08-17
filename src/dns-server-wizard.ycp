@@ -29,8 +29,10 @@
 
     // --> Internal Variables
     
+    // used for checking, informin about minimal and maximal values, etc.
     map <string, string> current_dhcp_settings = $[];
 
+    // contains configuration of the new zone(s)
     map <string, any> create_new_zone = $[];
 
     // used for editing or removing current nameservers
@@ -44,6 +46,16 @@
     /* ********************************************************************* */
 
     // --> Helper functions
+
+    boolean AbortWizard () {
+	return Popup::YesNoHeadline (
+	    // TRANSLATORS: Popup headline
+	    _("Aborting the Wizard"),
+	    // TRANSLATORS: Popup question
+	    _("All changes made in the wizard will be lost.
+Are you sure you want to abort it?")
+	);
+    }
 
     boolean IsDNSZoneMaintained (string zone_name) {
 	if (zone_name == nil) {
@@ -112,6 +124,7 @@
 
 	if (edit_current_ns) {
 	    caption = _("&Edit Name Server");
+
 	    string row_id = (string) UI::QueryWidget (`id("name_servers"), `CurrentItem);
 	    
 	    selected_ns         = translated_nameservers[row_id, 0]:"";
@@ -121,9 +134,15 @@
 	
 	UI::OpenDialog (
 	    `VBox (
-		`TextEntry (`id("nameserver"), caption,         selected_ns),
-		`TextEntry (`id("ip"),         _("Server &IP"), selected_ip),
-		`VSpacing (1),
+		`MarginBox (1, 1,
+		    `Frame (
+			caption,
+			`VBox (
+			    `TextEntry (`id("nameserver"), _("Hostname"),   selected_ns),
+			    `TextEntry (`id("ip"),         _("Server &IP"), selected_ip)
+			)
+		    )
+		),
 		`HBox (
 		    `PushButton (`id(`ok),     Label::OKButton()),
 		    `PushButton (`id(`cancel), Label::CancelButton())
@@ -304,6 +323,9 @@ Do you really want to use the new one?"),
 		func_ret = false;
 		break;
 	    } else if (ret == `ok) {
+		// working with this map only (in this block)
+		list <map <string, any> > current_ranges = create_new_zone["ranges"]:[];
+
 		map <string, any> validated = ValidateAddDNSRangeDialog (current_dhcp_settings);
 		if (validated == nil) continue;
 
@@ -317,7 +339,7 @@ Do you really want to use the new one?"),
 
 		// filter out old range (in case of edit)
 		if (old_range != $[]) {
-		    create_new_zone["ranges"] = filter (map <string, any> one, create_new_zone["ranges"]:[], {
+		    current_ranges = filter (map <string, any> one, current_ranges, {
 			return (
 			    one["base"]:"" != old_range["base"]:nil  ||
 			    one["start"]:1 != old_range["start"]:nil ||
@@ -330,17 +352,19 @@ Do you really want to use the new one?"),
 		// Checks whether a new range doesn't conflict with another one
 		if (! CheckRangeAgainsAllRanges (
 		    new_range,
-		    (list <map <string, any> >) create_new_zone["ranges"]:[]
+		    (list <map <string, any> >) current_ranges
 		)) {
 		    // cancelled, add the filtered-out range again
-		    create_new_zone["ranges"] = add (create_new_zone["ranges"]:[], old_range);
+		    current_ranges = add (current_ranges, old_range);
 		    continue;
 		}
 		
 		// Adding new range definition
-		create_new_zone["ranges"] = add (create_new_zone["ranges"]:[], new_range);
+		current_ranges = add (current_ranges, new_range);
 	    
 		func_ret = true;
+		create_new_zone["ranges"] = current_ranges;
+		
 		break;
 	    }
 	}
@@ -730,6 +754,11 @@ Do you really want to use the new one?"),
 	    } else if (ret == `create_also_reverse_zone) {
 		Wizard_StoreNewZoneDialog();
 		Wizard_InitNewZoneDialog_ReverseZone();
+	    } else if (ret == `abort) {
+		if (AbortWizard())
+		    break;
+	    } else {
+		y2error("Unexpected ret: %1", ret);
 	    }
 	}
 	
@@ -757,6 +786,9 @@ Do you really want to use the new one?"),
 		if (Wizard_AddEditNSDialog(true)) Wizard_InitZoneNameServersDialog();
 	    } else if (ret == `delete_ns) {
 		if (Wizard_DeleteNSDialog()) Wizard_InitZoneNameServersDialog();
+	    } else if (ret == `abort) {
+		if (AbortWizard())
+		    break;
 	    } else {
 		y2error("Unexpecetd ret: %1", ret);
 	    }
@@ -792,6 +824,9 @@ Do you really want to use the new one?"),
 		if (Wizard_AddEditResourceRecordsDialog(true)) Wizard_InitZoneResourceRecordsDialog();
 	    } else if (ret == `delete_dhcp) {
 		if (Wizard_DeleteResourceRecordsDialogDialog()) Wizard_InitZoneResourceRecordsDialog();
+	    } else if (ret == `abort) {
+		if (AbortWizard())
+		    break;
 	    } else {
 		y2error("Unexpected ret: %1", ret);
 	    }
@@ -815,6 +850,9 @@ Do you really want to use the new one?"),
 		break;
 	    } else if (ret == `back) {
 		break;
+	    } else if (ret == `abort) {
+		if (AbortWizard())
+		    break;
 	    } else {
 		y2error("Unexpected ret: %1", ret);
 	    }
@@ -1025,7 +1063,7 @@ Do you want to return to the Wizard?"), errors
 	    "create_reverse_zone" : (current_dhcp_settings["reverse_domain"]:"" != ""),
 	    // [ $[ "ns1" : "192.168.0.1" ], ... ]
 	    "name_servers" : [],
-	    // [ $[ "base" : "dhcp-%", "start" : 101, "from" : "192.168.10.1", "to" : "192.168.10.100" ] ]
+	    // [ $[ "base" : "dhcp-%", "start" : 101, "from" : "192.168.10.1", "to" : "192.168.10.100" ], ... ]
 	    "ranges" : [],
 	];
 
@@ -1075,6 +1113,10 @@ Do you want to return to the Wizard?"), errors
 	    y2milestone("Ret: %1, Restoring DNS Server settings...", ret);
 	    DnsServer::Import (dns_server_settings);
 	}
+	
+	// free the memory
+	current_dhcp_settings = nil;
+	create_new_zone = nil;
 
 	Wizard::CloseDialog();
 	
@@ -1084,14 +1126,6 @@ Do you want to return to the Wizard?"), errors
     // <-- Wizard Workflow
 
     /* ********************************************************************* */
-    
-//    // FIXME: ... !!!
-//    import "Progress";
-//    Progress::set(false);
-//    DnsServer::Read();
-//    y2milestone ("%1", RunNewDNSServerWizard($["current_network":"192.168.0.0", "domain":"example.com", "from_ip":"192.168.10.1", "ipv4_max":"192.168.15.254", "ipv4_min":"192.168.0.1", "netmask":"255.255.240.0", "netmask_bits":"20", "network":"192.168.0.0", "network_binary":"11000000101010000000000000000000", "reverse_domain":"168.192.in-addr.arpa", "to_ip":"192.168.10.254"]));
-//    DnsServer::Write();
-//    // FIXME: ... !!!
     
 // EOF
 }

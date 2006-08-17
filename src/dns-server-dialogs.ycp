@@ -26,9 +26,14 @@
 	//     "to"    : "192.168.10.100"
 	// ]
 
+	string dialog_caption = _("Add New DNS Records Range");
+	if (old_range != $[] && old_range != nil) {
+	    dialog_caption = _("Edit DNS Records Range");
+	}
+
 	UI::OpenDialog (`VBox (
 	    `MarginBox (1, 1, `Frame (
-		_("Add New DNS Records Range"),
+		dialog_caption,
 		`VBox (
 		    `HBox (
 			`TextEntry (`id ("current_range_min"), _("Min&imal IP Address")),
@@ -154,72 +159,7 @@
 	return true;
     }
 
-    // FIXME: validate DNS range against current DHCP range
-    map <string, any> ValidateAddDNSRangeDialog (map <string, string> & current_d_settings) {
-	map <string, any> ret = nil;
-
-	string hostname_base = (string) UI::QueryWidget (`id("hostname_base"), `Value);
-	hostname_base = hostname_base;
-	y2milestone("Entered hostname base: %1", hostname_base);
-
-	string hostname_base_check = hostname_base;
-	if (hostname_base_check != "" && hostname_base_check != nil) {
-	    // integer listed
-	    if (regexpmatch(hostname_base_check, "%i")) {
-		hostname_base_check = regexpsub(hostname_base_check, "^(.*)%i(.*)", "\\10\\2");
-	    // other integer listed
-	    } else if (regexpmatch(hostname_base_check, "%d")) {
-		hostname_base_check = regexpsub(hostname_base_check, "^(.*)%d(.*)", "\\10\\2");
-	    // add something
-	    } else {
-		hostname_base_check = hostname_base_check + "0";
-	    }
-		    
-	    hostname_base_check = DnsServerPunycode::EncodeDomainName(hostname_base_check);
-	}
-
-	y2milestone("Checking hostname base: %1", hostname_base_check);
-		
-	// Checking the hostname base
-	if (hostname_base_check == "" || hostname_base_check == nil || ! Hostname::Check(hostname_base_check)) {
-	    UI::SetFocus(`id ("hostname_base"));
-	    Report::Error(_("Invalid hostname.") + "\n\n" + Hostname::ValidHost());
-	    return nil;
-	}
-
-	string first_ip = (string) UI::QueryWidget (`id("first_ip"), `Value);
-	if (! IP::Check4(first_ip)) {
-	    UI::SetFocus(`id("first_ip"));
-	    Report::Error(_("Invalid IP address.") + "\n\n" + IP::Valid4());
-	    return nil;
-	}
-
-	string last_ip = (string) UI::QueryWidget (`id("last_ip"), `Value);
-	if (! IP::Check4(last_ip)) {
-	    UI::SetFocus(`id("last_ip"));
-	    Report::Error(_("Invalid IP address.") + "\n\n" + IP::Valid4());
-	    return nil;
-	}
-
-	string hostname_start_s = (string) UI::QueryWidget (`id("hostname_start"), `Value);
-	integer hostname_start = 0;
-	if (regexpmatch(hostname_start_s, "^[0123456789]+$")) {
-	    hostname_start = tointeger(hostname_start_s);
-	}
-		
-	if (! CheckDNSRange (first_ip, last_ip, current_d_settings)) return nil;
-	
-	ret = $[
-	    "hostname_base"  : hostname_base,
-	    "hostname_start" : hostname_start,
-	    "first_ip"       : first_ip,
-	    "last_ip"        : last_ip,
-	];
-	
-	return ret;
-    }
-
-    boolean IPisInRangeOfIPs (string & ipv4, string & first_ip, string & last_ip) {
+    boolean IPisInRangeOfIPs (string ipv4, string first_ip, string last_ip) {
 	// Checking delta between first_ip and last_ip
 	list <integer> ipv4_list = maplist (string ip_part, splitstring(ipv4, "."), {
 	    return tointeger(ip_part);
@@ -303,6 +243,109 @@
 	return range_status;
     }
 
+    map <string, any> ValidateAddDNSRangeDialog (map <string, string> & current_d_settings) {
+	map <string, any> ret = nil;
+
+	string hostname_base = (string) UI::QueryWidget (`id("hostname_base"), `Value);
+	y2milestone("Entered hostname base: %1", hostname_base);
+
+	// checking number of '%i' in the hostname base
+	string nr_hostname_base = hostname_base;
+	integer i_count = 0;
+	while (regexpmatch (nr_hostname_base, "%i")) {
+	    i_count = i_count + 1;
+	    nr_hostname_base = regexpsub (nr_hostname_base, "(.*)%i(.*)", "\\1--\\2");
+	}
+	if (i_count > 1) {
+	    Report::Error (
+		_("There can be only one '%i' in the Hostname Base string.")
+	    );
+	    return nil;
+	}
+	nr_hostname_base = nil;
+	
+	string hostname_base_check = hostname_base;
+	if (hostname_base_check != "" && hostname_base_check != nil) {
+	    // integer listed
+	    if (regexpmatch(hostname_base_check, "%i")) {
+		hostname_base_check = regexpsub(hostname_base_check, "^(.*)%i(.*)", "\\10\\2");
+	    // add something
+	    } else {
+		hostname_base_check = hostname_base_check + "0";
+	    }
+		    
+	    hostname_base_check = DnsServerPunycode::EncodeDomainName(hostname_base_check);
+	}
+
+	y2milestone("Checking hostname base: %1", hostname_base_check);
+		
+	// Checking the hostname base
+	if (hostname_base_check == "" || hostname_base_check == nil || ! Hostname::Check(hostname_base_check)) {
+	    UI::SetFocus(`id ("hostname_base"));
+	    Report::Error(_("Invalid hostname.") + "\n\n" + Hostname::ValidHost());
+	    return nil;
+	}
+
+	string first_ip = (string) UI::QueryWidget (`id("first_ip"), `Value);
+	if (! IP::Check4(first_ip)) {
+	    UI::SetFocus(`id("first_ip"));
+	    Report::Error(_("Invalid IP address.") + "\n\n" + IP::Valid4());
+	    return nil;
+	}
+
+	if (! IPisInRangeOfIPs (
+	    first_ip,
+	    (string) current_d_settings["ipv4_min"]:"",
+	    (string) current_d_settings["ipv4_max"]:""
+	)) {
+	    Report::Error (sformat (
+		_("The first IP address %1 is not in the range of allowed
+IP Addresses (%2 - %3) defined in the DHCP server."),
+		first_ip, current_d_settings["ipv4_min"]:"",
+		current_d_settings["ipv4_max"]:""
+	    ));
+	    return nil;
+	}
+	
+	string last_ip = (string) UI::QueryWidget (`id("last_ip"), `Value);
+	if (! IP::Check4(last_ip)) {
+	    UI::SetFocus(`id("last_ip"));
+	    Report::Error(_("Invalid IP address.") + "\n\n" + IP::Valid4());
+	    return nil;
+	}
+
+	if (! IPisInRangeOfIPs (
+	    last_ip,
+	    (string) current_d_settings["ipv4_min"]:"",
+	    (string) current_d_settings["ipv4_max"]:""
+	)) {
+	    Report::Error (sformat (
+		_("The first IP address %1 is not in the range of allowed
+IP Addresses (%2 - %3) defined in the DHCP server."),
+		first_ip, current_d_settings["ipv4_min"]:"",
+		current_d_settings["ipv4_max"]:""
+	    ));
+	    return nil;
+	}
+
+	string hostname_start_s = (string) UI::QueryWidget (`id("hostname_start"), `Value);
+	integer hostname_start = 0;
+	if (regexpmatch(hostname_start_s, "^[0123456789]+$")) {
+	    hostname_start = tointeger(hostname_start_s);
+	}
+		
+	if (! CheckDNSRange (first_ip, last_ip, current_d_settings)) return nil;
+	
+	ret = $[
+	    "hostname_base"  : hostname_base,
+	    "hostname_start" : hostname_start,
+	    "first_ip"       : first_ip,
+	    "last_ip"        : last_ip,
+	];
+	
+	return ret;
+    }
+
     boolean AddDNSRangeWorker (
 	string domain,
 	string hostname_domain,
@@ -319,8 +362,6 @@
 
 	if (regexpmatch(hostname_base, "%i")) {
 	    hostname_base = regexpsub(hostname_base, "^(.*)%i(.*)", "\\1%1\\2");
-	} else if (regexpmatch(hostname_base, "%d")) {
-	    hostname_base = regexpsub(hostname_base, "^(.*)%d(.*)", "\\1%1\\2");
 	} else {
 	    hostname_base = hostname_base + "%1";
 	}
@@ -344,11 +385,48 @@
 	integer hostname_counter = hostname_start - 1;
 	integer index_counter    = -1;
 	
+	// for counting max numbers
+	integer to_2 = nil;
+	integer to_3 = nil;
+	integer to_4 = nil;
+
 	// Generating hostnames and IPs
 	while (first_ip_list[0]:1 <= last_ip_list[0]:0) {
-	    while (first_ip_list[1]:1 <= last_ip_list[1]:0) {
-		while (first_ip_list[2]:1 <= last_ip_list[2]:0) {
-		    while (first_ip_list[3]:1 <= last_ip_list[3]:0) {
+
+	    // Range (1).1.1.1 -> (2).1.1.1
+	    //           contains (1).254.254.254
+	    if (first_ip_list[0]:1 < last_ip_list[0]:0) {
+	        to_2 = 254;
+	    } else {
+	        to_2 = last_ip_list[1]:0;
+	    }
+	    while (first_ip_list[1]:1 <= to_2) {
+
+		// Range 1.(1).1.1 -> 1.(2).1.1
+		//           contains 1.(1).254.254
+		if (first_ip_list[1]:1 < last_ip_list[1]:0) {
+		    to_3 = 254;
+		} else {
+		    to_3 = last_ip_list[2]:0;
+		}
+		while (first_ip_list[2]:1 <= to_3) {
+
+		    // Range 1.1.(1).1 -> 1.1.(2).1
+		    //           contains 1.1.(1).254
+		    if (first_ip_list[2]:1 < last_ip_list[2]:0) {
+			to_4 = 254;
+		    } else {
+			to_4 = last_ip_list[3]:0;
+		    }
+		    while (first_ip_list[3]:1 <= to_4) {
+			// 0 at the end of IP address means network
+			// skip it!
+			if (first_ip_list[3]:nil == 0) {
+			    y2milestone("Skipping %1", first_ip_list);
+			    first_ip_list[3] = first_ip_list[3]:0 + 1;
+			    continue;
+			}
+		    
 			hostname_counter = hostname_counter + 1;
 			index_counter    = index_counter    + 1;
 			
@@ -371,7 +449,6 @@
 							first_ip_list[0]:0
 						    );
 			}
-
 			first_ip_list[3] = first_ip_list[3]:0 + 1;
 		    }
 		    first_ip_list[2] = first_ip_list[2]:0 + 1;
