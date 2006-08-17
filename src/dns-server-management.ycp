@@ -23,7 +23,7 @@
     import "IP";
     import "Hostname";
     
-    include "dhcp-server/helps.ycp";
+    include "dhcp-server/dns-helps.ycp";
     include "dhcp-server/dns-server-dialogs.ycp";
 
     boolean modified = false;

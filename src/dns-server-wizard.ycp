@@ -22,7 +22,7 @@
     import "Report";
     import "Popup";
 
-    include "dhcp-server/helps.ycp";
+    include "dhcp-server/dns-helps.ycp";
     include "dhcp-server/dns-server-dialogs.ycp";
 
     /* ********************************************************************* */
@@ -106,15 +106,17 @@
 
     boolean Wizard_AddEditNSDialog (boolean edit_current_ns) {
 	string caption = _("&Add New Name Server");
-	string selected_ns = "";
-	string selected_ip = "";
+	string selected_ns         = "";
+	string selected_ns_encoded = "";
+	string selected_ip         = "";
 
 	if (edit_current_ns) {
 	    caption = _("&Edit Name Server");
 	    string row_id = (string) UI::QueryWidget (`id("name_servers"), `CurrentItem);
 	    
-	    selected_ns = translated_nameservers[row_id, 0]:"";
-	    selected_ip = translated_nameservers[row_id, 1]:"";
+	    selected_ns         = translated_nameservers[row_id, 0]:"";
+	    selected_ns_encoded = translated_nameservers[row_id, 1]:""; // actually the same as 'row_id'
+	    selected_ip         = translated_nameservers[row_id, 2]:"";
 	}
 	
 	UI::OpenDialog (
@@ -147,21 +149,24 @@
 		    new_selected_ns = DnsServerPunycode::EncodeDomainName(new_selected_ns);
 		}
 
+		// Hostname with a dot at the end is not a valid hostname
+		// but it's needed for DNS Server
 		string hostname_check = new_selected_ns;
 		if (regexpmatch(hostname_check, "\.$")) {
 		    hostname_check = regexpsub (hostname_check, "(.*)\.$", "\\1");
 		}
 
 		if (!Hostname::CheckDomain(hostname_check)) {
-		    UI::SetFocus (`id("nameserver"));
+		    UI::SetFocus (`id ("nameserver"));
 		    Report::Error("Invalid hostname." + "\n\n" + Hostname::ValidDomain());
+		    // next UserInput
 		    continue;
 		}
 
 		// not a final dot
 		if (! regexpmatch (new_selected_ns, "\\.$")) {
 		    // absolute name, add a dot
-		    if (regexpmatch(new_selected_ns, "\\.")) {
+		    if (regexpmatch (new_selected_ns, "\\.")) {
 			new_selected_ns = new_selected_ns + ".";
 		    // relative name, add a domain name
 		    } else {
@@ -173,6 +178,7 @@
 		if (new_selected_ip != "" && !IP::Check4(new_selected_ip)) {
 		    UI::SetFocus (`id("ip"));
 		    Report::Error ("Invalid IP address." + "\n\n" + IP::Valid4());
+		    // next UserInput
 		    continue;
 		}
 		
@@ -186,7 +192,26 @@
 This might not work because every Name Server needs its name and IP defined
 somewhere and the current zone is the only place where it can be.
 
-Are you sure you want to use the current settins?"))) continue;
+Are you sure you want to use the current settings?"))) continue;
+		}
+
+		// changing server name from
+		// check whether the new already exists or not
+		if (selected_ns_encoded != new_selected_ns) {
+		    boolean found_match = false;
+		    foreach (list <string> one, create_new_zone["name_servers"]:[], {
+			// nameserver already exists in the configuration
+			if (one[0]:"" == new_selected_ns) {
+			    found_match = true;
+			    Report::Error (sformat (
+				_("Name Server %1 already exists in the configuration."),
+				new_selected_ns
+			    ));
+			    break;
+			}
+		    });
+		    // next UserInput
+		    if (found_match) continue;
 		}
 
 		// in case of `edit
@@ -194,10 +219,9 @@ Are you sure you want to use the current settins?"))) continue;
 		    list <string> one,
 		    create_new_zone["name_servers"]:[],
 		{
-		    return (one[0]:"" != selected_ns || one[1]:"" != selected_ip);
+		    return (one[0]:"" != selected_ns_encoded || one[1]:"" != selected_ip);
 		});
 		
-		// FIXME: check if already exists
 		create_new_zone["name_servers"] = add (create_new_zone["name_servers"]:[],
 		    [new_selected_ns, new_selected_ip]
 		);
@@ -374,7 +398,7 @@ Do you really want to use the new one?"),
 	Wizard::SetContentsButtons (
 	    caption,
 	    contents,
-	    "FIXME: help",
+	    DNS_HELPS["wizard-zones"]:"",
 	    Label::BackButton(),
 	    Label::NextButton()
 	);
@@ -418,7 +442,7 @@ Do you really want to use the new one?"),
 	Wizard::SetContentsButtons (
 	    caption,
 	    contents,
-	    "FIXME: help",
+	    DNS_HELPS["wizard-nameservers"]:"",
 	    Label::BackButton(),
 	    Label::NextButton()
 	);
@@ -465,7 +489,7 @@ Do you really want to use the new one?"),
 	Wizard::SetContentsButtons (
 	    caption,
 	    contents,
-	    "FIXME: help",
+	    DNS_HELPS["wizard-ranges"]:"",
 	    Label::BackButton(),
 	    Label::NextButton()
 	);
@@ -481,7 +505,7 @@ Do you really want to use the new one?"),
 	Wizard::SetContentsButtons (
 	    caption,
 	    contents,
-	    "FIXME: help",
+	    DNS_HELPS["wizard-summary"]:"",
 	    Label::BackButton(),
 	    Label::AcceptButton()
 	);	
@@ -978,7 +1002,7 @@ Do you want to return to the Wizard?"), errors
 	} else {
 	    ret = `next;
 	    y2milestone("Creation was successful");
-	    Report::Message (_("The DNS zone was sucessfully created."));
+	    Report::Message (_("The DNS zone was successfully created."));
 	}
 	
 	return ret;
