@@ -149,6 +149,7 @@
 
 	// show the dialog 
 	boolean show_progress_dialog = (zone_records[200]:nil != nil);
+	// TRANSLATORS: busy message
 	if (show_progress_dialog) UI::OpenDialog(`Label(_("Regenerating DNS zone entries...")));
 
 	// later used when deleting records
@@ -196,9 +197,12 @@
     boolean AddDNSDialog () {
 	UI::OpenDialog (`VBox (
 	    `MarginBox (1, 1, `Frame (
+		// TRANSLATORS: dialog frame label
 		_("Add New DNS Record"),
 		`VBox (
+		    // TRANSLATORS: text entry
 		    `TextEntry (`id ("new_hostname"), _("&Hostname")),
+		    // TRANSLATORS: text entry
 		    `TextEntry (`id ("new_ip"),       _("&IP Address"))
 		)
 	    )),
@@ -221,6 +225,7 @@
 		new_hostname = DnsServerPunycode::EncodeDomainName(new_hostname);
 		if (! Hostname::Check(new_hostname)) {
 		    UI::SetFocus(`id("new_hostname"));
+		    // TRANSLATORS: popup error, followed by a newline and a valid hostname description
 		    Report::Error(_("Invalid hostname.") + "\n\n" + Hostname::ValidHost());
 		    continue;
 		}
@@ -228,6 +233,7 @@
 		string new_ip = (string) UI::QueryWidget (`id("new_ip"), `Value);
 		if (! IP::Check4(new_ip)) {
 		    UI::SetFocus(`id("new_ip"));
+		    // TRANSLATORS: poupu error, followed by a newlone and a valid IPv4 description
 		    Report::Error(_("Invalid IP address.") + "\n\n" + IP::Valid4());
 		    continue;
 		}
@@ -263,6 +269,8 @@
 
 		UI::OpenDialog(`Label(
 		    sformat(
+			// TRANSLATORS: busy message
+			// %1 is the first IP address of the range, %2 is the last one
 			_("Adding DHCP range %1 - %2 into DNS server..."),
 			validated["first_ip"]:"", validated["last_ip"]:""
 		)
@@ -292,9 +300,12 @@
     boolean RemoveDNSRangeDialog () {
 	UI::OpenDialog (`VBox (
 	    `MarginBox (1, 1, `Frame (
+		// TRANSLATORS: dialog frame label
 		_("Remove DNS Records Matching Range"),
 		`HBox (
+		    // TRANSLATORS: text entry
 		    `HWeight (1, `TextEntry (`id ("first_ip"), _("&First IP Address"))),
+		    // TRANSLATORS: text entry
 		    `HWeight (1, `TextEntry (`id ("last_ip"),  _("&Last IP Address")))
 		)
 	    )),
@@ -321,6 +332,7 @@
 		string first_ip = (string) UI::QueryWidget (`id("first_ip"), `Value);
 		if (! IP::Check4(first_ip)) {
 		    UI::SetFocus(`id("first_ip"));
+		    // TRANSLATORS: popup error, followed by a newline and a valid IPv4 description
 		    Report::Error(_("Invalid IP address.") + "\n\n" + IP::Valid4());
 		    continue;
 		}
@@ -328,6 +340,7 @@
 		string last_ip = (string) UI::QueryWidget (`id("last_ip"), `Value);
 		if (! IP::Check4(last_ip)) {
 		    UI::SetFocus(`id("last_ip"));
+		    // TRANSLATORS: popup error, followed by a newline and a valid IPv4 description
 		    Report::Error(_("Invalid IP address.") + "\n\n" + IP::Valid4());
 		    continue;
 		}
@@ -369,12 +382,15 @@
 		}
 
 		if (!range_status) {
+		    // TRANSLATORS: popup error
 		    Report::Error (_("The last IP address must be higher than the first one."));
 		    continue;
 		}
 				
 		UI::OpenDialog(`Label(
 		    sformat(
+			// TRANSLATORS: busy message
+			// %1 is the first IP address of the range, %2 is the last one
 			_("Removing range of records %1 - %2 from DNS server..."),
 			first_ip, last_ip
 		    )
@@ -452,6 +468,8 @@
 	} else if (rs_master == false) {
 	    UI::ChangeWidget(`id (`sync_reverse_zone), `Value, false);
 	    Report::Error (sformat (
+		// TRANSLATORS: popup error, %1 is the zone name
+		// please, do not translate 'master' (exact DNS definition)
 		_("Zone %1 is not a type 'master',
 DNS server cannot write any records into it."),
 		current_settings["reverse_domain"]:""
@@ -462,6 +480,7 @@ DNS server cannot write any records into it."),
 	} else {
 	    // should we create that zone?
 	    if (Popup::YesNo (sformat (
+		// TRANSLATORS: popup question, %1 is a DNS zone name
 		_("Zone %1 does not exist in the current DNS server configuration yet.
 
 Should it be created?"),
@@ -475,6 +494,7 @@ Should it be created?"),
 		if (! IsDNSZoneMaster (current_settings["reverse_domain"]:"")) {
 		    UI::ChangeWidget(`id (`sync_reverse_zone), `Value, false);
 		    Report::Error (sformat (
+			// TRANSLATORS: popup error, %1 is a zone name
 			_("Cannot create zone %1."),
 			current_settings["reverse_domain"]:""
 		    ));
@@ -670,6 +690,7 @@ Should it be created?"),
 	if (! (boolean) UI::QueryWidget (`id (`sync_reverse_zone), `Value))
 	    return true;
 	    
+	// TRANSLATORS: busy message
 	UI::OpenDialog(`Label(_("Synchronizing DNS reverse records...")));
 	boolean ret = SynchronizeReverseZone();
 	UI::CloseDialog();
@@ -714,7 +735,7 @@ Should it be created?"),
 		    break;
 		}
 		
-		// TRANSLATORS: popup question - canceling dns sync. with dhcp
+		// TRANSLATORS: popup question - canceling dns synchronization with dhcp
 		if (Popup::YesNo(_("All changes made in DNS Server will be lost.
 
 Are you sure you want to cancel this operation?"))) {
@@ -760,16 +781,22 @@ Are you sure you want to cancel this operation?"))) {
     term DNSServerDialogContents () {
 	return `VBox (
 	    `HBox (
+		// TRANSLATORS: text entry
 		`TextEntry(`id("current_zone"),    _("&Domain")),
+		// TRANSLATORS: text entry
 		`TextEntry(`id("current_network"), _("&Network")),
+		// TRANSLATORS: text entry
 		`TextEntry(`id("current_netmask"), _("Net&mask"))
 	    ),
 	    `HBox (
+		// TRANSLATORS: text entry
 		`HWeight(1, `TextEntry(`id("info_min_ip"), _("&First IP Address"))),
+		// TRANSLATORS: text entry
 		`HWeight(1, `TextEntry(`id("info_max_ip"), _("&Last IP Address"))),
 		`HWeight(1, `Empty())
 	    ),
-	    `Left (`Label (_("Zone Records"))),
+	    // TRANSLATORS: table label
+	    `Left (`Label (_("DNS Zone Records"))),
 	    `Table (
 		`id("zone_table"),
 		`header (
@@ -782,19 +809,26 @@ Are you sure you want to cancel this operation?"))) {
 	    ),
 	    `ReplacePoint (`id ("sync_also_reverse_zone"), `Empty()),
 	    `HBox (
+		// TRANSLATORS: push button
 		`PushButton(`id (`add), _("&Add...")),
 		`HSpacing(1),
+		// TRANSLATORS: push button
 		`PushButton(`id (`delete), Label::DeleteButton()),
 		`HSpacing(1),
 		`MenuButton(
 		    `id ("dns_menu"),
+		    // TRANSLATORS: menu button
 		    _("&Special Tasks"), [
+			// TRANSLATORS: menu entry
 			`item (`id (`add_range),    _("Add New Range of DNS Records")),
+			// TRANSLATORS: menu entry
 			`item (`id (`remove_range), _("Remove DNS Records Matching Range")),
+			// TRANSLATORS: menu entry
 			`item (`id (`run_wizard),   _("Run Wizard to Rewrite the DNS Zone from Scratch"))
 			// FIXME: add functionality (dialog) for checking the zone
 			// such as missing NS server, range of dhcp clients that are not mentioned
 			// in the DNS, etc...
+			// // TRANSLATORS: menu entry
 			// `item (`id (`check_zone),   _("Check Zone"))
 		    ]
 		)
@@ -842,6 +876,7 @@ Are you sure you want to cancel this operation?"))) {
 		`id (`sync_reverse_zone),
 		`opt (`notify),
 		sformat (
+		    // TRANSLATORS: checkbox, %1 is a zone name
 		    _("Synchronize with Reverse Zone %1"),
 		    current_settings["reverse_domain"]:""
 		),
@@ -887,6 +922,7 @@ Are you sure you want to cancel this operation?"))) {
 	// init the internal variable
 	current_settings = param_current_settings;
     
+	// TRANSLATORS: dialog caption
 	string caption = _("DHCP Server: DNS Server Synchronization");
     
 	Wizard::CreateDialog();

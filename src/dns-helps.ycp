@@ -113,7 +113,7 @@ IP addresses - are maintained here.</p>") +
 <b>Network</b> and <b>Netmask</b> informs you about the current network settings.
 <b>Domain</b> is taken from the current DHCP configuration.
 <b>First IP Address</b> and <b>Second ID Address</b> match the current
-Dynamic DHCP range. <b>Zone Records</b></p>") +
+Dynamic DHCP range.</p>") +
 
 	// TRANSLATORS: DNS for Experts (editing current settings) (part 3)
 	_("<p><big><b>DNS Wizard</b></big><br />
