@@ -18,6 +18,37 @@
     import "Hostname";
     import "DnsServerAPI";
 
+    boolean IsDNSZoneMaintained (string zone_name) {
+	if (zone_name == nil) {
+	    y2error("Undefined zone name");
+	    return nil;
+	}
+
+	map <string, map <string, string> > all_zones = DnsServerAPI::GetZones();
+
+	// found or not?
+	return (all_zones[zone_name]:nil == nil);
+    }
+
+    boolean IsDNSZoneMaster (string zone_name) {
+	if (zone_name == nil) {
+	    y2error("Undefined zone name");
+	    return nil;
+	}
+	
+	map <string, map <string, string> > all_zones = DnsServerAPI::GetZones();
+	
+	// if zone not found
+	boolean ret = nil;
+	
+	// is master or not?
+	if (all_zones[zone_name]:nil != nil) {
+	    ret = (all_zones[zone_name, "type"]:nil == "master");
+	}
+
+	return ret;
+    }
+
     void CreateUI_DNSRangeDialog (string range_min, string range_max, map <string, any> old_range) {
 	// old_range: $[
 	//     "base"  : "dhcp-%",
