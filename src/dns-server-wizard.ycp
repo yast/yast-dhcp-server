@@ -57,25 +57,6 @@ Are you sure you want to abort it?")
 	);
     }
 
-    boolean IsDNSZoneMaintained (string zone_name) {
-	if (zone_name == nil) {
-	    y2error("Undefined zone name");
-	    return nil;
-	}
-
-	map <string, map <string, string> > all_zones = DnsServerAPI::GetZones();
-
-	boolean ret = false;
-	foreach (string one_zone_name, map <string, string> one_zone, all_zones, {
-	    if (one_zone_name == zone_name) {
-		ret = true;
-		break;
-	    }
-	});
-
-	return ret;
-    }
-
     void Wizard_StoreNewZoneDialog () {
 	// sets whether the reverse zone will be created too
 	create_new_zone["create_reverse_zone"] = (boolean) UI::QueryWidget(`id(`create_also_reverse_zone), `Value);
@@ -1008,7 +989,7 @@ Do you really want to use the new one?"),
 	y2milestone("Creating new zone... (backing-up old settings)");
 
 	// backup old settings for now
-	map current_settings = DnsServer::Export();
+	map current_settings_save = DnsServer::Export();
 	
 	symbol ret = `next;
 	// Creating zones and records
@@ -1021,8 +1002,8 @@ Do you really want to use the new one?"),
 	    // restore previous settings
 	    UI::OpenDialog (`Label (_("Restoring previous DNS settings...")));
 	    y2milestone("Creation failed, Restoring previous DNS settings...");
-	    DnsServer::Import (current_settings);
-	    current_settings = $[];
+	    DnsServer::Import (current_settings_save);
+	    current_settings_save = $[];
 	    UI::CloseDialog();
 
 	    if (Popup::YesNo (sformat (

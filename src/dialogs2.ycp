@@ -950,7 +950,7 @@ Which means that you cannot change it here."),
 	}
 
 	y2milestone("Running DNS wizard -- Creating zone from scratch");
-	RunNewDNSServerWizard(current_dynamic_dhcp);
+	RunNewDNSServerWizard (current_dynamic_dhcp);
 
     // Edit the current DNS Zone - for experts
     } else if (event["ID"]:nil == `dns_advanced_edit_current) {
@@ -960,7 +960,7 @@ Which means that you cannot change it here."),
 	}
 
 	y2milestone("Managing DNS Server");
-	ManageDNSServer(current_dynamic_dhcp);
+	ManageDNSServer (current_dynamic_dhcp);
     }
     
     return nil;
@@ -1075,7 +1075,7 @@ boolean DynamicDHCPValidate (string key, map event)
     // FIXME: Lease Time should NOT be zero or means zero NO expiration?
 
     // network of the current network interface
-    string current_network = IP::ComputeNetwork(current_dynamic_dhcp["network"]:"", current_dynamic_dhcp["netmask"]:"");
+    string current_network = IP::ComputeNetwork (current_dynamic_dhcp["network"]:"", current_dynamic_dhcp["netmask"]:"");
 
     // checking from_ip network with the current network
     string from_ip_network = IP::ComputeNetwork(from_ip, current_dynamic_dhcp["netmask"]:"");

@@ -11,6 +11,21 @@
 
     textdomain "dhcp-server";
 
+	// TRANSLATORS:
+	//     DNS Wizard - step 3 (part 4)
+	//       and
+	//     DNS for Experts (editing current settings) (part 5)
+    string new_range_help = _("<p><big><b>Adding New Range of DNS Records</b></big><br />
+The <b>First IP Address</b> defines
+the starting address of the range, the <b>Last IP Address</b> defines
+the last one. <b>Hostname Base</b> is a string that sets how hostnames
+will be created (e.g., <tt>dhcp-%i</tt>, <tt>e25-%i-a</tt>).
+<tt>%i</tt> will be replaced by the number of host in range.
+If no <tt>%i</tt> is defined, the number is added at the end of the
+string. <tt>%i</tt> can be used only once in one <b>Hostname Base</b>.
+<b>Start</b> defines the first number that is used for the first
+hostname. Hostnames are created one by one incrementally.</p>");
+
     map <string, string> DNS_HELPS = $[
 	// TRANSLATORS: DNS Wizard - step 1 (part 1)
 	"wizard-zones" : _("<p><big><b>DNS Wizard</b></big><br />
@@ -71,16 +86,7 @@ to <tt>192.168.5.188</tt>.</p>") +
 fill-up the form and click <b>OK</b>.</p>") +
 
 	// TRANSLATORS: DNS Wizard - step 3 (part 4)
-	_("<p><big><b>Adding New Range of DNS Records</b></big><br />
-The <b>First IP Address</b> defines
-the starting address of the range, the <b>Last IP Address</b> defines
-the last one. <b>Hostname Base</b> is a string that sets how hostnames
-will be created (e.g., <tt>dhcp-%i</tt>, <tt>e25-%i-a</tt>).
-<tt>%i</tt> will be replaced by the number of host in range.
-If no <tt>%i</tt> is defined, the number is added at the end of the
-string. <tt>%i</tt> can be used only once in one <b>Hostname Base</b>.
-<b>Start</b> defines the first number that is used for the first
-hostname. Hostnames are created one by one incrementally.</p>") +
+	new_range_help +
 
 	// TRANSLATORS: DNS Wizard - step 3 (part 5)
 	_("To edit or delete an entry, select it and click
@@ -95,6 +101,36 @@ you have entered in a configuration wizard before.</p>") +
 into the DNS Server. After that, you will still be able to cancel
 all the configuration by clicking the <b>Abort</b> in the DHCP server
 configuration.</p>"),
+
+	// TRANSLATORS: DNS for Experts (editing current settings) (part 1)
+	"edit-current-settings" : _("<p><big><b>DNS Synchronization</b></big><br />
+This is an advanced tool for editing current DNS server settings to match your
+DHCP settings. Only 'A' records - DNS records which convert hostnames to
+IP addresses - are maintained here.</p>") +
+
+	// TRANSLATORS: DNS for Experts (editing current settings) (part 2)
+	_("<p><big><b>Dialog Items</b></big>
+<b>Network</b> and <b>Netmask</b> informs you about the current network settings.
+<b>Domain</b> is taken from the current DHCP configuration.
+<b>First IP Address</b> and <b>Second ID Address</b> match the current
+Dynamic DHCP range. <b>Zone Records</b></p>") +
+
+	// TRANSLATORS: DNS for Experts (editing current settings) (part 3)
+	_("<p><big><b>DNS Wizard</b></big><br />
+If you want to create DNS zone from scratch, use the <b>Run Wizard...</b>
+in the <b>Special Tasks</b> menu.</p>") +
+
+	// TRANSLATORS: DNS for Experts (editing current settings) (part 4)
+	_("<p><big><b>DNS Records</b></big><br />
+To remove a range of DNS records, select <b>Remove DNS Records Matching Range</b>
+in a <b>Special Tasks</b> menu. To add a new range of DNS records, select
+<b>Add New Range of DNS Records</b>. To add or delete a single DNS record,
+click the appropriate <b>Add...</b> or <b>Delete</b> button.
+To synchronize the DNS entries also with their reverse forms in a respective
+reverse zone, select the <b>Synchronize with Reverse Zone...</b> checkbox.</p>") +
+
+	// TRANSLATORS: DNS for Experts (editing current settings) (part 5)
+	new_range_help,
     ];
 
 /* EOF */
