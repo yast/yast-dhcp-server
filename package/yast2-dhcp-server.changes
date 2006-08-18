@@ -4,6 +4,7 @@ Fri Aug 18 13:55:57 CEST 2006 - locilka@suse.cz
 - Added help texts for Zone Editor Dialog.
 - Added reverse-zone synchronization into Zone Editor Dialog.
 - Added comments for translators.
+- Added BuildRequires: yast2-dns-server.
 - 2.13.7
 
 -------------------------------------------------------------------
