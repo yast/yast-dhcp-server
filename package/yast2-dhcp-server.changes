@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Fri Aug 18 13:55:57 CEST 2006 - locilka@suse.cz
+
+- Added help texts for Zone Editor Dialog.
+- Added reverse-zone synchronization into Zone Editor Dialog.
+- Added comments for translators.
+- 2.13.7
+
+-------------------------------------------------------------------
 Thu Aug 17 13:57:30 CEST 2006 - locilka@suse.cz
 
 - Finished Sync-with-DNS wizard.
