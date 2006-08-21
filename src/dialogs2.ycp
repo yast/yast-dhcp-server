@@ -302,7 +302,7 @@ term Common_GlobalSettingsDialog() {
 
     if (expert_ui) ldap = `VBox(
 	// configuration will be saved in ldap?
-        `Left(`CheckBox(`id("ldap"), `opt( `notify), _("LDAP Support"), true)),
+        `Left(`CheckBox(`id("ldap"), `opt( `notify), _("&LDAP Support"), true)),
         `VSpacing(2)
     );
 

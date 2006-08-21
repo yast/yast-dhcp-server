@@ -122,7 +122,7 @@ Are you sure you want to abort it?")
 			frame_label,
 			`VBox (
 			    // TRANSLATORS: text entry
-			    `TextEntry (`id("nameserver"), _("Hostname"),   selected_ns),
+			    `TextEntry (`id("nameserver"), _("&Hostname"),  selected_ns),
 			    // TRANSLATORS: text entry
 			    `TextEntry (`id("ip"),         _("Server &IP"), selected_ip)
 			)
