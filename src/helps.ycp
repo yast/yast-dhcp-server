@@ -151,7 +151,7 @@ leases IPs to clients.</p>") +
 	// Wizard Installation - Step 2 4/9
 _("<p><b>Primary Name Server IP</b> and <b>Secondary Name Server IP</b> 
 offer these name servers to the DHCP clients.
-These values must be IP addresses.") +
+These values must be IP addresses.</p>") +
 
 	// Wizard Installation - Step 2 5/9
 _("<p><b>Default Gateway</b> inserts this

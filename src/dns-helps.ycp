@@ -59,14 +59,14 @@ That is also why you should mention the current DNS server hostname as one of
 the zone name servers.</p>") +
 
 	// TRANSLATORS: DNS Wizard - step 2 (part 3)
-	_("To add a <b>New Name Server</b>, click <b>Add...</b>, fill-up the form
+	_("<p>To add a <b>New Name Server</b>, click <b>Add...</b>, fill-up the form
 and then click <b>OK</b>. If the new name server name is included in the current
 DNS zone, enter also its IP address. It is mandatory because it will be used
-during the zone creation.") +
+during the zone creation.</p>") +
 
 	// TRANSLATORS: DNS Wizard - step 2 (part 4)
-	_("To edit or delete an entry, select it and click
-the appropriate <b>Edit</b> or <b>Delete</b> button."),
+	_("<p>To edit or delete an entry, select it and click
+the appropriate <b>Edit</b> or <b>Delete</b> button.</p>"),
 
 	// TRANSLATORS: DNS Wizard - step 3 (part 1)
 	"wizard-ranges" : _("<p><big><b>DNS Records</b></big><br />
@@ -89,8 +89,8 @@ fill-up the form and click <b>OK</b>.</p>") +
 	new_range_help +
 
 	// TRANSLATORS: DNS Wizard - step 3 (part 5)
-	_("To edit or delete an entry, select it and click
-the appropriate <b>Edit</b> or <b>Delete</b> button."),
+	_("<p>To edit or delete an entry, select it and click
+the appropriate <b>Edit</b> or <b>Delete</b> button.</p>"),
 
 	// TRANSLATORS: DNS Wizard - summary (part 1)
 	"wizard-summary" : _("<p>Here you can see summarized everything
