@@ -14,7 +14,7 @@
     import "IP";
     import "Label";
     import "Report";
-    import "DnsServerPunycode";
+    import "Punycode";
     import "Hostname";
     import "DnsServerAPI";
 
@@ -322,7 +322,7 @@
 		hostname_base_check = hostname_base_check + "0";
 	    }
 		    
-	    hostname_base_check = DnsServerPunycode::EncodeDomainName(hostname_base_check);
+	    hostname_base_check = Punycode::EncodeDomainName(hostname_base_check);
 	}
 
 	y2milestone("Checking hostname base: %1", hostname_base_check);
@@ -518,7 +518,7 @@ IP Addresses (%2 - %3) defined in the DHCP server."),
 
 	// Writing records into the DNS Server
 	if (hostname_counter > 0) {
-	    hostnames = DnsServerPunycode::EncodePunycodes (hostnames);
+	    hostnames = Punycode::EncodePunycodes (hostnames);
 
 	    index_counter = -1;	    
 	    foreach (string one_hostname, hostnames, {
