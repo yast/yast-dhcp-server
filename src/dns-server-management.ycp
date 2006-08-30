@@ -18,7 +18,7 @@
     import "Report";
     import "Popup";
     import "Label";
-    import "DnsServerPunycode";
+    import "Punycode";
     import "Confirm";
     import "IP";
     import "Hostname";
@@ -175,7 +175,7 @@
 	    }
 	});
 	
-	punycode_translations = DnsServerPunycode::DocodeDomainNames(punycode_translations);
+	punycode_translations = Punycode::DocodeDomainNames(punycode_translations);
 
 	counter = -1;
 	list <term> items = maplist (map <string, string> one_record, zone_records, {
@@ -222,7 +222,7 @@
 	    
 	    if (ret == `ok) {
 		string new_hostname = (string) UI::QueryWidget (`id("new_hostname"), `Value);
-		new_hostname = DnsServerPunycode::EncodeDomainName(new_hostname);
+		new_hostname = Punycode::EncodeDomainName(new_hostname);
 		if (! Hostname::Check(new_hostname)) {
 		    UI::SetFocus(`id("new_hostname"));
 		    // TRANSLATORS: popup error, followed by a newline and a valid hostname description

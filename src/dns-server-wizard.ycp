@@ -15,7 +15,7 @@
     import "Label";
     import "DnsServer";
     import "DnsServerAPI";
-    import "DnsServerPunycode";
+    import "Punycode";
     import "IP";
     import "Hostname";
     import "Sequencer";
@@ -150,7 +150,7 @@ Are you sure you want to abort it?")
 		string new_selected_ip = (string) UI::QueryWidget (`id("ip"),         `Value);
 		
 		if (new_selected_ns != "") {
-		    new_selected_ns = DnsServerPunycode::EncodeDomainName(new_selected_ns);
+		    new_selected_ns = Punycode::EncodeDomainName(new_selected_ns);
 		}
 
 		// Hostname with a dot at the end is not a valid hostname
@@ -619,7 +619,7 @@ Do you really want to use the new one?"),
 	});
 
 	if (counter > -1) {
-	    strings_to_translate = DnsServerPunycode::DocodeDomainNames(strings_to_translate);
+	    strings_to_translate = Punycode::DocodeDomainNames(strings_to_translate);
 	
 	    counter = -1;
 	    list <term> table_items = maplist (
@@ -663,7 +663,7 @@ Do you really want to use the new one?"),
 	    return tostring(one_range["base"]:"");
 	});
 	if (counter > -1) {
-	    basenames = DnsServerPunycode::DecodePunycodes(basenames);
+	    basenames = Punycode::DecodePunycodes(basenames);
 	}
 	
 	counter = -1;

@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Aug 30 15:50:04 CEST 2006 - locilka@suse.cz
+
+- DnsServerPunycode has been renamed to Punycode
+  and moved to yast2-2.13.78
+- 2.13.8
+
+-------------------------------------------------------------------
 Mon Aug 21 09:50:50 CEST 2006 - locilka@suse.cz
 
 - Corrected HTML in helps.
