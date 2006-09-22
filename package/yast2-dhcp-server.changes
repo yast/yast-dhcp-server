@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Fri Sep 22 10:38:52 CEST 2006 - kmachalkova@suse.cz
+
+- Added support for passing commandline parameters to dhcpd
+  (FaTE #225)
+- Warning popup if alternate config file (-cf) is used
+- 2.13.9 
+
+-------------------------------------------------------------------
 Wed Aug 30 15:50:04 CEST 2006 - locilka@suse.cz
 
 - DnsServerPunycode has been renamed to Punycode
