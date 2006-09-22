@@ -128,6 +128,12 @@ Specify forward and reverse zones to update. For both, also specify
 their primary name server. If the name server runs on the same host as the DHCP
 server, you can leave the fields empty.</p>"),
 
+	// help text
+	"other_options" : _("<p><b><big>DHCP Server Start-Up Arguments</big></b><br>
+Here you can specify parameters that you want DHCP Server to be started with 
+(e.g. \"-p 1234\") for a non-standard port to listen on). For all possible options,
+consult dhcpd manual page. If left blank, default values will be used.</p>"),
+
 	// Wizard Installation - Step 1 (version for expert UI)
 	"card_selection_expert" : _("<p><b><big>Network Card Selection</big></b><br>
 Select one or more of listed network cards to use for the DHCP server.</p>"),

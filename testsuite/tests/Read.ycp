@@ -75,6 +75,7 @@
 	    "dhcpd" : $[
 		"DHCPD_INTERFACE" : "eth0 eth2",
 		"DHCPD_RUN_CHROOTED" : "no",
+		"DHCPD_OTHER_ARGS"   : "-p 111",
 	    ],
 	],
 	"product" : $[

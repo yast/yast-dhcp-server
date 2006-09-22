@@ -56,6 +56,8 @@ my $ldap_port = "";
 
 my @tsig_keys = ();
 
+my $other_options = "";
+
 #transient variables
 
 my $modified = 0;
@@ -1334,6 +1336,19 @@ sub SetUseLdap {
 
     $self->SetModified ();
 }
+BEGIN{$TYPEINFO{GetOtherOptions} = ["function", "string"];}
+sub GetOtherOptions {
+    my $self = shift;
+
+    return \$other_options; 	
+}
+BEGIN{$TYPEINFO{SetOtherOptions} = ["function", "void", "string"];}
+sub SetOtherOptions {
+    my $self = shift;
+    $other_options = shift;
+
+    $self->SetModified();
+}
 
 ##------------------------------------
 
@@ -1482,6 +1497,8 @@ Report->Error (sformat(__("Cannot determine the hostname of %1."), $dhcp_server_
 	    }
 	}
     }
+    $other_options = SCR->Read(".sysconfig.dhcpd.DHCPD_OTHER_ARGS") || "";
+    y2milestone("Other options: $other_options");
 
     @settings = ();
     my $ag_settings_ref = SCR->Read (".etc.dhcpd_conf");
@@ -1690,7 +1707,9 @@ sub Write {
 	$ifaces_list = " ";
     }    
     SCR->Write (".sysconfig.dhcpd.DHCPD_INTERFACE", $ifaces_list);
+    SCR->Write (".sysconfig.dhcpd.DHCPD_OTHER_ARGS", $other_options);
     SCR->Write (".sysconfig.dhcpd", undef);
+ 	
 
     if ($start_service)
     {
@@ -1738,6 +1757,7 @@ sub Export {
 	"chroot" => $chroot,
 	"use_ldap" => $use_ldap,
 	"allowed_interfaces" => \@allowed_interfaces,
+	"other_options" => $other_options,
 	"settings" => \@settings,
     );
     return \%ret;
@@ -1764,6 +1784,7 @@ sub Import {
     $chroot = $settings{"chroot"} || 1;
     $use_ldap = $settings{"use_ldap"} || 0;
     @allowed_interfaces = @{$settings{"allowed_interfaces"} || []};
+    $other_options = $settings{"other_options"} || "";
     @settings = @{$settings{"settings"} || $default_settings};
 
     @settings_for_ldap = ();
