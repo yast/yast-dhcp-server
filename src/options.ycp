@@ -881,7 +881,7 @@ all clients*/
 	 if( !Address::CheckMAC(hosthwaddress)){
 		Popup::Error (
 		//error popup
-		_("The hardware address is invalid\n") + Address::ValidMAC()
+		_("The hardware address is invalid.\n") + Address::ValidMAC()
 		);
 		UI::SetFocus (`id (`addr));
 		return false;

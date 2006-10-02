@@ -15,33 +15,37 @@
 	//     DNS Wizard - step 3 (part 4)
 	//       and
 	//     DNS for Experts (editing current settings) (part 5)
-    string new_range_help = _("<p><big><b>Adding New Range of DNS Records</b></big><br />
-The <b>First IP Address</b> defines
-the starting address of the range, the <b>Last IP Address</b> defines
+    string new_range_help = _("<p><big><b>Adding a New Range of DNS Records</b></big><br />
+<b>First IP Address</b> defines
+the starting address of the range. <b>Last IP Address</b> defines
 the last one. <b>Hostname Base</b> is a string that sets how hostnames
-will be created (e.g., <tt>dhcp-%i</tt>, <tt>e25-%i-a</tt>).
-<tt>%i</tt> will be replaced by the number of host in range.
+should be created (such as <tt>dhcp-%i</tt> or <tt>e25-%i-a</tt>).
+<tt>%i</tt> is replaced with the number of the host in the range.
 If no <tt>%i</tt> is defined, the number is added at the end of the
-string. <tt>%i</tt> can be used only once in one <b>Hostname Base</b>.
+string. <tt>%i</tt> can be used only once in <b>Hostname Base</b>.
 <b>Start</b> defines the first number that is used for the first
-hostname. Hostnames are created one by one incrementally.</p>");
+hostname. Hostnames are created incrementally.</p>
+");
 
     map <string, string> DNS_HELPS = $[
 	// TRANSLATORS: DNS Wizard - step 1 (part 1)
 	"wizard-zones" : _("<p><big><b>DNS Wizard</b></big><br />
-This wizard will help you to simply create a new DNS zone
-directly from the DHCP Server Configuration. This DNS zone is important
-if you want to identify your DHCP clients also by their hostname. The DNS zone
+This wizard can help you to create a new DNS zone
+directly from the DHCP server configuration. This DNS zone is important
+if you also want to identify your DHCP clients by hostname. The DNS zone
 translates names to IP addresses assigned to them. You can also
-create a reverse zone that translates IP addresses to their names.</p>") + 
+create a reverse zone that translates IP addresses to names.</p>
+") + 
 
 	// TRANSLATORS: DNS Wizard - step 1 (part 2)
-	_("<p>You can neither change the <b>New Zone Name</b> nor <b>Reverse Zone Name</b>
-because they are taken from your current DHCP Server and network settings.</p>") +
+	_("<p>You cannot change <b>New Zone Name</b> or <b>Reverse Zone Name</b>
+because they are taken from your current DHCP server and network settings.</p>
+") +
 
 	// TRANSLATORS: DNS Wizard - step 1 (part 3)
-	_("<p>Select the <b>Create Also Reverse Zone</b> check-box if you want
-to create a zone that would contain reverse entries to the main DNS zone.</p>"),
+	_("<p>Select <b>Also Create Reverse Zone</b> to create a zone 
+to contain reverse entries of the main DNS zone.</p>
+"),
 
 	// TRANSLATORS: DNS Wizard - step 2 (part 1)
 	"wizard-nameservers" : _("<p><big><b>Name Servers</b></big><br />
@@ -50,84 +54,97 @@ They administer all the DNS zone records.</p>") +
 
 	// TRANSLATORS: DNS Wizard - step 2 (part 2)
 	_("<p><big><b>DNS Queries</b></big><br />
-Every DNS query that has to find out, e.g., an IP address for some
-hostname inside a DNS zone, firstly asks the parent zone
-(e.g., <tt>com</tt> for <tt>example.com</tt>) for the current zone
-name servers, and secondly it sends a DNS query to these name servers to get
-the reply containing the wanted IP address.<br />
-That is also why you should mention the current DNS server hostname as one of
-the zone name servers.</p>") +
+Every DNS query that must find out, for example, an IP address for a
+hostname in a DNS zone, first asks the parent zone
+(<tt>com</tt> for <tt>example.com</tt>) for the current zone
+name servers then sends a DNS query to these name servers to get
+a reply containing the desired IP address.<br />
+This is why you should mention the current DNS server hostname as one of
+the zone name servers.</p>
+") +
 
 	// TRANSLATORS: DNS Wizard - step 2 (part 3)
-	_("<p>To add a <b>New Name Server</b>, click <b>Add...</b>, fill-up the form
-and then click <b>OK</b>. If the new name server name is included in the current
-DNS zone, enter also its IP address. It is mandatory because it will be used
-during the zone creation.</p>") +
+	_("<p>To add a <b>New Name Server</b>, click <b>Add</b>, complete the form,
+then click <b>OK</b>. If the new name server name is included in the current
+DNS zone, also enter its IP address. This is mandatory because it is used
+during the zone creation.</p>
+") +
 
 	// TRANSLATORS: DNS Wizard - step 2 (part 4)
 	_("<p>To edit or delete an entry, select it and click
-the appropriate <b>Edit</b> or <b>Delete</b> button.</p>"),
+<b>Edit</b> or <b>Delete</b>.</p>
+"),
 
 	// TRANSLATORS: DNS Wizard - step 3 (part 1)
 	"wizard-ranges" : _("<p><big><b>DNS Records</b></big><br />
-Here you define DNS hostnames for all DHCP clients. You do not need to define
-all hostnames one by one. You only set one or more simple rules how
-the hostnames are created. These rules define ranges of used IP addresses,
-and string that is used to generate hostnames for a range.</p>") +
+Here, define DNS hostnames for all DHCP clients. You do not need to define
+all hostnames one by one. Only set one or more simple rules for how
+the hostnames are created. These rules define the ranges of IP addresses to use
+and the string that is used to generate hostnames for a range.</p>
+") +
 
 	// TRANSLATORS: DNS Wizard - step 3 (part 2)
 	_("<p><big><b>Range of DNS Records</b></big><br />
-For example, you can create set of hostnames from <tt>dhcp-133-a</tt>
+For example, create a set of hostnames from <tt>dhcp-133-a</tt>
 to <tt>dhcp-233-a</tt> with IP addresses from <tt>192.168.5.88</tt>
-to <tt>192.168.5.188</tt>.</p>") +
+to <tt>192.168.5.188</tt>.</p>
+") +
 
 	// TRANSLATORS: DNS Wizard - step 3 (part 3)
-	_("<p>To add a <b>New Range of DNS Records</b>, click <b>Add...</b>,
-fill-up the form and click <b>OK</b>.</p>") +
+	_("<p>To add a new range of DNS records</b>, click <b>Add</b>,
+complete the form, then click <b>OK</b>.</p>
+") +
 
 	// TRANSLATORS: DNS Wizard - step 3 (part 4)
 	new_range_help +
 
 	// TRANSLATORS: DNS Wizard - step 3 (part 5)
 	_("<p>To edit or delete an entry, select it and click
-the appropriate <b>Edit</b> or <b>Delete</b> button.</p>"),
+<b>Edit</b> or <b>Delete</b>.</p>
+"),
 
 	// TRANSLATORS: DNS Wizard - summary (part 1)
-	"wizard-summary" : _("<p>Here you can see summarized everything
-you have entered in a configuration wizard before.</p>") +
+	"wizard-summary" : _("<p>This is a summary of all data
+entered in the configuration wizard so far.</p>
+") +
 
 	// TRANSLATORS: DNS Wizard - summary (part 2)
-	_("<p>Click <b>Accept</b> to get the configuration written
-into the DNS Server. After that, you will still be able to cancel
-all the configuration by clicking the <b>Abort</b> in the DHCP server
-configuration.</p>"),
+	_("<p>Click <b>Accept</b> to save the settings for
+the DNS server and return to the DHCP server configuration.
+The settings are not saved permanently until you complete the 
+DHCP server configuration.</p>
+"),
 
 	// TRANSLATORS: DNS for Experts (editing current settings) (part 1)
 	"edit-current-settings" : _("<p><big><b>DNS Synchronization</b></big><br />
-This is an advanced tool for editing current DNS server settings to match your
-DHCP settings. Only 'A' records - DNS records which convert hostnames to
-IP addresses - are maintained here.</p>") +
+This is an advanced tool for editing DNS server settings to match your
+DHCP settings. Only 'A' records--DNS records that convert hostnames to
+IP addresses--are maintained here.</p>
+") +
 
 	// TRANSLATORS: DNS for Experts (editing current settings) (part 2)
-	_("<p><big><b>Dialog Items</b></big>
-<b>Network</b> and <b>Netmask</b> informs you about the current network settings.
+	_("<b>Current Subnet</b> and <b>Netmask</b> show the current network settings.
 <b>Domain</b> is taken from the current DHCP configuration.
 <b>First IP Address</b> and <b>Second ID Address</b> match the current
-Dynamic DHCP range.</p>") +
+Dynamic DHCP range.</p>
+") +
 
 	// TRANSLATORS: DNS for Experts (editing current settings) (part 3)
-	_("<p><big><b>DNS Wizard</b></big><br />
-If you want to create DNS zone from scratch, use the <b>Run Wizard...</b>
-in the <b>Special Tasks</b> menu.</p>") +
+	_("<p>
+To create a DNS zone from scratch, use <b>Run Wizard</b>
+from <b>Special Tasks</b>.</p>
+") +
 
 	// TRANSLATORS: DNS for Experts (editing current settings) (part 4)
-	_("<p><big><b>DNS Records</b></big><br />
-To remove a range of DNS records, select <b>Remove DNS Records Matching Range</b>
-in a <b>Special Tasks</b> menu. To add a new range of DNS records, select
-<b>Add New Range of DNS Records</b>. To add or delete a single DNS record,
-click the appropriate <b>Add...</b> or <b>Delete</b> button.
-To synchronize the DNS entries also with their reverse forms in a respective
-reverse zone, select the <b>Synchronize with Reverse Zone...</b> checkbox.</p>") +
+	_("<p>
+ To create or remove a single DNS record,
+click <b>Add</b> or <b>Delete</b>.
+To synchronize the DNS entries with their reverse forms in the corresponding
+reverse zone, select <b>Synchronize with Reverse Zone</b>.
+Use <b>Remove DNS Records Matching Range</b> 
+from <b>Special Tasks</b> to delete any information relating to this range of IP addresses from the DNS server. To create a new range of DNS records, select
+<b>Add New Range of DNS Records</b> from <b>Special Tasks</b>.</p>
+") +
 
 	// TRANSLATORS: DNS for Experts (editing current settings) (part 5)
 	new_range_help,

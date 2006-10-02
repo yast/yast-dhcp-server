@@ -53,7 +53,8 @@
 	    _("Aborting the Wizard"),
 	    // TRANSLATORS: Popup question
 	    _("All changes made in the wizard will be lost.
-Are you sure you want to abort it?")
+Really abort?
+")
 	);
     }
 
@@ -99,14 +100,14 @@ Are you sure you want to abort it?")
 
     boolean Wizard_AddEditNSDialog (boolean edit_current_ns) {
 	// TRANSLATORS: dialog frame label
-	string frame_label = _("Add New Name Server");
+	string frame_label = _("Add a New Name Server");
 	string selected_ns         = "";
 	string selected_ns_encoded = "";
 	string selected_ip         = "";
 
 	if (edit_current_ns) {
 	    // TRANSLATORS: dialgo frame label
-	    frame_label = _("&Edit Name Server");
+	    frame_label = _("Edit Name Server");
 
 	    string row_id = (string) UI::QueryWidget (`id("name_servers"), `CurrentItem);
 	    
@@ -193,11 +194,11 @@ Are you sure you want to abort it?")
 		) {
 		    UI::SetFocus (`id("ip"));
 		    // TRANSLATORS: popup question
-		    if (! Popup::YesNo(_("No IP address provided for a Name Server in the current DNS Zone.
-This might not work because every Name Server needs its name and IP defined
-somewhere and the current zone is the only place where it can be.
-
-Are you sure you want to use the current settings?"))) continue;
+		    if (! Popup::YesNo(_("No IP address has been provided for a name server in the current DNS zone.
+This might not work because each zone needs its name server name and IP 
+defined. 
+Really use the current settings?
+"))) continue;
 		}
 
 		// changing server name from
@@ -210,7 +211,7 @@ Are you sure you want to use the current settings?"))) continue;
 			    found_match = true;
 			    Report::Error (sformat (
 				// TRANSLATORS: popup error, %1 si a server name
-				_("Name Server %1 already exists in the configuration."),
+				_("Name server %1 already exists in the configuration."),
 				new_selected_ns
 			    ));
 			    break;
@@ -268,9 +269,9 @@ Are you sure you want to use the current settings?"))) continue;
 		    // %1 the first IP address og 'another range'
 		    // %2 is the last one
 		    _("This new range of DNS entries is already covered by
-another one (%1 - %2).
-
-Do you really want to use the new one?"),
+another one (%1-%2).
+Really use the new one?
+"),
 		    one_range["from"]:"",
 		    one_range["to"]:""
 		))) {
@@ -365,7 +366,7 @@ Do you really want to use the new one?"),
     boolean CheckNumberOfNameServers () {
 	if (size(create_new_zone["name_servers"]:[]) == 0) {
 	    Report::Error (
-		_("At least one Name Server must be defined.")
+		_("At least one name server must be defined.")
 	    );
 	
 	    return false;
@@ -382,7 +383,7 @@ Do you really want to use the new one?"),
 
     void Wizard_CreateNewZoneDialog () {
 	// TRANSLATORS: a dialog caption
-	string caption = _("DHCP Server: New DNS Zone - Step 1/3");
+	string caption = _("DHCP Server: New DNS Zone--Step 1 of 3");
 	
 	term contents = `VBox (
 	    `Left (
@@ -401,7 +402,7 @@ Do you really want to use the new one?"),
 			    `VSpacing(1),
 			    `Left(`CheckBox  (`id (`create_also_reverse_zone), `opt(`notify),
 				// TRANSLATORS: check box
-				_("Create &Also Reverse Zone")
+				_("&Also Create Reverse Zone")
 			    )),
 			    `ReplacePoint(`id("reverse_zone_rp"), `Empty())
 			)
@@ -424,7 +425,7 @@ Do you really want to use the new one?"),
 
     void Wizard_CreateZoneNameServersDialog () {
 	// TRANSLATORS: a dialog caption
-	string caption = _("DHCP Server: Zone Name Servers - Step 2/3");
+	string caption = _("DHCP Server: Zone Name Servers--Step 2 of 3");
 	
 	term contents = `VBox (
 	    `Left (
@@ -477,7 +478,7 @@ Do you really want to use the new one?"),
 
     void Wizard_CreateZoneResourceRecordsDialog () {
 	// TRANSLATORS: a dialog caption
-	string caption = _("DHCP Server: DNS Records - Step 3/3");
+	string caption = _("DHCP Server: DNS Records--Step 3 of 3");
 	
 	term contents = `VBox (
 	    `Left (
@@ -506,7 +507,7 @@ Do you really want to use the new one?"),
 		    // TRANSLATORS: table header item
 		    _("Hostname Base"),
 		    // TRANSLATORS: table header item
-		    _("Start with Number"),
+		    _("Number to Start With"),
 		    // TRANSLATORS: table header item
 		    _("From IP"),
 		    // TRANSLATORS: table header item
@@ -534,7 +535,7 @@ Do you really want to use the new one?"),
     
     void Wizard_CreateNewZoneSummaryDialog () {
 	// TRANSLATORS: a dialog caption
-	string caption = _("DHCP Server: DNS Records - Summary");
+	string caption = _("DHCP Server: DNS Records--Summary");
 	
 	term contents = `VBox (
 	    `RichText (`id ("summary"), "")
@@ -708,7 +709,7 @@ Do you really want to use the new one?"),
 
 	if (IsDNSZoneMaintained(current_dhcp_settings["domain"]:nil))
 	    // TRANSLATORS: HTML summary item
-	    summary = summary + " " + _("(Current zone will be replaced by the new one)");
+	    summary = summary + " " + _("(Replacing the current zone with the new one)");
 
 	summary = summary + "</p>\n";
 
@@ -721,7 +722,7 @@ Do you really want to use the new one?"),
 
 	    if (IsDNSZoneMaintained(current_dhcp_settings["reverse_domain"]:nil))
 		// TRANSLATORS: HTML summary note
-		summary = summary + " " + _("(Current zone will be replaced by the new one)");
+		summary = summary + " " + _("(Replacing the current zone with the new one)");
 
 	    summary = summary + "</p>\n";
 	}
@@ -749,7 +750,7 @@ Do you really want to use the new one?"),
 		// %1 is the first IP of the range, %2 is the last one
 		// %3 defines the hostname base (e.g., 'dhcp-%i')
 		// %4 is a number 'start' used incremental replacement for '%i'
-		_("Range: %1 - %2<br />Hostname Base: %3, Starting with: %4"),
+		_("Range: %1-%2<br />Hostname Base: %3, Starting With: %4"),
 		range["from"]:"", range["to"]:"",
 		range["base"]:"", range["start"]:1
 	    ) + "</li>\n";
@@ -909,7 +910,7 @@ Do you really want to use the new one?"),
 	    if (IsDNSZoneMaintained (zone)) {
 		errors = errors + sformat (
 		    // TRANSLATORS: error message, %1 is a zone name
-		    _("Cannot remove current zone %1."), zone
+		    _("Cannot remove zone %1."), zone
 		) + "\n";
 		y2error("Cannot remove zone %1", zone);
 
@@ -944,7 +945,7 @@ Do you really want to use the new one?"),
 	// Checking added name servers
 	if (size (DnsServerAPI::GetZoneNameServers(zone)) != size (create_new_zone["name_servers"]:[])) {
 	    // TRANSLATORS: error message, %1 is a zone name
-	    errors = errors + sformat (_("Cannot add Name Servers into zone %1."), zone) + "\n";
+	    errors = errors + sformat (_("Cannot add name servers to zone %1."), zone) + "\n";
 	    return errors;
 	}
 
@@ -982,7 +983,7 @@ Do you really want to use the new one?"),
 	    if (IsDNSZoneMaintained (reverse_zone)) {
 		errors = errors + sformat (
 		    // TRANSLATORS: error message, %1 is a reverse zone name
-		    _("Cannot remove zone current zone %1."), reverse_zone
+		    _("Cannot remove zone %1."), reverse_zone
 		) + "\n";
 		y2error("Cannot remove zone %1", reverse_zone);
 
@@ -1012,7 +1013,7 @@ Do you really want to use the new one?"),
 	// Checking added name servers
 	if (size (DnsServerAPI::GetZoneNameServers(reverse_zone)) != size (create_new_zone["name_servers"]:[])) {
 	    // TRANSLATORS: error message, %1 is a zone name
-	    errors = errors + sformat (_("Cannot add Name Servers into zone %1."), reverse_zone) + "\n";
+	    errors = errors + sformat (_("Cannot add name servers to zone %1."), reverse_zone) + "\n";
 	    return errors;
 	}
 
@@ -1040,7 +1041,7 @@ Do you really want to use the new one?"),
 
     symbol Wizard_CreateZoneDialog () {
 	// TRANSLATORS: busy message
-	UI::OpenDialog(`Label(_("Creating DNS Zone...")));
+	UI::OpenDialog(`Label(_("Creating DNS zone...")));
 
 	y2milestone("Creating new zone... (backing-up old settings)");
 
@@ -1068,7 +1069,8 @@ Do you really want to use the new one?"),
 		_("There were some errors during DNS zone creation:
 
 %1
-Do you want to return to the Wizard?"), errors
+Return to the wizard?
+"), errors
 	    ))) {
 		y2milestone("User decided to run through Wizard again");
 		ret = `wizard_again;
@@ -1080,7 +1082,7 @@ Do you want to return to the Wizard?"), errors
 	    ret = `next;
 	    y2milestone("Creation was successful");
 	    // TRANSLATORS: popup message
-	    Report::Message (_("The DNS zone was successfully created."));
+	    Report::Message (_("The DNS zone was created successfully."));
 	}
 	
 	return ret;
