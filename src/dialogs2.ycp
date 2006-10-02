@@ -141,7 +141,7 @@ term Common_CardSelectionDialog() {
 		// TRANSLATORS: a push-button
 		`PushButton(`id("add"),    _("&Select")),
 		// TRANSLATORS: a push-button
-		`PushButton(`id("remove"), _("&Unselect"))
+		`PushButton(`id("remove"), _("&Deselect"))
 	    ),
 	    `VStretch()
         );
@@ -688,9 +688,9 @@ term Common_DynamicDHCPDialog() {
 			),
 			`VBox (
 			    // text entry
-			    `Left( `TextEntry ( `id ("from_ip_min"), _("Min&imal IP Address") ) ),
+			    `Left( `TextEntry ( `id ("from_ip_min"), _("Min&imum IP Address") ) ),
 			    // text entry
-			    `Left( `TextEntry ( `id ("to_ip_max"), _("Ma&ximal IP Address") ) )
+			    `Left( `TextEntry ( `id ("to_ip_max"), _("Ma&ximum IP Address") ) )
 			)
 		    )
 
@@ -937,8 +937,9 @@ symbol DynamicDHCPHandle (string key, map event) {
     // Show DNS Zone Information
     if (event["ID"]:nil == `dns_advanced_zone_info) {
 	Report::Message (sformat (
-	    _("The current DNS Zone %1 is not a type 'master'.
-Which means that you cannot change it here."),
+	    _("DNS zone %1 is not a master zone.
+This means that you cannot change it here.
+"),
 	    current_settings["domain"]:""
 	));
 

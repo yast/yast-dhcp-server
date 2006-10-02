@@ -58,10 +58,10 @@
 	// ]
 
 	// TRANSLATORS: dialog caption
-	string dialog_caption = _("Add New DNS Records Range");
+	string dialog_caption = _("Add New DNS Record Range");
 	if (old_range != $[] && old_range != nil) {
 	    // TRANSLATORS: dialog caption
-	    dialog_caption = _("Edit DNS Records Range");
+	    dialog_caption = _("Edit DNS Record Range");
 	}
 
 	UI::OpenDialog (`VBox (
@@ -70,9 +70,9 @@
 		`VBox (
 		    `HBox (
 			// TRANSLATORS: text entry
-			`TextEntry (`id ("current_range_min"), _("Min&imal IP Address")),
+			`TextEntry (`id ("current_range_min"), _("Min&imum IP Address")),
 			// TRANSLATORS: text entry
-			`TextEntry (`id ("current_range_max"), _("Ma&ximal IP Address"))
+			`TextEntry (`id ("current_range_max"), _("Ma&ximum IP Address"))
 		    ),
 		    `HBox (
 			// TRANSLATORS: text entry
@@ -143,7 +143,9 @@
 	    Report::Error (
 		// TRANSLATORS: popup error, %1 is an IP address
 		// %2 is a network, %3 is a netmask
-		sformat (_("IP Address %1 does not match\nthe current network %2/%3."),
+		sformat (_("IP address %1 does not match
+the current network %2/%3.
+"),
 		first_ip, current_d_settings["network"]:"", current_d_settings["netmask"]:""
 	    ));
 	    UI::SetFocus(`id("first_ip"));
@@ -155,7 +157,9 @@
 	// network bits must be the same in both IP and Network
 	if (last_ip_mask != network_bits) {
 	    Report::Error (
-		sformat (_("IP Address %1 does not match\nthe current network %2/%3"),
+		sformat (_("IP address %1 does not match
+the current network %2/%3
+"),
 		last_ip, current_d_settings["network"]:"", current_d_settings["netmask"]:""
 	    ));
 	    UI::SetFocus(`id("last_ip"));
@@ -186,7 +190,9 @@
 	    Report::Error (sformat (
 		// TRANSLATORS: popup error, %1 an IP address
 		// %2 is the first IP address of the range, %3 is the last one
-		_("The IP Address %1 is out of the current\ndynamic DHCP range %2 - %3."),
+		_("The IP address %1 is out of the current
+dynamic DHCP range %2-%3.
+"),
 		first_ip, current_d_settings["from_ip"]:"", current_d_settings["to_ip"]:""
 	    ));
 	    return false;
@@ -197,7 +203,10 @@
 	    Report::Error (sformat (
 		// TRANSLATORS: popup error, %1 an IP address
 		// %2 is the first IP address of the range, %3 is the last one
-		_("The IP Address %1 is\nout of the current\ndynamic DHCP range %2 - %3"),
+		_("The IP address %1 is
+out of the current
+dynamic DHCP range %2-%3.
+"),
 		last_ip, current_d_settings["from_ip"]:"", current_d_settings["to_ip"]:""
 	    ));
 	    return false;
@@ -306,7 +315,7 @@
 	if (i_count > 1) {
 	    Report::Error (
 		// TRANSLATORS: popup error '%i' is a special string, do not translate it, please
-		_("There can be only one '%i' in the Hostname Base string.")
+		_("There can be only one '%i' in the hostname base string.")
 	    );
 	    return nil;
 	}
@@ -351,8 +360,9 @@
 	    Report::Error (sformat (
 		// TRANSLATORS: popup error, %1 is an IP address
 		// %2 is the first IP address of the range, %3 is the last one
-		_("The first IP address %1 is not in the range of allowed
-IP Addresses (%2 - %3) defined in the DHCP server."),
+		_("IP address %1 is not in the range of allowed
+IP addresses (%2-%3) defined in the DHCP server.
+"),
 		first_ip, current_d_settings["ipv4_min"]:"",
 		current_d_settings["ipv4_max"]:""
 	    ));
@@ -375,8 +385,9 @@ IP Addresses (%2 - %3) defined in the DHCP server."),
 	    Report::Error (sformat (
 		// TRANSLATORS: popup error, %1 is an IP address
 		// %2 is the first IP address of the range, %3 is the last one
-		_("The first IP address %1 is not in the range of allowed
-IP Addresses (%2 - %3) defined in the DHCP server."),
+		_("IP address %1 is not in the range of allowed
+IP addresses (%2-%3) defined in the DHCP server.
+"),
 		first_ip, current_d_settings["ipv4_min"]:"",
 		current_d_settings["ipv4_max"]:""
 	    ));

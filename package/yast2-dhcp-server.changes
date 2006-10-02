@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Mon Oct  2 16:45:40 CEST 2006 - kmachalkova@suse.cz
+
+- Merged proofread texts 
+
+-------------------------------------------------------------------
 Fri Sep 22 10:38:52 CEST 2006 - kmachalkova@suse.cz
 
 - Added support for passing commandline parameters to dhcpd

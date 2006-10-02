@@ -198,7 +198,7 @@
 	UI::OpenDialog (`VBox (
 	    `MarginBox (1, 1, `Frame (
 		// TRANSLATORS: dialog frame label
-		_("Add New DNS Record"),
+		_("Adding a New DNS Record"),
 		`VBox (
 		    // TRANSLATORS: text entry
 		    `TextEntry (`id ("new_hostname"), _("&Hostname")),
@@ -271,7 +271,7 @@
 		    sformat(
 			// TRANSLATORS: busy message
 			// %1 is the first IP address of the range, %2 is the last one
-			_("Adding DHCP range %1 - %2 into DNS server..."),
+			_("Adding DHCP range %1-%2 to the DNS server..."),
 			validated["first_ip"]:"", validated["last_ip"]:""
 		)
 		));
@@ -301,7 +301,7 @@
 	UI::OpenDialog (`VBox (
 	    `MarginBox (1, 1, `Frame (
 		// TRANSLATORS: dialog frame label
-		_("Remove DNS Records Matching Range"),
+		_("Removing DNS Records Matching Range"),
 		`HBox (
 		    // TRANSLATORS: text entry
 		    `HWeight (1, `TextEntry (`id ("first_ip"), _("&First IP Address"))),
@@ -391,7 +391,7 @@
 		    sformat(
 			// TRANSLATORS: busy message
 			// %1 is the first IP address of the range, %2 is the last one
-			_("Removing range of records %1 - %2 from DNS server..."),
+			_("Removing records in the range %1-%2 from the DNS server..."),
 			first_ip, last_ip
 		    )
 		));
@@ -470,8 +470,9 @@
 	    Report::Error (sformat (
 		// TRANSLATORS: popup error, %1 is the zone name
 		// please, do not translate 'master' (exact DNS definition)
-		_("Zone %1 is not a type 'master',
-DNS server cannot write any records into it."),
+		_("Zone %1 is not type master.
+The DNS server cannot write any records to it.
+"),
 		current_settings["reverse_domain"]:""
 	    ));
 	    return;
@@ -481,9 +482,9 @@ DNS server cannot write any records into it."),
 	    // should we create that zone?
 	    if (Popup::YesNo (sformat (
 		// TRANSLATORS: popup question, %1 is a DNS zone name
-		_("Zone %1 does not exist in the current DNS server configuration yet.
-
-Should it be created?"),
+		_("Zone %1 does not yet exist in the current DNS server configuration.
+Create it?
+"),
 		current_settings["reverse_domain"]:""
 	    ))) {
 		y2milestone("Creating zone reverse %1", current_settings["reverse_domain"]:"");
@@ -736,9 +737,9 @@ Should it be created?"),
 		}
 		
 		// TRANSLATORS: popup question - canceling dns synchronization with dhcp
-		if (Popup::YesNo(_("All changes made in DNS Server will be lost.
-
-Are you sure you want to cancel this operation?"))) {
+		if (Popup::YesNo(_("If you cancel, all changes made in the DNS server will be lost.
+Really cancel this operation?
+"))) {
 		    // Changes currently made will be reverted
 		    y2milestone("Cancel... Recent changes in DNS will be reverted");
 		    dialog_ret = false;
@@ -822,7 +823,7 @@ Are you sure you want to cancel this operation?"))) {
 			// TRANSLATORS: menu entry
 			`item (`id (`add_range),    _("Add New Range of DNS Records")),
 			// TRANSLATORS: menu entry
-			`item (`id (`remove_range), _("Remove DNS Records Matching Range")),
+			`item (`id (`remove_range), _("Removing DNS Records Matching Range")),
 			// TRANSLATORS: menu entry
 			`item (`id (`run_wizard),   _("Run Wizard to Rewrite the DNS Zone from Scratch"))
 			// FIXME: add functionality (dialog) for checking the zone
