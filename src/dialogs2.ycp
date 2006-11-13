@@ -25,9 +25,13 @@ import "CWMServiceStart";
 import "ProductFeatures";
 import "NetworkDevices";
 import "Report";
+import "Mode";
+import "Netmask";
 
 include "dhcp-server/helps.ycp";
 include "dhcp-server/widgets.ycp";
+include "dhcp-server/dns-server-management.ycp";
+include "dhcp-server/dns-server-wizard.ycp";
 
 /* Using expert UI */
 define boolean expert_ui = (ProductFeatures::GetFeature ("globals", "ui_mode") == "expert");
@@ -119,9 +123,10 @@ term Common_CardSelectionDialog() {
 		`Left( `Label( _("Network Cards for DHCP Server") ) ),
                 `Table (
 		    `id("nic_selection"),
+		    `opt(`notify, `immediate),
 		    `header (
 			// TRANSLATORS: table header item
-			_("Active"),
+			_("Selected"),
 			// TRANSLATORS: table header item
 			_("Interface Name"),
 			// TRANSLATORS: table header item
@@ -133,13 +138,29 @@ term Common_CardSelectionDialog() {
 		)
             ),
 	    `HBox (
-		`PushButton(`id("add"), Label::AddButton()),
-		`PushButton(`id("remove"), Label::RemoveButton())
+		// TRANSLATORS: a push-button
+		`PushButton(`id("add"),    _("&Select")),
+		// TRANSLATORS: a push-button
+		`PushButton(`id("remove"), _("&Deselect"))
 	    ),
 	    `VStretch()
         );
 
     return dialog;
+}
+
+void SetInterfacesTableButtons () {
+    string current_item = (string) UI::QueryWidget(`id("nic_selection"), `CurrentItem);
+
+    // The currently selected item is active, can be deactivated
+    if ((boolean) DhcpServerUI::ifaces[current_item, "active"]:nil == true) {
+	UI::ChangeWidget(`id("add"),    `Enabled, false);
+	UI::ChangeWidget(`id("remove"), `Enabled, true);
+    // and vice versa
+    } else {
+	UI::ChangeWidget(`id("add"),    `Enabled, true);
+	UI::ChangeWidget(`id("remove"), `Enabled, false);
+    }
 }
 
 void RedrawInterfacesTable () {
@@ -153,10 +174,13 @@ void RedrawInterfacesTable () {
 	    settings["ipaddr"]:""
 	));
     });
+
     UI::ChangeWidget(`id("nic_selection"), `Items, table_items);
     if (current_item_iface != nil) {
 	UI::ChangeWidget(`id("nic_selection"), `CurrentItem, current_item_iface);
     }
+    
+    SetInterfacesTableButtons();
 }
 
 void CardSelectionInit (string key)
@@ -165,8 +189,13 @@ void CardSelectionInit (string key)
 
     foreach (string iface, NetworkDevices::List(""), {
 	if (iface != "" && !issubstring(iface, "lo") && !issubstring(iface, "sit")) {
+	    string device_name = NetworkDevices::GetValue(iface, "NAME");
+	    if (size(device_name) > 40) {
+		device_name = substring (device_name, 0, 37) + "...";
+	    }
+	    
 	    DhcpServerUI::ifaces[iface] = $[
-		"device" : NetworkDevices::GetValue(iface, "NAME"),
+		"device" : device_name,
 		"ipaddr" : (NetworkDevices::GetValue(iface, "BOOTPROTO") == "dhcp" ?
 		    // TRANSLATORS: Table items; Informs that the IP is a DHCP Address
 		    _("DHCP address")
@@ -201,6 +230,8 @@ void CardSelectionInit (string key)
 symbol CardSelectionHandle (string key, map event) {
     string item_id = (string) UI::QueryWidget(`id("nic_selection"), `CurrentItem);
 
+    SetInterfacesTableButtons();
+
     current_item_iface = item_id;
 
     if (expert_ui) {
@@ -220,6 +251,7 @@ symbol CardSelectionHandle (string key, map event) {
 	    DhcpServerUI::ifaces[item_id,"active"] = false;
 	}
     }
+
     RedrawInterfacesTable();
 
     return nil;
@@ -270,7 +302,7 @@ term Common_GlobalSettingsDialog() {
 
     if (expert_ui) ldap = `VBox(
 	// configuration will be saved in ldap?
-        `Left(`CheckBox(`id("ldap"), `opt( `notify), _("LDAP Support"), true)),
+        `Left(`CheckBox(`id("ldap"), `opt( `notify), _("&LDAP Support"), true)),
         `VSpacing(2)
     );
 
@@ -303,12 +335,12 @@ term Common_GlobalSettingsDialog() {
                     `Left(
 			`HBox(
 			    // Textentry with default lease time of IP address from dhcp server
-                    	    `TextEntry(`id("defaultleasetime"), `opt(`hsquash), _("Default &Lease Time")),
+                    	    `HSquash(`TextEntry(`id("defaultleasetime"), _("Default &Lease Time"))),
                 	    `HSpacing(0.1),
 			    `MinWidth(
 				TimeComboLabelLength(),
 				// Units for defaultleasetime
-				`ComboBox(`id("defaultleasetimeunits"), `opt(`hsquash), "", time_combo_items)
+				`HSquash(`ComboBox(`id("defaultleasetimeunits"), _("&Units"), time_combo_items))
 			    )
 			)
                     )
@@ -332,6 +364,21 @@ void GlobalSettingsValidChars ()
     UI::ChangeWidget(`id( "printserver" ),	`ValidChars, Address::ValidChars4);
     UI::ChangeWidget(`id( "winsserver" ),	`ValidChars, Address::ValidChars4);
     UI::ChangeWidget(`id( "defaultleasetime" ),	`ValidChars, "0123456789");
+}
+
+string CurrentDomainName () {
+    string current_domain_name = "";
+
+    foreach (map<string,string> opt, DhcpServer::GetEntryOptions ("",""), {
+	if (opt["key"]:nil == "domain-name") {
+	    current_domain_name = opt["value"]:"";
+	    if (regexpmatch (current_domain_name, "^[ \t]*\".*\"[ \t]*$"))
+		current_domain_name = regexpsub (current_domain_name, "^[ \t]*\"(.*)\"[ \t]*$", "\\1");
+	    break;
+	}
+    });
+
+    return current_domain_name;
 }
 
 void GlobalSettingsInit (string key)
@@ -614,17 +661,41 @@ term Common_DynamicDHCPDialog() {
 		// frame
                 `Frame (_("IP Address Range") ,
 		    `VBox(
+
 		    `HBox (
-			// TRANSLATORS: informative text entry (filled up, disabled)
-			`TextEntry( `id("current_network"), _("Current &Network") ),
-			// TRANSLATORS: informative text entry (filled up, disabled)
-			`TextEntry( `id("current_netmask"), _("Current Net&mask") )
+			`HWeight (2,
+			    // TRANSLATORS: informative text entry (filled up, disabled)
+			    `TextEntry( `id("current_network"), _("Current &Network") )
+			),
+			`HWeight (2,
+			    // TRANSLATORS: informative text entry (filled up, disabled)
+			    `TextEntry( `id("current_netmask"), _("Current Net&mask") )
+			),
+			`HWeight (1,
+			    // TRANSLATORS: informative text entry (filled up, disabled)
+			    `TextEntry( `id("current_bits"),    _("Netmask Bi&ts"))
+			)
 		    ),
-			// text entry
-		    `Left( `TextEntry ( `id ("from_ip"), _("&First IP Address") ) ),
-			// text entry
-		    `Left( `TextEntry ( `id ("to_ip"), _("&Last IP Address") ) )
-		) ) 
+
+		    `VSpacing(1),
+
+		    `HBox (
+			`VBox (
+			    // text entry
+			    `Left( `TextEntry ( `id ("from_ip"), _("&First IP Address") ) ),
+			    // text entry
+			    `Left( `TextEntry ( `id ("to_ip"), _("&Last IP Address") ) )
+			),
+			`VBox (
+			    // text entry
+			    `Left( `TextEntry ( `id ("from_ip_min"), _("Min&imum IP Address") ) ),
+			    // text entry
+			    `Left( `TextEntry ( `id ("to_ip_max"), _("Ma&ximum IP Address") ) )
+			)
+		    )
+
+		    )
+		) 
             ),
 	    `VSpacing (1),
             `Frame(
@@ -634,13 +705,13 @@ term Common_DynamicDHCPDialog() {
 		    `opt(`hstretch),
 		    `HWeight(
 			// Textentry label - lease time for IPs in the range
-                	3, `TextEntry(`id("defaultleasetime"), `opt(`hsquash), _("&Default"))
+                	3, `TextEntry(`id("defaultleasetime"), _("&Default"))
 		    ),
 		    `HWeight(
 			2, `MinWidth(
 			    TimeComboLabelLength(),
                     	    // Combobox - type of units for lease time
-			    `ComboBox(`id("defaultleasetimeunits"), `opt(`hsquash), "",
+			    `ComboBox(`id("defaultleasetimeunits"), _("&Units"),
 				time_combo_items
                     	    )
 			)
@@ -648,20 +719,21 @@ term Common_DynamicDHCPDialog() {
 		    `HSpacing(1),
 		    `HWeight(
 			// TextEntryLabel - max. time for leasing of IPs from the range
-			3, `TextEntry(`id("maxleasetime"), `opt(`hsquash), _("&Maximum"))
+			3, `TextEntry(`id("maxleasetime"), _("&Maximum"))
 		    ),
 		    `HWeight(
 			2, `MinWidth(
 			    TimeComboLabelLength(),
 			    // Combobox - type of units for max lease time
-                    	    `ComboBox(`id("maxleasetimeunits"), `opt(`hsquash), "",
+                    	    `ComboBox(`id("maxleasetimeunits"), `opt(`hsquash), _("Uni&ts"),
 				time_combo_items
                     	    )
 			)
 		    )
                 )
             ),
-	    `VStretch()
+	    `VStretch(),
+	    `ReplacePoint (`id (`dns_advanced), `Empty())
         );
 
     return dialog;
@@ -698,16 +770,75 @@ void DynamicDHCPInit (string key)
     string interface = ifaces_allowed[0]:nil;
     map m = DhcpServer::GetInterfaceInformation (interface);
     string id = m["network"]:"" + " netmask " + m["netmask"]:"";
+    string zone_name = CurrentDomainName();
 
     current_dynamic_dhcp = $[
 	"network" : m["network"]:"",
 	"netmask" : m["netmask"]:"",
+	"domain"  : zone_name,
     ];
+
+    integer netmask_bits = Netmask::ToBits(m["netmask"]:"255.255.255.255");
+    current_dynamic_dhcp["netmask_bits"] = tostring(netmask_bits);
 
     UI::ChangeWidget( `id("current_network"), `Value, m["network"]:"");
     UI::ChangeWidget( `id("current_network"), `Enabled, false);
     UI::ChangeWidget( `id("current_netmask"), `Value, m["netmask"]:"");
     UI::ChangeWidget( `id("current_netmask"), `Enabled, false);
+    UI::ChangeWidget( `id("current_bits"),    `Value, tostring (netmask_bits));
+    UI::ChangeWidget( `id("current_bits"),    `Enabled, false);
+
+    // Computing minimal and maximal IPs
+    string current_network = IP::ComputeNetwork (m["network"]:"", m["netmask"]:"255.255.255.255");
+    string network_binary  = IP::IPv4ToBits (current_network);
+
+    current_dynamic_dhcp["current_network"] = current_network;
+    current_dynamic_dhcp["network_binary"]  = network_binary;
+
+    // generating reverse zone
+    if (IP::Check(current_network)) {
+	// 10.20.60.2  / 255.255.255.0 -> 60.20.10.in-addr.arpa
+	// 135.14.80.2 / 255.255.240.0 -> 14.135.in-addr.arpa
+	// 10.20.60.2  / 255.128.0.0   -> 10.in-addr.arpa
+
+	string reverse_zone = "";
+
+	// only 255's are valid for a reverse zone
+	integer network_bytes = netmask_bits / 8;
+	list <string> network_split = splitstring (current_network, ".");
+	while (network_bytes > 0) {
+	    network_bytes = network_bytes - 1;
+	    reverse_zone = reverse_zone + network_split[network_bytes]:"" + ".";
+	}
+	reverse_zone = reverse_zone + "in-addr.arpa";
+	
+	current_dynamic_dhcp["reverse_domain"] = reverse_zone;
+    }
+
+    // Computing minimal IP
+    string ipv4_min = regexpsub (network_binary, "^(.*).$", "\\11");
+    ipv4_min = IP::BitsToIPv4 (ipv4_min);
+
+    // Computing maximal IP
+    string ipv4_max = substring (network_binary, 0, netmask_bits);
+    ipv4_max = ipv4_max + "11111111111111111111111111111111";
+    ipv4_max = substring (ipv4_max, 0, 32);
+    // changing the last bit not to be >1< (reserved for broadcast)
+    ipv4_max = regexpsub (ipv4_max, "(.*)1$", "\\10");
+    ipv4_max = IP::BitsToIPv4 (ipv4_max);
+
+    y2milestone("Network: %1, Min. IP: %2, Max. IP: %3", m["network"]:"", ipv4_min, ipv4_max);
+
+    UI::ChangeWidget( `id("from_ip_min"), `Enabled, false);
+    UI::ChangeWidget( `id("to_ip_max"),   `Enabled, false);
+    if (ipv4_min != nil && ipv4_max != nil) {
+	UI::ChangeWidget( `id("from_ip_min"), `Value, ipv4_min);
+	UI::ChangeWidget( `id("to_ip_max"), `Value,   ipv4_max);
+	
+	current_dynamic_dhcp["ipv4_min"] = ipv4_min;
+	current_dynamic_dhcp["ipv4_max"] = ipv4_max;
+    }
+    
 
     y2milestone ("Id to lookup: %1", id );
 
@@ -755,6 +886,85 @@ void DynamicDHCPInit (string key)
     UI::ChangeWidget ( `id ("maxleasetimeunits"), `Value, unit );
 
     DynamicDHCPValidChars ();
+    
+    // Synchronize DNS Server -- init
+    map <string, map <string, string> > all_zones = DnsServerAPI::GetZones();
+    list <term> possible_dns_actions = [];
+
+    // zone is not maintained by the DNS server
+    if (all_zones[zone_name]:nil == nil) {
+	possible_dns_actions = [
+	    `item(`id(`dns_advanced_from_scratch), _("Create New DNS Zone from Scratch"))
+	];
+
+    // zone is maintained and it is a 'master'
+    } else if (all_zones[zone_name,"type"]:nil == "master") {
+	possible_dns_actions = [
+	    `item(`id(`dns_advanced_from_scratch), _("Create New DNS Zone from Scratch")),
+	    `item(`id(`dns_advanced_edit_current), _("Edit Current DNS Zone"))
+	];
+
+    // zone is maintained but it is not a 'master'
+    } else {
+	possible_dns_actions = [
+	    `item(`id(`dns_advanced_zone_info), _("Get Current Zone Information"))
+	];
+    }
+
+    UI::ReplaceWidget (`id(`dns_advanced), `MenuButton (
+	`id(`dns_advanced_menu),
+	_("&Synchronize DNS Server..."),
+	possible_dns_actions
+    ));
+
+    UI::ChangeWidget (`id (`dns_advanced_menu), `Enabled, DhcpServer::IsDnsServerAvailable());
+}
+
+boolean DynamicDHCPValidate (string key, map event);
+
+symbol DynamicDHCPHandle (string key, map event) {
+    if (key != "dynamic_dhcp") return nil;
+
+    // Only these IDs are handled
+    if (
+	event["ID"]:nil != `dns_advanced_edit_current
+	&&
+	event["ID"]:nil != `dns_advanced_from_scratch
+	&&
+	event["ID"]:nil != `dns_advanced_zone_info
+    ) return nil;
+
+    // Show DNS Zone Information
+    if (event["ID"]:nil == `dns_advanced_zone_info) {
+	Report::Message (sformat (
+	    _("DNS zone %1 is not a master zone.
+This means that you cannot change it here.
+"),
+	    current_settings["domain"]:""
+	));
+
+    // Run the DNS Wizard - Zone from Scratch
+    } else if (event["ID"]:nil == `dns_advanced_from_scratch) {
+	if (! DynamicDHCPValidate(nil, nil)) {
+	    y2milestone("Dynamic DHCP Validation failed, Not managing DNS Server");
+	    return nil;
+	}
+
+	y2milestone("Running DNS wizard -- Creating zone from scratch");
+	RunNewDNSServerWizard (current_dynamic_dhcp);
+
+    // Edit the current DNS Zone - for experts
+    } else if (event["ID"]:nil == `dns_advanced_edit_current) {
+	if (! DynamicDHCPValidate(nil, nil)) {
+	    y2milestone("Dynamic DHCP Validation failed, Not managing DNS Server");
+	    return nil;
+	}
+
+	y2milestone("Managing DNS Server");
+	ManageDNSServer (current_dynamic_dhcp);
+    }
+    
+    return nil;
 }
 
 void DynamicDHCPStore (string key, map event)
@@ -866,7 +1076,7 @@ boolean DynamicDHCPValidate (string key, map event)
     // FIXME: Lease Time should NOT be zero or means zero NO expiration?
 
     // network of the current network interface
-    string current_network = IP::ComputeNetwork(current_dynamic_dhcp["network"]:"", current_dynamic_dhcp["netmask"]:"");
+    string current_network = IP::ComputeNetwork (current_dynamic_dhcp["network"]:"", current_dynamic_dhcp["netmask"]:"");
 
     // checking from_ip network with the current network
     string from_ip_network = IP::ComputeNetwork(from_ip, current_dynamic_dhcp["netmask"]:"");
@@ -896,6 +1106,10 @@ IP %1 does not match the network %2/%3."),
 	return false;
     }
 
+    
+    current_dynamic_dhcp["from_ip"] = from_ip;
+    current_dynamic_dhcp["to_ip"]   = to_ip;
+
     return true;
 }
 
@@ -906,8 +1120,8 @@ IP %1 does not match the network %2/%3."),
 
 term Common_HostManagementDialog() {
     term dialog = `VBox(
-            `VBox(
-			// Label of the registered hosts table
+    	    `VBox (
+		    // Label of the registered hosts table
                     `Left(`Label(_("Registered Host"))),
                     `Table(`id("registered_hosts_table"), 
 			`opt(`notify, `immediate, `vstretch),
@@ -920,53 +1134,54 @@ term Common_HostManagementDialog() {
 			_("Hardware Address"), 
 			// Network type of the host
 			_("Type")))
-                ),
+            ),
 
-		// Frame label - configuration of particular host
-            `Frame( _("List Setup"),
-                `VBox(
-                    `HBox(
-                        `HWeight(45, `VBox(
-                            `HBox(
-				// Textentry label - name of the host
-                                `Left(`TextEntry(`id("hostname"), _("&Name"))),
-				// noneditable textentry
-                                `Left(`TextEntry(`id("domain"), `opt(`disabled), "  "))
-                            ),
+	    // Frame label - configuration of particular host
+            `VSquash (`Frame( _("List Setup"),
+                `VBox (
+                    `Top (`HBox (
+			`Top (
+			    `VBox (
+                        	`HBox (
+				    // Textentry label - name of the host
+                            	    `Left (`TextEntry(`id("hostname"), _("&Name"))),
+				    // noneditable textentry
+                            	    `Left (`TextEntry(`id("domain"), `opt(`disabled), "  "))
+                        	),
 				// Textentry label - IP address of the host
-                            `Left(`TextEntry(`id("hostip"), _("&IP Address")))
-                        )),
-                        `HWeight(10, `VBox(
-                            `HStretch()
-                        )),
-                        `HWeight(45, `VBox(
+                        	`Left (`TextEntry(`id("hostip"), _("&IP Address")))
+                    	    )
+			),
+
+			`HSpacing(2),
+
+                        `Top(
+			    `VBox(
 				// Textentry label - hardware (mac) address of the host
-                            `Left(`TextEntry(`id("hosthwaddress"), _("&Hardware Address"))),
+                        	`Left (`TextEntry(`id("hosthwaddress"), _("&Hardware Address"))),
 				// Radiobutton label - network type of the host
-                            `RadioButtonGroup(`id("network_type"), 
-                                `HBox(
-                                    `Left(`RadioButton(`id("ethernet"), _("&Ethernet"), true)),
-                                    `Left(`RadioButton(`id("token-ring"), _("&Token Ring")))
-                                )
-                            ),
-			    `VSpacing(1),
-			    `VStretch()
-                        ))
-                    ),
+                        	`RadioButtonGroup (`id("network_type"), 
+                            	    `HBox(
+                                	`Left (`RadioButton(`id("ethernet"), _("&Ethernet"), true)),
+                                	`Left (`RadioButton(`id("token-ring"), _("&Token Ring")))
+                            	    )
+                        	)
+                    	    )
+			)
+                    )),
                     `VSpacing(1),
-                    `HBox(
-				// Pushbutton label - add host into list
-                        `HSquash(`Left(`PushButton(`id("addhost"), Label::AddButton ()))),
+		    `Top (`Left (`HBox (
+			// Pushbutton label - add host into list
+                        `Left (`PushButton(`id("addhost"), Label::AddButton ())),
                         `HSpacing(1),
-				// Pushbutton label - change host in list
-                        `HSquash(`Left(`PushButton(`id("edithost"), _("C&hange in List")))),
+			// Pushbutton label - change host in list
+                        `Left (`PushButton(`id("edithost"), _("C&hange in List"))),
                         `HSpacing(1),
-				// Pushbutton label - delete host from list
-                        `Left(`PushButton(`id("deletehost"), _("Dele&te from List"))),
-                        `HStretch()
-                    )
+			// Pushbutton label - delete host from list
+                        `Left (`PushButton(`id("deletehost"), _("Dele&te from List")))
+            	    )))
                 )
-            )
+            ))
         );
 
     return dialog;
@@ -1110,19 +1325,16 @@ boolean CheckMacAddrFormat () {
 	UI::QueryWidget ( `id ("hosthwaddress"), `Value );
     string addr_type
 	= (string) UI::QueryWidget ( `id ("network_type"), `CurrentButton );
-    string regexp = nil;
     if (addr_type == "ethernet" || addr_type == "token-ring")
     {
-	regexp = "[0-9a-fA-F]{2,2}";
-	regexp = sformat ("(%1:){5,5}%1", regexp);
-    }
-    if (regexp != nil && ! regexpmatch (hosthwaddress, regexp))
-    {
-	UI::SetFocus (`id ("hosthwaddress"));
-	Report::Error (
+	 if( !Address::CheckMAC(hosthwaddress))
+      {
+	  UI::SetFocus (`id ("hosthwaddress"));
+	  Report::Error (
 	    // error popup
-	    _("The hardware address is invalid."));
-	return false;
+	      _("The hardware address is invalid.\n") + Address::ValidMAC());
+	  return false;
+      }
     }
     return true;
 }
@@ -1369,6 +1581,72 @@ Continue?")))
     return nil;
 }
 
+void OtherOptionsInit (string key) {
+    string params = DhcpServer::GetOtherOptions();
+    UI::ChangeWidget(`id("other_opts"), `Value, params);
+}
+
+map <string, boolean> valid_opts = $[
+    "p" : true,
+    "f" : false,
+    "d" : false,
+    "q" : false,
+    "t" : false,
+    "T" : false,
+    "cf": true,
+    "lf": true,
+    "tf": true,
+    "play": true,
+];
+
+boolean OtherOptionsValidate(string key, map event) {
+    string cmdline = (string) UI::QueryWidget(`id("other_opts"), `Value);
+    //remove leading '-'
+    cmdline = substring(cmdline,1);
+    boolean correct = true;
+
+    map <string, string> options = listmap(string s, splitstring(cmdline,"-"), {
+	list <string> wrk = splitstring(s," ");
+	return $[wrk[0]:"" : wrk[1]:""];
+    });
+
+    y2milestone("Cmdline options: %1", options);
+
+    foreach(string k, string v, options, {
+	if (!haskey(valid_opts,k)) {
+	    UI::SetFocus(`id("other_opts"));
+	    Popup::Error( sformat(_("\"\-%1\" is not a valid DHCP server commandline option"),k));
+	    correct = false;
+	    break;
+	} else {
+	    if(v == "" && valid_opts[k]:false){
+	        UI::SetFocus(`id("other_opts"));
+	        Popup::Error( sformat(_("DHCP server commandline option \"\-%1\" requires an argument"),k));
+		correct = false;
+		break;
+	    }
+	    if(k == "cf") {
+		UI::SetFocus(`id("other_opts"));
+		correct = (Popup::ContinueCancel(sformat(_("You have specified an alternate configuration file for DHCP server.\n
+This is not supported by YaST, as DHCP server module can only read and write
+/etc/dhcpd.conf. New configuration from %1 will not be imported and all changes 
+will be saved to the default configuration file.
+ 
+Really continue?"), v))); 
+		break;
+	    }
+	}
+    });
+//    y2milestone("Commandline options parsed");
+    return correct;
+}
+
+void OtherOptionsStore(string key, map event) {
+    string params = (string) UI::QueryWidget(`id("other_opts"), `Value);
+
+    DhcpServer::SetOtherOptions(params);
+}
+
 map<string, map<string, any> > tabs = $[
     "start_up" : $[
 	"contents"	: `VBox (
@@ -1376,6 +1654,8 @@ map<string, map<string, any> > tabs = $[
 	    `VSpacing(),
 	    "use_ldap",
 	    "start_stop",
+	    `VSpacing(),
+	    "other_options",
 	    `VStretch ()
 	),
 	// dialog caption
@@ -1384,7 +1664,7 @@ map<string, map<string, any> > tabs = $[
 	"wizard"	: _("Start-Up"),
 	// tree item
 	"tree_item_label"	: _("Start-Up"),
-	"widget_names"	: ["auto_start_up", "use_ldap", "start_stop", "expert_settings"],
+	"widget_names"	: ["auto_start_up", "use_ldap", "start_stop", "expert_settings", "other_options"],
     ],
     "card_selection" : $[
 	"contents"	: `VBox (
@@ -1518,7 +1798,7 @@ map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
 	"store"		: CardSelectionStore,
 	"validate_type"	: `function,
 	"validate_function"	: CardSelectionValidate,
-	"help"		: HELPS["card_selection"]:"",
+	"help"		: (expert_ui ? HELPS["card_selection_expert"]:"" : HELPS["card_selection_simple"]:""),
     ],
     "global_settings" : $[
 	"widget"	: `custom,
@@ -1536,6 +1816,7 @@ map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
 	"init"		: DynamicDHCPInit,
 	"validate_type"	: `function,
 	"validate_function"	: DynamicDHCPValidate,
+	"handle"	: DynamicDHCPHandle,
 	"store"		: DynamicDHCPStore,
 	"help"		: HELPS["dynamic_dhcp"]:"",
     ],
@@ -1556,6 +1837,15 @@ map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
 	"widget"	: `custom,
 	"custom_widget"	: `Empty (),
 	"help"		: HELPS["config_summary"]:" ",
+    ],
+    "other_options" : $[
+	"widget"	: `custom,
+	"custom_widget" : `TextEntry (`id("other_opts"), "DHCP Server Start-Up Arguments"),
+	"init"		: OtherOptionsInit,
+	"validate_type"	: `function,
+	"validate_function" : OtherOptionsValidate,
+	"store"		: OtherOptionsStore,
+	"help"		: HELPS["other_options"]:" ",
     ],
 ]);
 

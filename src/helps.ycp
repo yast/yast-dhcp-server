@@ -128,8 +128,18 @@ Specify forward and reverse zones to update. For both, also specify
 their primary name server. If the name server runs on the same host as the DHCP
 server, you can leave the fields empty.</p>"),
 
-	// Wizard Installation - Step 1
-	"card_selection" : _("<p><b><big>Network Card Selection</big></b><br>
+	// help text
+	"other_options" : _("<p><b><big>DHCP Server Start-Up Arguments</big></b><br>
+Here you can specify parameters that you want DHCP Server to be started with 
+(e.g. \"-p 1234\") for a non-standard port to listen on). For all possible options,
+consult dhcpd manual page. If left blank, default values will be used.</p>"),
+
+	// Wizard Installation - Step 1 (version for expert UI)
+	"card_selection_expert" : _("<p><b><big>Network Card Selection</big></b><br>
+Select one or more of listed network cards to use for the DHCP server.</p>"),
+
+	// Wizard Installation - Step 1 (version for simple UI)
+	"card_selection_simple" : _("<p><b><big>Network Card Selection</big></b><br>
 Select one of listed network cards to use for the DHCP server.</p>"),
 
 	// Wizard Installation - Step 2 1/9
@@ -147,7 +157,7 @@ leases IPs to clients.</p>") +
 	// Wizard Installation - Step 2 4/9
 _("<p><b>Primary Name Server IP</b> and <b>Secondary Name Server IP</b> 
 offer these name servers to the DHCP clients.
-These values must be IP addresses.") +
+These values must be IP addresses.</p>") +
 
 	// Wizard Installation - Step 2 5/9
 _("<p><b>Default Gateway</b> inserts this
@@ -215,7 +225,7 @@ _("<p>To remove a host, select it and click <b>Delete from List</b>.</p>"),
       * @param possible list of declarations that can be selected
       * @return string the help
       */
-    global define string getSelectDeclarationTypeHelp (list possible) ``{
+    define string getSelectDeclarationTypeHelp (list possible) ``{
 	// help text 1/7
 	string ret = _("<p>Select the type of declaration to add.</p>");
 

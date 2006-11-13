@@ -1,0 +1,960 @@
+/**
+ * File:	include/dhcp-server/dns-server-management.ycp
+ * Package:	Configuration of dhcp-server
+ * Summary:	Synchronization with DNS Server
+ * Authors:	Lukas Ocilka <lukas.ocilka@suse.cz>
+ *
+ * $Id:$
+ */
+
+{
+
+    textdomain "dhcp-server";
+
+    import "Wizard";
+    import "DhcpServer";
+    import "DnsServerAPI";
+    import "DnsServer";
+    import "Report";
+    import "Popup";
+    import "Label";
+    import "Punycode";
+    import "Confirm";
+    import "IP";
+    import "Hostname";
+    
+    include "dhcp-server/dns-helps.ycp";
+    include "dhcp-server/dns-server-dialogs.ycp";
+    include "dhcp-server/dns-server-wizard.ycp";
+
+    boolean modified = false;
+    
+    list <map <string, string> > dns_server_managed_records = [];
+
+    /**
+     * @struct $[
+     *     "current_network" : "192.168.0.0",
+     *     "domain"          : "example.com",
+     *     "from_ip"         : "192.168.10.2",
+     *     "to_ip"           : "192.168.15.254"
+     *     "ipv4_max"        : "192.168.13.254",
+     *     "ipv4_min"        : "192.168.0.1",
+     *     "netmask"         : "255.255.240.0",
+     *     "netmask_bits"    : "20",
+     *     "network"         : "192.168.0.0",
+     *     "network_binary"  : "11000000101010000000000000000000",
+     * ]
+     */
+    map <string, string> current_settings = $[];
+
+    // --> Helper Functions
+
+    boolean GetModified() {
+	return modified;
+    }
+    
+    void SetModified () {
+	modified = true;
+    }
+    
+    void ResetModified () {
+	modified = false;
+    }
+
+    // Converts DNS record to relative one
+    string ToRelativeName (string absolute_name, string zone_name) {
+	if (absolute_name == nil || zone_name == nil) {
+	    return nil;
+	}
+	
+	string remove_this_to_be_relative = "." + zone_name + ".";
+	string relative_name = regexpsub(absolute_name, "(.*)" + remove_this_to_be_relative, "\\1");
+	if ((relative_name != nil) && (! regexpmatch(relative_name, "\\."))) {
+	    return relative_name;
+	}
+	
+	return absolute_name;
+    }
+
+    // <-- Helper Functions
+
+    // --> Add / Delete - DNS Functions
+
+    boolean RemoveDNSRangeWorker (string first_ip, string last_ip) {
+	string zone_name = current_settings["domain"]:"";
+	
+	string hostname = nil;
+	string ipv4     = nil;
+
+	integer removed = 0;
+	list <map <any, any> > all_zones = DnsServer::FetchZones();
+	
+	integer zone_counter = -1;
+	boolean zone_found   = false;
+
+	map <any, any> filtered_zone = $[];
+	foreach (map <any, any> one_zone, all_zones, {
+	    zone_counter = zone_counter + 1;
+	    if (one_zone["zone"]:nil == zone_name) {
+		zone_found = true;
+		break;
+	    }
+	});
+	if (! zone_found) {
+	    y2error("Cannot find zone %1", zone_name);
+	}
+
+	list <map <string, string> > zone_records = (list <map <string, string> >) all_zones[zone_counter, "records"]:[];
+
+	// Filter out DNS records that match the rule
+	zone_records = filter (map <string, string> one_record, zone_records, {
+	    // Only "A"
+	    if (one_record["type"]:"" != "A") return true;
+
+	    hostname = one_record["key"]:"";
+	    ipv4     = one_record["value"]:"";
+
+	    // Only non-empty "key" and "value"
+	    if (hostname == "" || ipv4 == "") return true;
+
+	    if (!IP::Check4(ipv4)) {
+		// leaving wrong definition in the zone
+		y2warning("Not a valid IP '%1'", ipv4);
+		return true;
+	    }
+
+	    // Current IP doesn't match the range
+	    if (! IPisInRangeOfIPs(ipv4, first_ip, last_ip)) return true;
+
+	    // Remove from zone
+	    removed = removed + 1;
+	    return false;
+	});
+	
+	all_zones[zone_counter, "records"] = zone_records;
+
+	DnsServer::StoreZones(all_zones);
+
+	return (removed > 0);
+    }
+    
+    // <-- Add / Delete - DNS Functions
+
+    // --> Edit Zone
+
+    void RedrawRRsTable () {
+	string zone_name = current_settings["domain"]:"";
+
+	list <map <string, string> > zone_records = DnsServerAPI::GetZoneRRs(zone_name);
+
+	// show the dialog 
+	boolean show_progress_dialog = (zone_records[200]:nil != nil);
+	// TRANSLATORS: busy message
+	if (show_progress_dialog) UI::OpenDialog(`Label(_("Regenerating DNS zone entries...")));
+
+	// later used when deleting records
+	dns_server_managed_records = [];
+
+	list <string> punycode_translations = [];
+	integer counter = -1;
+	string record_key = "";
+	zone_records = filter (map <string, string> one_record, zone_records, {
+	    record_key = ToRelativeName (one_record["key"]:"", zone_name);
+	    // record for the entire zone
+	    if (one_record["key"]:"" == zone_name + ".") record_key = "";
+
+	    // Only "A" records and non-empty "key"
+	    if (one_record["type"]:nil == "A" && record_key != "" && record_key != nil) {
+		counter = counter + 1;
+		punycode_translations[counter] = record_key;
+		dns_server_managed_records[counter] = $[ "name" : record_key, "ip" : one_record["value"]:"" ];
+		
+		return true;
+	    } else {
+		return false;
+	    }
+	});
+	
+	punycode_translations = Punycode::DocodeDomainNames(punycode_translations);
+
+	counter = -1;
+	list <term> items = maplist (map <string, string> one_record, zone_records, {
+	    counter = counter + 1;
+	    return `item(`id(counter), punycode_translations[counter]:"", one_record["value"]:"");
+	});
+
+	// Free Willy!
+	zone_records = [];
+	punycode_translations = [];
+	
+	// progress dialog
+	if (show_progress_dialog) UI::CloseDialog();
+
+	items = sort (term x, term y, items, ``(x[1]:"" < y[1]:""));
+	UI::ChangeWidget(`id("zone_table"), `Items, items);
+    }
+
+    boolean AddDNSDialog () {
+	UI::OpenDialog (`VBox (
+	    `MarginBox (1, 1, `Frame (
+		// TRANSLATORS: dialog frame label
+		_("Adding a New DNS Record"),
+		`VBox (
+		    // TRANSLATORS: text entry
+		    `TextEntry (`id ("new_hostname"), _("&Hostname")),
+		    // TRANSLATORS: text entry
+		    `TextEntry (`id ("new_ip"),       _("&IP Address"))
+		)
+	    )),
+	    `HBox (
+		`PushButton (`id(`ok), Label::OKButton()),
+		`HSpacing (1),
+		`PushButton (`id(`cancel), Label::CancelButton())
+	    )
+	));
+	
+	UI::ChangeWidget (`id ("new_ip"), `ValidChars, IP::ValidChars4);
+	
+	boolean func_ret = false;
+	any ret = nil;
+	while (true) {
+	    ret = UI::UserInput();
+	    
+	    if (ret == `ok) {
+		string new_hostname = (string) UI::QueryWidget (`id("new_hostname"), `Value);
+		new_hostname = Punycode::EncodeDomainName(new_hostname);
+		if (! Hostname::Check(new_hostname)) {
+		    UI::SetFocus(`id("new_hostname"));
+		    // TRANSLATORS: popup error, followed by a newline and a valid hostname description
+		    Report::Error(_("Invalid hostname.") + "\n\n" + Hostname::ValidHost());
+		    continue;
+		}
+
+		string new_ip = (string) UI::QueryWidget (`id("new_ip"), `Value);
+		if (! IP::Check4(new_ip)) {
+		    UI::SetFocus(`id("new_ip"));
+		    // TRANSLATORS: poupu error, followed by a newlone and a valid IPv4 description
+		    Report::Error(_("Invalid IP address.") + "\n\n" + IP::Valid4());
+		    continue;
+		}
+		
+		func_ret = DnsServerAPI::AddZoneRR (
+		    current_settings["domain"]:"", "A", new_hostname, new_ip
+		);
+		SetModified();
+		
+		break;
+	    } else {
+		break;
+	    }
+	}
+	
+	UI::CloseDialog();
+	return func_ret;
+    }
+
+    boolean AddDNSRangeDialog () {
+	// from shared dialogs
+	CreateUI_DNSRangeDialog (current_settings["from_ip"]:"", current_settings["to_ip"]:"", $[]);
+	
+	boolean func_ret = false;
+	any ret = nil;
+	while (true) {
+	    ret = UI::UserInput();
+	    
+	    if (ret == `ok) {
+		map <string, any> validated = ValidateAddDNSRangeDialog (current_settings);
+
+		if (validated == nil) continue;
+
+		UI::OpenDialog(`Label(
+		    sformat(
+			// TRANSLATORS: busy message
+			// %1 is the first IP address of the range, %2 is the last one
+			_("Adding DHCP range %1-%2 to the DNS server..."),
+			validated["first_ip"]:"", validated["last_ip"]:""
+		)
+		));
+		func_ret = AddDNSRangeWorker (
+		    (string)  current_settings["domain"]:"",
+		    (string)  current_settings["domain"]:"",
+		    "A", // adding 'A' records
+		    (string)  validated["hostname_base"]:"",
+		    (integer) validated["hostname_start"]:1,
+		    (string)  validated["first_ip"]:"",
+		    (string)  validated["last_ip"]:""
+		);
+		SetModified();
+		UI::CloseDialog();
+		
+		break;
+	    } else {
+		break;
+	    }
+	}
+	
+	UI::CloseDialog();
+	return func_ret;
+    }
+
+    boolean RemoveDNSRangeDialog () {
+	UI::OpenDialog (`VBox (
+	    `MarginBox (1, 1, `Frame (
+		// TRANSLATORS: dialog frame label
+		_("Removing DNS Records Matching Range"),
+		`HBox (
+		    // TRANSLATORS: text entry
+		    `HWeight (1, `TextEntry (`id ("first_ip"), _("&First IP Address"))),
+		    // TRANSLATORS: text entry
+		    `HWeight (1, `TextEntry (`id ("last_ip"),  _("&Last IP Address")))
+		)
+	    )),
+	    `HBox (
+		`PushButton (`id(`ok), Label::OKButton()),
+		`HSpacing (1),
+		`PushButton (`id(`cancel), Label::CancelButton())
+	    )
+	));
+	
+	UI::ChangeWidget (`id ("first_ip"), `ValidChars, IP::ValidChars4);
+	UI::ChangeWidget (`id ("last_ip"),  `ValidChars, IP::ValidChars4);
+	
+	// Predefining initial values
+	UI::ChangeWidget (`id ("first_ip"), `Value, current_settings["from_ip"]:"");
+	UI::ChangeWidget (`id ("last_ip"),  `Value, current_settings["to_ip"]:"");
+	
+	boolean func_ret = false;
+	any ret = nil;
+	while (true) {
+	    ret = UI::UserInput();
+	    
+	    if (ret == `ok) {
+		string first_ip = (string) UI::QueryWidget (`id("first_ip"), `Value);
+		if (! IP::Check4(first_ip)) {
+		    UI::SetFocus(`id("first_ip"));
+		    // TRANSLATORS: popup error, followed by a newline and a valid IPv4 description
+		    Report::Error(_("Invalid IP address.") + "\n\n" + IP::Valid4());
+		    continue;
+		}
+
+		string last_ip = (string) UI::QueryWidget (`id("last_ip"), `Value);
+		if (! IP::Check4(last_ip)) {
+		    UI::SetFocus(`id("last_ip"));
+		    // TRANSLATORS: popup error, followed by a newline and a valid IPv4 description
+		    Report::Error(_("Invalid IP address.") + "\n\n" + IP::Valid4());
+		    continue;
+		}
+		
+		// Checking delta between first_ip and last_ip
+		list <integer> first_ip_list = maplist (string ip_part, splitstring(first_ip, "."), {
+		    return tointeger(ip_part);
+		});
+		list <integer> last_ip_list = maplist (string ip_part, splitstring(last_ip, "."), {
+		    return tointeger(ip_part);
+		});
+		
+		// Computing deltas
+		// 195(.168.0.1) - 192(.11.0.58) => 3
+		integer address_1 = (last_ip_list[0]:0 - first_ip_list[0]:0);
+		integer address_2 = (last_ip_list[1]:0 - first_ip_list[1]:0);
+		integer address_3 = (last_ip_list[2]:0 - first_ip_list[2]:0);
+		integer address_4 = (last_ip_list[3]:0 - first_ip_list[3]:0);
+		
+		boolean range_status = nil;
+		// first chunk is either smaller or bigger than zero
+		if (address_1 < 0 || address_1 > 0) {
+		    // bigger means that the IP range is correct
+		    range_status = (address_1 > 0);
+
+		// if they are equal, check the very next chunk...
+		} else if (address_2 < 0 || address_2 > 0) {
+		    range_status = (address_2 > 0);
+
+		} else if (address_3 < 0 || address_3 > 0) {
+		    range_status = (address_3 > 0);
+
+		} else if (address_4 < 0 || address_4 > 0) {
+		    range_status = (address_4 > 0);
+
+		// addresses are the same
+		} else {
+		    range_status = false;
+		}
+
+		if (!range_status) {
+		    // TRANSLATORS: popup error
+		    Report::Error (_("The last IP address must be higher than the first one."));
+		    continue;
+		}
+				
+		UI::OpenDialog(`Label(
+		    sformat(
+			// TRANSLATORS: busy message
+			// %1 is the first IP address of the range, %2 is the last one
+			_("Removing records in the range %1-%2 from the DNS server..."),
+			first_ip, last_ip
+		    )
+		));
+		y2milestone("Removing DNS range %1 - %2", first_ip, last_ip);
+		func_ret = RemoveDNSRangeWorker(first_ip, last_ip);
+		UI::CloseDialog();
+		
+		break;
+	    } else {
+		break;
+	    }
+	}
+	
+	UI::CloseDialog();
+	return (func_ret == false ? false:true);
+    }
+    
+    void DeleteDNSDialog () {
+	integer current_item = (integer) UI::QueryWidget(`id("zone_table"), `CurrentItem);
+	if (current_item == nil) {
+	    return nil;
+	}
+	
+	if (! Confirm::DeleteSelected()) {
+	    return nil;
+	}
+
+	map <string, string> delete_item = dns_server_managed_records[current_item]:$[];
+	boolean success = DnsServerAPI::RemoveZoneRR (
+	    current_settings["domain"]:"",
+	    "A",
+	    delete_item["name"]:"",
+	    delete_item["ip"]:""
+	);
+	SetModified();
+	y2milestone("Removing: %1 / %2 from %3 -> %4",
+	    delete_item["name"]:"", delete_item["ip"]:"", current_settings["domain"]:"", success
+	);
+	
+	RedrawRRsTable();
+    }
+
+    void CheckDNSZone () {
+	y2error("FIXME: !!!!!!!!!!!!!");
+	return nil;
+    }
+
+    boolean RunDNSWizardFromScratch () {
+	symbol ret = RunNewDNSServerWizard(current_settings);
+
+	if (ret == `next) {
+	    SetModified();
+	    return true;
+	}
+	
+	return false;
+    }
+
+    void HandleSyncRZCheckbox () {
+	boolean current_status = (boolean) UI::QueryWidget (`id (`sync_reverse_zone), `Value);
+	// do not sync
+	if (! current_status) return nil;
+
+	boolean rs_master = IsDNSZoneMaster (current_settings["reverse_domain"]:"");
+	if (rs_master == true) {
+	    y2milestone(
+		"Zone %1 will be synchornized with %2",
+		current_settings["reverse_domain"]:"", current_settings["domain"]:""
+	    );
+	    SetModified();
+	    return;
+
+	// 
+	} else if (rs_master == false) {
+	    UI::ChangeWidget(`id (`sync_reverse_zone), `Value, false);
+	    Report::Error (sformat (
+		// TRANSLATORS: popup error, %1 is the zone name
+		// please, do not translate 'master' (exact DNS definition)
+		_("Zone %1 is not type master.
+The DNS server cannot write any records to it.
+"),
+		current_settings["reverse_domain"]:""
+	    ));
+	    return;
+
+	// zone doesn't exist
+	} else {
+	    // should we create that zone?
+	    if (Popup::YesNo (sformat (
+		// TRANSLATORS: popup question, %1 is a DNS zone name
+		_("Zone %1 does not yet exist in the current DNS server configuration.
+Create it?
+"),
+		current_settings["reverse_domain"]:""
+	    ))) {
+		y2milestone("Creating zone reverse %1", current_settings["reverse_domain"]:"");
+		DnsServerAPI::AddZone (
+		    current_settings["reverse_domain"]:"",
+		    "master", $[]
+		);
+		if (! IsDNSZoneMaster (current_settings["reverse_domain"]:"")) {
+		    UI::ChangeWidget(`id (`sync_reverse_zone), `Value, false);
+		    Report::Error (sformat (
+			// TRANSLATORS: popup error, %1 is a zone name
+			_("Cannot create zone %1."),
+			current_settings["reverse_domain"]:""
+		    ));
+		} else {
+		    SetModified();
+		}
+		return;
+	    } else {
+		y2milestone("user decided not to create reverse zone %1",
+		    current_settings["reverse_domain"]:""
+		);
+		UI::ChangeWidget(`id (`sync_reverse_zone), `Value, false);
+		return;
+	    }
+	}
+    }
+
+    list <map <string, string> > GetZoneRecords (string zone_name) {
+	if (zone_name == nil || zone_name == "") {
+	    y2error("Zone name not set");
+	    return nil;
+	}
+	
+	list <map <string, string> > ret = nil;
+	foreach (map zone, DnsServer::FetchZones(), {
+	    if (zone["zone"]:"" == zone_name) {
+		ret = (list <map <string, string> >) zone["records"]:[];
+		break;
+	    }
+	});
+	
+	return ret;
+    }
+    
+    boolean SetZoneRecords (string zone_name, list <map <string, string> > & new_records) {
+	if (zone_name == nil || zone_name == "") {
+	    y2error("Zone name not set");
+	    return nil;
+	}
+	
+	list <map <string, string> > ret = nil;
+	list <map <any, any> > all_records = DnsServer::FetchZones();
+
+	integer zone_counter = -1;
+	foreach (map zone, all_records, {
+	    zone_counter = zone_counter + 1;
+	    // zone match found
+	    if (zone["zone"]:"" == zone_name) {
+		break;
+	    };
+	});
+	
+	if (zone_counter > -1) {
+	    all_records[zone_counter, "records"] = new_records;
+	    DnsServer::StoreZones(all_records);
+	}
+    }
+
+    boolean SynchronizeReverseZone () {
+	// reverse zone
+	string r_zone = current_settings["reverse_domain"]:nil;
+	if (r_zone == nil) {
+	    y2error("No reverse zone defined");
+	    return false;
+	}
+	
+	// base zone
+	string b_zone = current_settings["domain"]:nil;
+	if (b_zone == nil) {
+	    y2error("No base zone defined");
+	    return false;
+	}
+	
+	y2milestone("Synchronizing %1 with %2", r_zone, b_zone);
+
+	// remove all NS records from the current zone
+	foreach (string zone_ns, DnsServerAPI::GetZoneNameServers (r_zone), {
+	    DnsServerAPI::RemoveZoneNameServer (r_zone, zone_ns);
+	});
+
+	// add all NS records from the base zone
+	foreach (string zone_ns, DnsServerAPI::GetZoneNameServers (b_zone), {
+	    // reletive vs. absolute NS name
+	    if (! regexpmatch (zone_ns, "\.$")) {
+		zone_ns = zone_ns + "." + b_zone + ".";
+	    }
+	    y2milestone("Adding NS %1 into %2", zone_ns, r_zone);
+	    DnsServerAPI::AddZoneNameServer (r_zone, zone_ns);
+	});
+
+	// minimal and maximal DHCP addresses
+	string dhcp_min_ip = current_settings["from_ip"]:nil;
+	string dhcp_max_ip = current_settings["to_ip"]:nil;
+
+	list <map <string, string> > zone_records_r = GetZoneRecords (r_zone);
+
+	y2milestone("Filtering out records from range %1 - %2", dhcp_min_ip, dhcp_max_ip);
+	// remove all PTR records from the current DHCP range
+	zone_records_r = filter (map <string, string> zone_record, zone_records_r, {
+	    // leave all non-PTR records
+	    if (zone_record["type"]:"" != "PTR") return true;
+
+	    // relative name 15.5 vs. absolute  15.5.168.192.in-addr.arpa.
+	    if (! regexpmatch(zone_record["key"]:"", "\.$")) {
+		zone_record["key"] = zone_record["key"]:"" + "." + r_zone + ".";
+	    }
+
+	    list <string> r_ip = splitstring (zone_record["key"]:"", ".");
+	    // unknown record, leave it there
+	    if (size (r_ip) != 7) {
+		y2warning("Unknown record %1", zone_record);
+		return true;
+	    }
+	    
+	    string ip_b = sformat ("%1.%2.%3.%4", r_ip[3]:"x", r_ip[2]:"x", r_ip[1]:"x", r_ip[0]:"x");
+	    // wrong IP, leave it there
+	    if (! IP::Check4 (ip_b)) {
+		y2warning("Wrong IP %1 (%2)", ip_b, zone_record);
+		return true;
+	    }
+
+	    // IP matches the range
+	    if (IPisInRangeOfIPs(ip_b, dhcp_min_ip, dhcp_max_ip)) return false;
+	    
+	    // Any other record
+	    return true;
+	});
+
+	list <map <string, string> > zone_records_b = GetZoneRecords (b_zone);
+
+	string hostname = nil;
+	list <string> r_ip_l = nil;
+	string r_ip = nil;
+	
+	// starts with 0 (if no entries)
+	integer record_counter = size (zone_records_r);
+
+	y2milestone("Synchronizing A records to reverse zone...");
+	// add all A records from the base zone as PTR records
+	foreach (map <string, string> zone_record, zone_records_b, {
+	    // not an 'A' record
+	    if (zone_record["type"]:"" != "A") return;
+
+	    // wrong IP
+	    if (! IP::Check4 (zone_record["value"]:"")) {
+		y2warning("Invalid IPv4 %1", zone_record["value"]:"");
+		return;
+	    }
+	    
+	    // IP doesn't match the DHCP range
+	    if (! IPisInRangeOfIPs(zone_record["value"]:"", dhcp_min_ip, dhcp_max_ip)) return;
+
+	    // convert IP to reverseIP
+	    r_ip_l = splitstring (zone_record["value"]:"", ".");
+	    r_ip = sformat (
+		"%1.%2.%3.%4.in-addr.arpa.",
+		r_ip_l[3]:"x", r_ip_l[2]:"x", r_ip_l[1]:"x", r_ip_l[0]:"x"
+	    );
+	    // convert relative hostname to absolute one
+	    hostname = zone_record["key"]:"";
+	    if (! regexpmatch (hostname, "\\.$")) {
+		hostname = hostname + "." + b_zone + ".";
+	    }
+	    
+	    // Last check
+	    if (r_ip == "" || hostname == "") {
+		y2error("Wrong IP/Hostname %1/%2 (%3)", r_ip, hostname, zone_record);
+		return;
+	    }
+	    
+	    // Adding new record
+	    zone_records_r[record_counter] = $[
+		"key"   : r_ip,
+		"type"  : "PTR",
+		"value" : hostname,
+	    ];
+	    record_counter = record_counter + 1;
+	});
+	
+	SetZoneRecords (r_zone, zone_records_r);
+	y2milestone("Synchronized");
+	
+	return true;
+    }
+
+    boolean SynchronizeReverseZoneDialog () {
+	if (! UI::WidgetExists (`id (`sync_reverse_zone))) {
+	    y2warning("No such widget: %1", `sync_reverse_zone);
+	    return nil;
+	}
+
+	// do not synchornize
+	if (! (boolean) UI::QueryWidget (`id (`sync_reverse_zone), `Value))
+	    return true;
+	    
+	// TRANSLATORS: busy message
+	UI::OpenDialog(`Label(_("Synchronizing DNS reverse records...")));
+	boolean ret = SynchronizeReverseZone();
+	UI::CloseDialog();
+	
+	return ret;
+    }
+
+    // Returns whether the DNS Should be stored
+    // or reverted back
+    boolean HandleDNSDialog () {
+	boolean dialog_ret = true;
+
+	symbol ret = nil;
+	while (true) {
+	    map event = UI::WaitForEvent();
+	    ret = (symbol) event["ID"]:nil;
+	    
+	    // Timeout
+	    if (ret == `timeout) {
+		continue;
+
+	    // [ OK ] or [ Next ]
+	    } else if (ret == `ok || ret == `next) {
+		// synchronizing on exit
+		SynchronizeReverseZoneDialog();
+		dialog_ret = true;
+		break;
+
+	    // Adding new record
+	    } else if (ret == `add) {
+		if (AddDNSDialog()) RedrawRRsTable();
+		continue;
+
+	    } else if (ret == `delete) {
+		DeleteDNSDialog();
+		continue;
+
+	    // [ Cancel ] or [ Back ]
+	    } else if (ret == `cancel || ret == `back) {
+		if (! GetModified()) {
+		    dialog_ret = true;
+		    break;
+		}
+		
+		// TRANSLATORS: popup question - canceling dns synchronization with dhcp
+		if (Popup::YesNo(_("If you cancel, all changes made in the DNS server will be lost.
+Really cancel this operation?
+"))) {
+		    // Changes currently made will be reverted
+		    y2milestone("Cancel... Recent changes in DNS will be reverted");
+		    dialog_ret = false;
+		    break;
+		} else {
+		    continue;
+		}
+
+	    // Adding DHCP Range
+	    } else if (ret == `add_range) {
+		if (AddDNSRangeDialog()) RedrawRRsTable();
+		continue;
+
+	    // Checking the zone and reporting result
+	    } else if (ret == `check_zone) {
+		CheckDNSZone();
+	    
+	    // Removing all A records with IPs that match the current range
+	    } else if (ret == `remove_range) {
+		if (RemoveDNSRangeDialog()) RedrawRRsTable();
+
+	    // Running a Wizard Sequence (Editing zone from scratch)
+	    } else if (ret == `run_wizard) {
+		if (RunDNSWizardFromScratch()) RedrawRRsTable();
+
+	    // Synchronize with Reverse Zone (checkbox changed)
+	    } else if (ret == `sync_reverse_zone) {
+		HandleSyncRZCheckbox();
+
+	    // the rest
+	    } else {
+		y2error("Unknown input: %1", ret);
+		continue;
+	    }
+	}
+	
+	return dialog_ret;
+    }
+
+    term DNSServerDialogContents () {
+	return `VBox (
+	    `HBox (
+		// TRANSLATORS: text entry
+		`TextEntry(`id("current_zone"),    _("&Domain")),
+		// TRANSLATORS: text entry
+		`TextEntry(`id("current_network"), _("&Network")),
+		// TRANSLATORS: text entry
+		`TextEntry(`id("current_netmask"), _("Net&mask"))
+	    ),
+	    `HBox (
+		// TRANSLATORS: text entry
+		`HWeight(1, `TextEntry(`id("info_min_ip"), _("&First IP Address"))),
+		// TRANSLATORS: text entry
+		`HWeight(1, `TextEntry(`id("info_max_ip"), _("&Last IP Address"))),
+		`HWeight(1, `Empty())
+	    ),
+	    // TRANSLATORS: table label
+	    `Left (`Label (_("DNS Zone Records"))),
+	    `Table (
+		`id("zone_table"),
+		`header (
+		    // TRANSLATORS: table header item
+		    _("Hostname"),
+		    // TRANSLATORS: table header item
+		    _("Assigned IP")
+		),
+		[]
+	    ),
+	    `ReplacePoint (`id ("sync_also_reverse_zone"), `Empty()),
+	    `HBox (
+		// TRANSLATORS: push button
+		`PushButton(`id (`add), _("&Add...")),
+		`HSpacing(1),
+		// TRANSLATORS: push button
+		`PushButton(`id (`delete), Label::DeleteButton()),
+		`HSpacing(1),
+		`MenuButton(
+		    `id ("dns_menu"),
+		    // TRANSLATORS: menu button
+		    _("&Special Tasks"), [
+			// TRANSLATORS: menu entry
+			`item (`id (`add_range),    _("Add New Range of DNS Records")),
+			// TRANSLATORS: menu entry
+			`item (`id (`remove_range), _("Removing DNS Records Matching Range")),
+			// TRANSLATORS: menu entry
+			`item (`id (`run_wizard),   _("Run Wizard to Rewrite the DNS Zone from Scratch"))
+			// FIXME: add functionality (dialog) for checking the zone
+			// such as missing NS server, range of dhcp clients that are not mentioned
+			// in the DNS, etc...
+			// // TRANSLATORS: menu entry
+			// `item (`id (`check_zone),   _("Check Zone"))
+		    ]
+		)
+	    )
+	);
+    }
+
+    // Init DNS / DHCP Dialog
+    void InitDNSServerConfiguration (map <string, string> current_settings) {
+	y2milestone("%1", current_settings);
+
+	UI::ChangeWidget(`id("current_zone"),    `Value, current_settings["domain"]:"");
+	UI::ChangeWidget(`id("current_network"), `Value, current_settings["current_network"]:"");
+	UI::ChangeWidget(`id("current_netmask"), `Value, current_settings["netmask"]:"");
+	UI::ChangeWidget(`id("info_min_ip"),     `Value, current_settings["from_ip"]:"");
+	UI::ChangeWidget(`id("info_max_ip"),     `Value, current_settings["to_ip"]:"");
+
+	UI::ChangeWidget(`id("current_zone"),    `Enabled, false);
+	UI::ChangeWidget(`id("current_network"), `Enabled, false);
+	UI::ChangeWidget(`id("current_netmask"), `Enabled, false);
+	UI::ChangeWidget(`id("info_min_ip"),     `Enabled, false);
+	UI::ChangeWidget(`id("info_max_ip"),     `Enabled, false);
+
+	// reverse domain is set
+	if (current_settings["reverse_domain"]:"" != "") {
+	    boolean rd_enabled  = true;
+	    boolean rd_selected = true;
+
+	    boolean is_master = IsDNSZoneMaster (current_settings["reverse_domain"]:"");
+	    // exists as a master
+	    if (is_master == true) {
+		rd_enabled  = true;
+		rd_selected = true;
+	    // exists but not as a master
+	    } else if (is_master == false) {
+		rd_enabled  = false;
+		rd_selected = false;
+	    // doesn't exist
+	    } else {
+		rd_enabled  = true;
+		rd_selected = false;
+	    }
+
+	    term reverse_zone_checkbox = `CheckBox (
+		`id (`sync_reverse_zone),
+		`opt (`notify),
+		sformat (
+		    // TRANSLATORS: checkbox, %1 is a zone name
+		    _("Synchronize with Reverse Zone %1"),
+		    current_settings["reverse_domain"]:""
+		),
+		rd_selected
+	    );
+	    UI::ReplaceWidget (`id ("sync_also_reverse_zone"),
+		`VBox (
+		    `VSpacing (0.3),
+		    reverse_zone_checkbox,
+		    `VSpacing (1)
+		)
+	    );
+	    if (! rd_enabled) UI::ChangeWidget (`id (`sync_reverse_zone), `Enabled, false);
+	}
+    }
+
+    // Checks whether the current zone is maintained by the DNS Server (master)
+    // Initializes zone records and lists them in the table
+    //
+    boolean InitZoneRecords (string zone_name) {
+	map <string, map<string, string> > all_zones = DnsServerAPI::GetZones();
+
+	if (all_zones[zone_name]:nil == nil) {
+	    y2error ("Zone %1 is not maintained by this DNS Server, cannot edit...", zone_name);
+
+	    return false;
+	}
+
+	if (all_zones["zone_name","type"]:"master" != "master") {
+	    y2error("Zone %1 is type %2", zone_name, all_zones["zone_name","type"]:nil);
+
+	    return false;
+	}
+	
+	y2milestone("Zone '%1' editable, initializing...", zone_name);
+	RedrawRRsTable();
+	
+	return true;
+    }
+
+    // Manages the synchronization with DNS Server
+    boolean ManageDNSServer (map <string, string> param_current_settings) {
+	// init the internal variable
+	current_settings = param_current_settings;
+    
+	// TRANSLATORS: dialog caption
+	string caption = _("DHCP Server: DNS Server Synchronization");
+    
+	Wizard::CreateDialog();
+	Wizard::HideAbortButton();
+
+	Wizard::SetContentsButtons (
+	    caption, DNSServerDialogContents(),
+	    DNS_HELPS["edit-current-settings"]:"",
+	    Label::CancelButton(), Label::OKButton()
+	);
+	Wizard::SetDesktopIcon("dhcp-server");
+
+	InitDNSServerConfiguration(current_settings);
+	
+	if (InitZoneRecords(current_settings["domain"]:"")) {
+	    // Save the current DNS configuration before editing
+	    map saved_conf = DnsServer::Export();
+
+	    if (! HandleDNSDialog()) {
+		y2milestone("Reverting changes made in DNS Server by DHCP Server");
+		DnsServer::Import(saved_conf);
+	    }
+	} else {
+	    y2milestone("Unable to continue, returning back from DNS Dialog...");
+	}
+	
+	Wizard::CloseDialog();
+	return true;
+    }
+
+    // <-- Edit Zone
+
+// EOF
+}

@@ -56,6 +56,8 @@ my $ldap_port = "";
 
 my @tsig_keys = ();
 
+my $other_options = "";
+
 #transient variables
 
 my $modified = 0;
@@ -90,6 +92,7 @@ my @deleted_include_files = ();
 
 my @original_allowed_interfaces = ();
 
+my $dns_server_available = 0;
 
 YaST::YCP::Import ("SCR");
 YaST::YCP::Import ("CWMTsigKeys");
@@ -108,8 +111,7 @@ YaST::YCP::Import ("Popup");
 YaST::YCP::Import ("Progress");
 YaST::YCP::Import ("Report");
 YaST::YCP::Import ("SuSEFirewall");
-
-use lib "/usr/share/YaST2/modules";
+YaST::YCP::Import ("DnsServerAPI");
 
 ##-------------------------------------------------------------------------
 ##----------------- TSIG Key Management routines --------------------------
@@ -172,6 +174,12 @@ sub ListUsedKeys {
 
 ##-------------------------------------------------------------------------
 ##----------------- various routines --------------------------------------
+
+BEGIN {$TYPEINFO{IsDnsServerAvailable} = [ "function", "boolean" ];}
+sub IsDnsServerAvailable () {
+    # returns current status - is DNS Server available to be configured?
+    return $dns_server_available;
+}
 
 sub InitTSIGKeys {
     my $self = shift;
@@ -1328,6 +1336,19 @@ sub SetUseLdap {
 
     $self->SetModified ();
 }
+BEGIN{$TYPEINFO{GetOtherOptions} = ["function", "string"];}
+sub GetOtherOptions {
+    my $self = shift;
+
+    return \$other_options; 	
+}
+BEGIN{$TYPEINFO{SetOtherOptions} = ["function", "void", "string"];}
+sub SetOtherOptions {
+    my $self = shift;
+    $other_options = shift;
+
+    $self->SetModified();
+}
 
 ##------------------------------------
 
@@ -1337,7 +1358,7 @@ sub AutoPackages {
 
     return {
 	"install" => ["dhcp-server"],
-	"remote" => [],
+	"remove" => [],
     }
 }
 
@@ -1348,13 +1369,15 @@ sub Read {
     # Dhcp-server read dialog caption
     my $caption = __("Initializing DHCP Server Configuration");
 
-    Progress->New( $caption, " ", 3, [
+    Progress->New( $caption, " ", 4, [
 	# progress stage
 	__("Check the environment"),
 	# progress stage
 	__("Read firewall settings"),
 	# progress stage
 	__("Read DHCP server settings"),
+	# progress stage
+	__("Read DNS server settings"),
     ],
     [
 	# progress step
@@ -1364,7 +1387,9 @@ sub Read {
 	# progress step
 	__("Reading DHCP server settings..."),
 	# progress step
-	__("Finished")
+	__("Reading DNS server settings..."),
+	# progress step
+	__("Finished"),
     ],
     ""
     );
@@ -1472,6 +1497,8 @@ Report->Error (sformat(__("Cannot determine the hostname of %1."), $dhcp_server_
 	    }
 	}
     }
+    $other_options = SCR->Read(".sysconfig.dhcpd.DHCPD_OTHER_ARGS") || "";
+    y2milestone("Other options: $other_options");
 
     @settings = ();
     my $ag_settings_ref = SCR->Read (".etc.dhcpd_conf");
@@ -1502,7 +1529,11 @@ configured yet. Create a new configuration?");
     if (scalar (@allowed_interfaces) == 0)
     {
 	y2milestone ("No interface was set to listen to!");
-	$was_configured = 0;
+	# Bugzilla 173861
+	# Permit empty list of interfaces
+	if (!Mode->autoinst() && !Mode->installation()) {
+	    $was_configured = 0;
+	}
     }
     if (scalar (keys (%{SCR->Read (".target.stat", Directory->vardir () . "/dhcp_server_done_once") || {}})) == 0)
     {
@@ -1543,6 +1574,13 @@ configured yet. Create a new configuration?");
 
     Progress->NextStage ();
 
+    $dns_server_available = DnsServerAPI->IsServiceConfigurableExternally();
+    if ($dns_server_available) {
+	DnsServerAPI->Read();
+    }
+
+    Progress->NextStage ();
+
     return "true";
 }
 
@@ -1554,13 +1592,15 @@ sub Write {
     my $caption = __("Saving DHCP Server Configuration");
 
     # We do not set help text here, because it was set outside
-    Progress->New($caption, " ", 3, [
+    Progress->New($caption, " ", 4, [
 	# progress stage
 	__("Write DHCP server settings"),
 	# progress stage
 	__("Write firewall settings"),
 	# progress stage
 	__("Restart DHCP server"),
+	# progress stage
+	__("Write DNS server settings"),
     ], [
 	# progress step
 	__("Writing DHCP server settings..."),
@@ -1569,7 +1609,9 @@ sub Write {
 	# progress step
 	__("Restarting DHCP server..."),
 	# progress step
-	__("Finished")
+	__("Writing DNS server settings..."),
+	# progress step
+	__("Finished"),
     ],
     ""
     );
@@ -1655,9 +1697,19 @@ sub Write {
     Progress->NextStage ();
 
     SCR->Write (".sysconfig.dhcpd.DHCPD_RUN_CHROOTED", $chroot ? "yes" : "no");
+
     my $ifaces_list = join (" ", @allowed_interfaces);
+    # in (auto)installation only
+    if ((Mode->autoinst() || Mode->installation()) && scalar(@allowed_interfaces) == 0) {
+	# bug #173861
+	# " " means ANY interface
+	y2warning("Activating \" \" for DHCPD_INTERFACE");
+	$ifaces_list = " ";
+    }    
     SCR->Write (".sysconfig.dhcpd.DHCPD_INTERFACE", $ifaces_list);
+    SCR->Write (".sysconfig.dhcpd.DHCPD_OTHER_ARGS", $other_options);
     SCR->Write (".sysconfig.dhcpd", undef);
+ 	
 
     if ($start_service)
     {
@@ -1687,6 +1739,12 @@ sub Write {
 
     Progress->NextStage ();
 
+    if ($dns_server_available) {
+	if (! DnsServerAPI->Write()) {
+	    $ok = 0;
+	}
+    }
+
     return Boolean ($ok);
 }
 
@@ -1699,6 +1757,7 @@ sub Export {
 	"chroot" => $chroot,
 	"use_ldap" => $use_ldap,
 	"allowed_interfaces" => \@allowed_interfaces,
+	"other_options" => $other_options,
 	"settings" => \@settings,
     );
     return \%ret;
@@ -1725,6 +1784,7 @@ sub Import {
     $chroot = $settings{"chroot"} || 1;
     $use_ldap = $settings{"use_ldap"} || 0;
     @allowed_interfaces = @{$settings{"allowed_interfaces"} || []};
+    $other_options = $settings{"other_options"} || "";
     @settings = @{$settings{"settings"} || $default_settings};
 
     @settings_for_ldap = ();
