@@ -1,4 +1,106 @@
 -------------------------------------------------------------------
+Mon Oct  2 16:45:40 CEST 2006 - kmachalkova@suse.cz
+
+- Merged proofread texts 
+
+-------------------------------------------------------------------
+Fri Sep 22 10:38:52 CEST 2006 - kmachalkova@suse.cz
+
+- Added support for passing commandline parameters to dhcpd
+  (FaTE #225)
+- Warning popup if alternate config file (-cf) is used
+- 2.13.9 
+
+-------------------------------------------------------------------
+Wed Aug 30 15:50:04 CEST 2006 - locilka@suse.cz
+
+- DnsServerPunycode has been renamed to Punycode
+  and moved to yast2-2.13.78
+- 2.13.8
+
+-------------------------------------------------------------------
+Mon Aug 21 09:50:50 CEST 2006 - locilka@suse.cz
+
+- Corrected HTML in helps.
+- Added missing keyboard shortcuts.
+
+-------------------------------------------------------------------
+Fri Aug 18 13:55:57 CEST 2006 - locilka@suse.cz
+
+- Added help texts for Zone Editor Dialog.
+- Added reverse-zone synchronization into Zone Editor Dialog.
+- Added comments for translators.
+- Added BuildRequires: yast2-dns-server.
+- 2.13.7
+
+-------------------------------------------------------------------
+Thu Aug 17 13:57:30 CEST 2006 - locilka@suse.cz
+
+- Finished Sync-with-DNS wizard.
+- Added help texts.
+- Fixed some development bugs.
+- Added more checking for entered values.
+
+-------------------------------------------------------------------
+Tue Aug 15 16:49:16 CEST 2006 - locilka@suse.cz
+
+- Adding more functionality into the Sync-with-DNS wizard.
+
+-------------------------------------------------------------------
+Fri Aug 11 11:57:09 CEST 2006 - locilka@suse.cz
+
+- Added initial version of Sync-with-DNS support.
+
+-------------------------------------------------------------------
+Wed Aug  9 15:14:09 CEST 2006 - kmachalkova@suse.cz
+
+- Added validation of MAC address in expert configuration (#147676)
+- Changed validation of MAC address in Host Management dialog 
+  to use Address::CheckMAC() function
+
+-------------------------------------------------------------------
+Mon Aug  7 12:46:33 CEST 2006 - locilka@suse.cz
+
+- Added information about minimal and maximal IP address in the
+  Dynamic DHCP server dialog - computed using the server IP and
+  netmask.
+- Reading DNS server configuration when dns server is externally
+  configurable (New function of DnsServerAPI) (FaTE #120037).
+
+-------------------------------------------------------------------
+Fri Aug  4 12:35:36 CEST 2006 - mvidner@suse.cz
+
+- Removed a Perl search path that is added elsewhere already
+  and here just breaks compilation in some cases (#197099).
+
+-------------------------------------------------------------------
+Wed Aug  2 11:34:37 CEST 2006 - locilka@suse.cz
+
+- Limit displayed interface name to 40 characters.
+- 2.13.6
+
+-------------------------------------------------------------------
+Tue Jul 18 15:43:26 CEST 2006 - locilka@suse.cz
+
+- Card selection dialog changed to provide buttons [Select] and
+  [Unselect] and table header item to Selected to better reflect
+  the status of the network interfaces that are selected for
+  DHCP Server to run on (#164242).
+- These buttons are enabled or disabled by the current status of
+  the selected interface. Active interface can be deactivated only
+  and vice versa.
+- Different help for expert and simple UI in the Card Selection
+  dialog.
+
+-------------------------------------------------------------------
+Thu Jul 13 11:46:21 CEST 2006 - locilka@suse.cz
+
+- Do not complain about blank DHCPD_INTERFACE in case of
+  (auto)installation. All interfaces will be used instead
+  by the dhcpd (#173861).
+- 2.13.5
+
+-------------------------------------------------------------------
 Mon Jun  5 11:01:51 CEST 2006 - locilka@suse.cz
 
 - Fixing UI visibility, especially Time Units ComboBox (#181146).

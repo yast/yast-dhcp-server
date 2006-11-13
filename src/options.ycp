@@ -16,7 +16,6 @@
     import "IP";
     import "Label";
 
-
 // generic routines
 
     /**
@@ -857,6 +856,7 @@ all clients*/
 	UI::ChangeWidget (`id (`addr), `Value, l[1]:"");
     }
 
+
     /**
       * Store function of a table entry / popup
       * @param opt_id any option id
@@ -866,7 +866,29 @@ all clients*/
 	storeValue (opt_id, opt_key, sformat ("%1 %2",
 	    (string)UI::QueryWidget (`id (`hw), `Value),
 	    (string)UI::QueryWidget (`id (`addr), `Value)));
-    }
+	}
+
+	/**
+      * Validate function of a popup
+      * @param opt_id any option id
+      * @param key string option key
+      * @param event a map event to validate
+      * @return boolean true if widget settings ok
+      */
+	global define boolean hardwareValidate (any opt_id, string key, map event) ``{
+	 string hosthwaddress = (string) UI::QueryWidget ( `id (`addr), `Value );
+
+	 if( !Address::CheckMAC(hosthwaddress)){
+		Popup::Error (
+		//error popup
+		_("The hardware address is invalid.\n") + Address::ValidMAC()
+		);
+		UI::SetFocus (`id (`addr));
+		return false;
+	 }
+
+	 return true;
+	}
 
     /**
       * Initialization function of a table entry / popup
@@ -964,6 +986,8 @@ all clients*/
 			`TextEntry (`id (`addr), _("&MAC Address"))),
 		    "init" : hardwareInit,
 		    "store" : hardwareStore,
+		    "validate_type" : `function,
+		    "validate_function" : hardwareValidate,
 		],
 	    ],
 	    "flag" : $[

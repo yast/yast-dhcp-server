@@ -3,6 +3,7 @@ Execute	.target.bash_output "/bin/hostname --short" $["exit":0, "stderr":"localh
 Execute	.target.bash_output "/bin/hostname --fqdn" $["exit":0, "stderr":"localhost", "stdout":"localhost"]
 Read	.sysconfig.dhcpd.DHCPD_RUN_CHROOTED "no"
 Read	.sysconfig.dhcpd.DHCPD_INTERFACE "eth0 eth2"
+Read	.sysconfig.dhcpd.DHCPD_OTHER_ARGS "-p 111"
 Read	.etc.dhcpd_conf [$["key":"domain-name", "type":"option", "value":"\"example.net\""], $["key":"ddns-update-style", "type":"directive", "value":"none"], $["key":"192.168.0.0 netmask 255.255.255.0", "type":"subnet", "value":[$["key":"range", "type":"directive", "value":"192.168.0.100 192.168.0.200"], $["key":"h1", "type":"host", "value":[$["key":"fixed-address", "type":"directive", "value":"192.168.0.1"], $["key":"hardware", "type":"directive", "value":"ethernet 11:22:33:44:55:66"]]], $["key":"h2", "type":"host", "value":[$["key":"fixed-address", "type":"directive", "value":"192.168.0.2"], $["key":"hardware", "type":"directive", "value":"ethernet 11:22:33:44:55:77"]]]]]]
 Read	.target.size "/etc/dhcpd.conf" 5
 Execute	.target.bash "diff -q /etc/dhcpd.conf \\\n             /usr/share/doc/packages/dhcp-server/dhcpd.conf" 1
@@ -10,6 +11,7 @@ Read	.target.stat "/var/lib/YaST2/dhcp_server_done_once" $[]
 Write	.etc.dhcpd_conf [$["key":"domain-name", "type":"option", "value":"\"example.net\""], $["key":"ddns-update-style", "type":"directive", "value":"none"], $["comment_after":nil, "comment_before":nil, "key":"192.168.0.0 netmask 255.255.255.0", "type":"subnet", "value":[$["key":"range", "type":"directive", "value":"192.168.0.100 192.168.0.200"], $["comment_after":nil, "comment_before":nil, "key":"h1", "type":"host", "value":[$["key":"fixed-address", "type":"directive", "value":"192.168.0.1"], $["key":"hardware", "type":"directive", "value":"ethernet 11:22:33:44:55:66"]]], $["comment_after":nil, "comment_before":nil, "key":"h2", "type":"host", "value":[$["key":"fixed-address", "type":"directive", "value":"192.168.0.2"], $["key":"hardware", "type":"directive", "value":"ethernet 11:22:33:44:55:77"]]]]], $["comment_after":"", "comment_before":"", "key":"192.168.5.1 netmask 255.255.255.0", "type":"subnet", "value":[]]] true
 Write	.sysconfig.dhcpd.DHCPD_RUN_CHROOTED "no" true
 Write	.sysconfig.dhcpd.DHCPD_INTERFACE "eth0 eth2" true
+Write	.sysconfig.dhcpd.DHCPD_OTHER_ARGS "-p 111" true
 Write	.sysconfig.dhcpd nil true
 Execute	.target.bash "/etc/init.d/dhcpd stop" 1
 Return	true

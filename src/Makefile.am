@@ -19,7 +19,11 @@ ynclude_DATA =			\
 	widgets.ycp		\
 	options.ycp		\
 	commandline.ycp		\
-	misc.ycp
+	misc.ycp		\
+	dns-helps.ycp		\
+	dns-server-wizard.ycp	\
+	dns-server-dialogs.ycp	\
+	dns-server-management.ycp
 
 desktop_DATA =                  \
 	dhcp-server.desktop
