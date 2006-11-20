@@ -37,3 +37,4 @@ Summary:	Configuration of dhcp-server
 @scrconfdir@/etc_dhcpd_conf.scr
 @agentdir@/ag_dhcpd_conf
 %doc @docdir@
+@schemadir@/autoyast/rnc/dhcp-server.rnc
