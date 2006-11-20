@@ -37,8 +37,13 @@ YaPI_perldir = @moduledir@/YaPI
 YaPI_perl_DATA = \
 	DHCPD.pm
 
+rncdir= $(schemadir)/autoyast/rnc
 
-EXTRA_DIST = $(client_DATA) $(ynclude_DATA) $(module_DATA) $(desktop_DATA) $(YaPI_perl_DATA)
+rnc_DATA = \
+	dhcp-server.rnc
+
+
+EXTRA_DIST = $(client_DATA) $(ynclude_DATA) $(module_DATA) $(desktop_DATA) $(YaPI_perl_DATA) $(rnc_DATA)
 
 dhcp-server:
 	test -l dhcp-server || ln -s . dhcp-server
