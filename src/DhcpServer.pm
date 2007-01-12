@@ -2217,7 +2217,7 @@ sub GetInterfaceInformation {
     my $self = shift;
     my $interface = shift;
 
-    y2milestone ("Gettign information about interface $interface");
+    y2milestone ("Getting information about interface $interface");
     my %out = %{SCR->Execute (".target.bash_output",
 	"/sbin/getcfg-interface $interface") || {}};
     if ($out{"exit"} != 0)
@@ -2331,7 +2331,7 @@ sub LdapInit {
     if (defined $yapi_conf{"use_ldap"})
     {
 	$use_ldap = $yapi_conf{"use_ldap"};
-	y2milestone ("YaPI sepcified to use LDAP: $use_ldap");
+	y2milestone ("YaPI specified to use LDAP: $use_ldap");
     }
 
     if (! $use_ldap)
@@ -2457,11 +2457,28 @@ sub LdapInit {
 	    $_->{"key"} =~ /^[ \t]*ldap-.*$/;
 	} @settings_for_ldap;
 
+	# check if there is ldap-dhcp-server-cn entry in config file
+	my @ldap_dhcp_server_entry = grep {
+	    $_->{"key"} eq "ldap-dhcp-server-cn";
+	} @settings_for_ldap;
+	my $ldap_dhcp_server_cn = $ldap_dhcp_server_entry[0]{'value'};
+	my $filter = "(&(objectClass=dhcpServer)";
+
+	# if ldap-dhcp-server-cn is found, adjust filter expression
+ 	if ( (defined ($ldap_dhcp_server_cn) && $ldap_dhcp_server_cn =~ /\S+/) )
+	{
+	    $filter .= "(cn=$ldap_dhcp_server_cn))";	
+	}
+	# else use $dhcp_server and $dhcp_server_fqdn values
+	else
+	{
+	    $filter .= "(|(cn=$dhcp_server)(cn=$dhcp_server_fqdn)))";
+	}        
+ 
 	# now query to find out the servers
 	my %ldap_query = (
 	    "base_dn" => $base_config_dn,
-	    "filter"  => "(&(objectClass=dhcpServer)".
-	                 "(|(cn=$dhcp_server)(cn=$dhcp_server_fqdn)))",
+	    "filter"  => $filter, 
 	    "scope"   => 2, # scope sub
 	    "map"     => 1, # gimme a list (single entry)
 	    "not_found_ok" => 1,
