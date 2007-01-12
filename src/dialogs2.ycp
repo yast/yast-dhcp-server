@@ -302,7 +302,12 @@ term Common_GlobalSettingsDialog() {
 
     if (expert_ui) ldap = `VBox(
 	// configuration will be saved in ldap?
-        `Left(`CheckBox(`id("ldap"), `opt( `notify), _("&LDAP Support"), true)),
+	`HBox (
+    	    `Left(`CheckBox(`id("ldap"), `opt( `notify), _("&LDAP Support"), true)),
+	    `HSpacing(2),
+	    // FATE #227, comments #5 and #17
+	    `Left (`HSquash (`TextEntry (`id ("ldap-dhcp-server-cn"), _("LDAP Server &Name (optional)"))))
+	),
         `VSpacing(2)
     );
 
@@ -454,7 +459,10 @@ void GlobalSettingsInit (string key)
     UI::ChangeWidget ( `id ("defaultleasetimeunits"), `Value, unit );
     
     if (expert_ui) {
-	UI::ChangeWidget ( `id ("ldap"), `Value, DhcpServer::GetUseLdap () );
+	boolean ldap_in_use = DhcpServer::GetUseLdap();
+	UI::ChangeWidget (`id ("ldap"), `Value, ldap_in_use);
+	UI::ChangeWidget (`id ("ldap-dhcp-server-cn"), `Value, DhcpServer::GetLdapDHCPServerCN());
+	UI::ChangeWidget (`id ("ldap-dhcp-server-cn"), `Enabled, ldap_in_use);
     }
 
     GlobalSettingsValidChars ();
@@ -465,10 +473,14 @@ symbol GlobalSettingsHandle (string key, map event)
     if (event ["ID"]:nil == "ldap" && event ["EventReason"]:nil == "ValueChanged")
     {
 	boolean ldap = (boolean) UI::QueryWidget ( `id ("ldap"), `Value );
+
 	// LDAP switch
 	SetUseLdap (ldap);
 	ldap = DhcpServer::GetUseLdap ();
 	UI::ChangeWidget (`id ("ldap"), `Value, ldap);
+	
+	// ldap-dhcp-server-cn switch
+	UI::ChangeWidget (`id ("ldap-dhcp-server-cn"), `Enabled, ldap);
     }
     return nil;
 }
@@ -561,6 +573,18 @@ void GlobalSettingsStore (string key, map event)
 	    UI::QueryWidget ( `id ("defaultleasetimeunits"), `Value );
 	val = time2seconds (val, units);
 	directives = add (directives, $[ "key" : "default-lease-time", "value": tostring (val) ] );
+    }
+
+    if (UI::WidgetExists (`id ("ldap-dhcp-server-cn"))) {
+	string ldap_dhcp_server_cn = (string) UI::QueryWidget (`id ("ldap-dhcp-server-cn"), `Value);
+	DhcpServer::SetLdapDHCPServerCN (ldap_dhcp_server_cn);
+
+	// save ldap-dhcp-server-cn only when set
+	if (ldap_dhcp_server_cn != "") {
+	    // backslash quotes in the ldap-dhcp-server-cn entry, just to be safe
+	    ldap_dhcp_server_cn = mergestring (splitstring (ldap_dhcp_server_cn, "\""), "\\\"");
+	    directives = add (directives, $[ "key" : "ldap-dhcp-server-cn", "value": sformat ("\"%1\"", ldap_dhcp_server_cn) ] );
+	}
     }
 
     DhcpServer::SetEntryDirectives ("","", directives);
@@ -725,9 +749,9 @@ term Common_DynamicDHCPDialog() {
 			2, `MinWidth(
 			    TimeComboLabelLength(),
 			    // Combobox - type of units for max lease time
-                    	    `ComboBox(`id("maxleasetimeunits"), `opt(`hsquash), _("Uni&ts"),
+                    	    `HSquash (`ComboBox(`id("maxleasetimeunits"), _("Uni&ts"),
 				time_combo_items
-                    	    )
+                    	    ))
 			)
 		    )
                 )
@@ -1558,7 +1582,7 @@ void HostManagementStore (string key, map event)
 }
 
 symbol ExpertSettingsTabInit (string tab) {
-    y2error ("Tab: %1", tab);
+    y2warning ("Tab: %1", tab);
     if (tab == "expert_settings")
     {
 	// yes-no popup
@@ -1602,7 +1626,7 @@ map <string, boolean> valid_opts = $[
 boolean OtherOptionsValidate(string key, map event) {
     string cmdline = (string) UI::QueryWidget(`id("other_opts"), `Value);
     //remove leading '-'
-    cmdline = substring(cmdline,1);
+    if (size(cmdline) > 0) cmdline = substring(cmdline,1);
     boolean correct = true;
 
     map <string, string> options = listmap(string s, splitstring(cmdline,"-"), {
@@ -1808,7 +1832,8 @@ map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
 	"validate_type"	: `function,
 	"validate_function" : GlobalSettingsValidate,
 	"store"		: GlobalSettingsStore,
-	"help"		: HELPS["global_settings"]:"",
+	"help"		: (expert_ui ?  (HELPS["ldap_support"]:"" + HELPS["ldap_server_name"]:"" + HELPS["global_settings"]:"")
+			   : HELPS["global_settings"]:""),
     ],
     "dynamic_dhcp" : $[
 	"widget"	: `custom,

@@ -94,6 +94,8 @@ my @original_allowed_interfaces = ();
 
 my $dns_server_available = 0;
 
+my $ldap_dhcp_server_cn = "";
+
 YaST::YCP::Import ("SCR");
 YaST::YCP::Import ("CWMTsigKeys");
 YaST::YCP::Import ("DNS");
@@ -884,7 +886,7 @@ sub PrepareToSave {
 sub FindEntry {
     my $self = shift;
     my $type = shift;
-    my $id = shift;
+    my $id = shift || "";
 
     my $index = -1;
     my $found = -1;
@@ -2217,7 +2219,7 @@ sub GetInterfaceInformation {
     my $self = shift;
     my $interface = shift;
 
-    y2milestone ("Gettign information about interface $interface");
+    y2milestone ("Getting information about interface $interface");
     my %out = %{SCR->Execute (".target.bash_output",
 	"/sbin/getcfg-interface $interface") || {}};
     if ($out{"exit"} != 0)
@@ -2319,6 +2321,23 @@ sub LdapInit {
 	    $configured_ldap = 1;
 	}
     }
+
+    # check if there is ldap-dhcp-server-cn entry in config file
+    # even if LDAP is not in use
+    if (defined $settings{"ldap-dhcp-server-cn"}) {
+	$ldap_dhcp_server_cn = $settings{"ldap-dhcp-server-cn"} || "";
+	# removing quotes
+	# format: ldap-dhcp-server-cn "entry"
+	if ($ldap_dhcp_server_cn =~ /^\".*\"$/) {
+	    $ldap_dhcp_server_cn =~ s/(^\"|\"$)//g;
+	    $ldap_dhcp_server_cn =~ s/\\\"/\"/g;
+	}
+	y2milestone ("ldap-dhcp-server-cn defined (".$ldap_dhcp_server_cn.")");
+    } else {
+	$ldap_dhcp_server_cn = "";
+	y2milestone ("ldap-dhcp-server-cn not defined");
+    }
+
     y2milestone ("DHCP configured LDAP: $configured_ldap");
 
     # grab info about the LDAP server
@@ -2331,7 +2350,7 @@ sub LdapInit {
     if (defined $yapi_conf{"use_ldap"})
     {
 	$use_ldap = $yapi_conf{"use_ldap"};
-	y2milestone ("YaPI sepcified to use LDAP: $use_ldap");
+	y2milestone ("YaPI specified to use LDAP: $use_ldap");
     }
 
     if (! $use_ldap)
@@ -2457,11 +2476,23 @@ sub LdapInit {
 	    $_->{"key"} =~ /^[ \t]*ldap-.*$/;
 	} @settings_for_ldap;
 
+	my $filter = "(&(objectClass=dhcpServer)";
+
+	# if ldap-dhcp-server-cn is found, adjust filter expression
+ 	if ( (defined ($ldap_dhcp_server_cn) && $ldap_dhcp_server_cn =~ /\S+/) )
+	{
+	    $filter .= "(cn=$ldap_dhcp_server_cn))";	
+	}
+	# else use $dhcp_server and $dhcp_server_fqdn values
+	else
+	{
+	    $filter .= "(|(cn=$dhcp_server)(cn=$dhcp_server_fqdn)))";
+	}        
+ 
 	# now query to find out the servers
 	my %ldap_query = (
 	    "base_dn" => $base_config_dn,
-	    "filter"  => "(&(objectClass=dhcpServer)".
-	                 "(|(cn=$dhcp_server)(cn=$dhcp_server_fqdn)))",
+	    "filter"  => $filter, 
 	    "scope"   => 2, # scope sub
 	    "map"     => 1, # gimme a list (single entry)
 	    "not_found_ok" => 1,
@@ -2526,6 +2557,22 @@ sub LdapInit {
 	    }
 	}
     }
+}
+
+BEGIN { $TYPEINFO{GetLdapDHCPServerCN} = ["function", "string"];}
+sub GetLdapDHCPServerCN {
+    if (defined $ldap_dhcp_server_cn) {
+	return $ldap_dhcp_server_cn;
+    }
+    return "";
+}
+
+BEGIN { $TYPEINFO{SetLdapDHCPServerCN} = ["function", "void", "string"];}
+sub SetLdapDHCPServerCN {
+    my $self = shift;
+    my $new_value = shift || "";
+
+    $ldap_dhcp_server_cn = $new_value;
 }
 
 BEGIN { $TYPEINFO{LdapPrepareToWrite} = ["function", "boolean"];}

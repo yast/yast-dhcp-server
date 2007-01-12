@@ -909,6 +909,8 @@ global define void InitWidgets () ``{
 "ddns-update-style",
 "ddns-updates",
 "log-facility",
+// FATE #227
+"ldap-dhcp-server-cn",
     ];
 
     list<string> subnet_commands = [
