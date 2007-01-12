@@ -564,6 +564,7 @@
 "allow" : "adi",
 "deny" : "adi",
 "ignore" : "adi",
+"ldap-dhcp-server-cn" : "text",
 
 /*Possible values in the scope:
 unknown-clients
