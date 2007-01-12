@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Jan 12 15:54:08 CET 2007 - kmachalkova@suse.cz
+
+- Added support for ldap-dhcp-server-cn configuration option to 
+  get/set alternative name for dhcpServer LDAP object (FaTE #227)
+- 2.13.11
+
+-------------------------------------------------------------------
 Mon Nov 20 17:03:56 CET 2006 - kmachalkova@suse.cz
 
 - Added autoyast validation file (#220736)
