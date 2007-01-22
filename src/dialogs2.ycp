@@ -306,7 +306,7 @@ term Common_GlobalSettingsDialog() {
     	    `Left(`CheckBox(`id("ldap"), `opt( `notify), _("&LDAP Support"), true)),
 	    `HSpacing(2),
 	    // FATE #227, comments #5 and #17
-	    `Left (`HSquash (`TextEntry (`id ("ldap-dhcp-server-cn"), _("LDAP Server &Name (optional)"))))
+	    `Left (`HSquash (`TextEntry (`id ("ldap-dhcp-server-cn"), _("DHCP Server &Name (optional)"))))
 	),
         `VSpacing(2)
     );
