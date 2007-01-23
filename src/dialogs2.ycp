@@ -277,9 +277,13 @@ boolean CardSelectionValidate (string key, map event) {
     }
 
     list <string> allowed_interfaces = [];
+    list <string> configured_interfaces = [];
     foreach (string iface, map <string, any> settings, DhcpServerUI::ifaces, {
 	if (DhcpServerUI::ifaces[iface,"active"]:false == true) {
 	    allowed_interfaces = add (allowed_interfaces, iface);
+	    if ( DhcpServer::GetInterfaceInformation(iface) != $[] ) {
+		configured_interfaces = add(configured_interfaces, iface);
+	    }
 	    break;
 	}
     });
@@ -290,6 +294,13 @@ boolean CardSelectionValidate (string key, map event) {
 	return false;
     }
 
+    if (size(configured_interfaces) <= 0) {
+	// TRANSLATORS: popup error, DHCP Server requires selected interface to have 
+	//              at least minimal configuration 
+	return Popup::ContinueCancel(_("Selected network interface has currently no configuration (no assigned IP address 
+and netmask). Using it in DHCP server configuration may not work.
+Really use this interface?"));
+    }
     return true;
 }
 
