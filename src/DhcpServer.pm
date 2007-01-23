@@ -2219,6 +2219,10 @@ sub GetInterfaceInformation {
     my $self = shift;
     my $interface = shift;
 
+    my $ip = "";
+    my $bcast = "";
+    my $netmask = "";
+
     y2milestone ("Getting information about interface $interface");
     my %out = %{SCR->Execute (".target.bash_output",
 	"/sbin/getcfg-interface $interface") || {}};
@@ -2232,10 +2236,10 @@ sub GetInterfaceInformation {
 	y2error ("getcfg-interface returned strange interface \"0\"");
 	return {};
     }
-    $interface = $out{"stdout"};
+    my $iface = $out{"stdout"};
 
     %out = %{SCR->Execute (".target.bash_output",
-	"LANG=en_EN /sbin/ifconfig $interface") || {}};
+	"LANG=en_EN /sbin/ifconfig $iface") || {}};
     if ($out{"exit"} != 0)
     {
 	y2error ("getcfg-interface exited with code $out{\"exit\"}");
@@ -2247,19 +2251,36 @@ sub GetInterfaceInformation {
     my $line = $lines[0] || "";
     if ($line =~ /inet addr:[ \t]*([0-9\.]+)[ \t]*Bcast:[ \t]*([0-9\.]+)[ \t]*Mask:[ \t]*([0-9\.]+)[ \t]*$/)
     {
-	my $ip = $1;
-	my $bcast = $2;
-	my $netmask = $3;
-	return {
+	$ip = $1;
+	$bcast = $2;
+	$netmask = $3;
+    }
+   else 
+    {
+	chomp($iface);
+        y2warning ("ifconfig didn't return meaningful data about $iface, asking NetworkDevices");
+	$ip = NetworkDevices->GetValue($interface, "IPADDR");
+	$bcast = NetworkDevices->GetValue($interface, "BROADCAST");
+	$netmask = NetworkDevices->GetValue($interface, "NETMASK");
+    }
+
+    #at least IP and netmask must be defined
+    if ( ($ip ne "") && ($netmask ne ""))
+    {
+    	return { 
 	    "ip" => $ip,
 	    "bcast" => $bcast,
 	    "network" => IP->ComputeNetwork ($ip, $netmask),
 	    "netmask" => $netmask,
 	    "bits" => Netmask->ToBits ($netmask),
-	};
+    	};
     }
-    y2error ("ifconfig didn't return meaningful data about $interface");
-    return {};
+    else
+    {
+	y2error("Cannot get any data about $iface, it may have no configuration");
+	return {};
+    }	
+
 }
 
 BEGIN { $TYPEINFO{LdapInit} = ["function", "void", ["list", "any"], "boolean"];}
