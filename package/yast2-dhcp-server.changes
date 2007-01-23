@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Mon Jan 22 18:27:48 CET 2007 - kmachalkova@suse.cz
+
+- If gathering interface information by parsing ifconfig output 
+  fails, use NetworkDevices data. Inform user that interface has no
+  configuration (#233937)
+- 2.13.12 
+
+-------------------------------------------------------------------
 Fri Jan 12 15:54:08 CET 2007 - kmachalkova@suse.cz
 
 - Added support for ldap-dhcp-server-cn configuration option to 
