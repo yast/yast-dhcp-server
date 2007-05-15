@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue May 15 14:02:35 CEST 2007 - kmachalkova@suse.cz
+
+- Dropped simple vs. expert UI mode support (ProductFeatures): 
+  expert mode is now default
+- 2.15.2 
+
+-------------------------------------------------------------------
 Mon Jan 22 18:31:01 CET 2007 - kmachalkova@suse.cz
 
 - If gathering interface information by parsing ifconfig output

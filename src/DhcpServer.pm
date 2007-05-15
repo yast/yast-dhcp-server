@@ -107,7 +107,7 @@ YaST::YCP::Import ("Mode");
 YaST::YCP::Import ("NetworkDevices");
 YaST::YCP::Import ("Netmask");
 YaST::YCP::Import ("PackageSystem");
-YaST::YCP::Import ("ProductFeatures");
+#YaST::YCP::Import ("ProductFeatures");
 YaST::YCP::Import ("Service");
 YaST::YCP::Import ("Popup");
 YaST::YCP::Import ("Progress");
@@ -1842,13 +1842,12 @@ sub Import {
 	@allowed_interfaces = sort (keys (%ifaces));
 	@original_allowed_interfaces = @allowed_interfaces;
 
-	# Initialize LDAP if needed
-	if (ProductFeatures->GetFeature ("globals", "ui_mode") ne "simple")
-	{
-	    $self->InitYapiConfigOptions ({"use_ldap" => $use_ldap});
-	    $self->LdapInit ([], 1);
-	    $self->CleanYapiConfigOptions ();
-	}
+	# Initialize LDAP 
+
+	$self->InitYapiConfigOptions ({"use_ldap" => $use_ldap});
+	$self->LdapInit ([], 1);
+	$self->CleanYapiConfigOptions ();
+
     }
 }
 
@@ -1911,10 +1910,6 @@ BEGIN { $TYPEINFO{IsConfigurationSimple} = ["function", "boolean"];}
 sub IsConfigurationSimple {
     my $self = shift;
 
-    if (ProductFeatures->GetFeature ("globals", "ui_mode") eq "simple")
-    {
-	return Boolean (1);
-    }
     y2milestone ("Checking how complex configuration is set");
 
     if (scalar (@allowed_interfaces) > 1)
@@ -2293,10 +2288,6 @@ sub LdapInit {
     $use_ldap = 0;
     my $configured_ldap = 0;
 
-    if (ProductFeatures->GetFeature ("globals", "ui_mode") eq "simple")
-    {
-	return;
-    }
 
     #error message
     my $ldap_error_msg = __("Invalid LDAP configuration. Cannot use LDAP.");
@@ -2600,11 +2591,6 @@ BEGIN { $TYPEINFO{LdapPrepareToWrite} = ["function", "boolean"];}
 sub LdapPrepareToWrite {
     my $self = shift;
 
-    if (ProductFeatures->GetFeature ("globals", "ui_mode") eq "simple")
-    {
-	return;
-    }
-
     my $ldap_data_ref = Ldap->Export ();
 
     # check if the schema is properly included
@@ -2848,11 +2834,6 @@ y included");
 BEGIN { $TYPEINFO{LdapStore} = ["function", "void" ]; }
 sub LdapStore {
     my $self = shift;
-
-    if (ProductFeatures->GetFeature ("globals", "ui_mode") eq "simple")
-    {
-	return 1;
-    }
 
     my $ret = 1;
 

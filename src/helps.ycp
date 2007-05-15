@@ -138,10 +138,7 @@ consult dhcpd manual page. If left blank, default values will be used.</p>"),
 	"card_selection_expert" : _("<p><b><big>Network Card Selection</big></b><br>
 Select one or more of listed network cards to use for the DHCP server.</p>"),
 
-	// Wizard Installation - Step 1 (version for simple UI)
-	"card_selection_simple" : _("<p><b><big>Network Card Selection</big></b><br>
-Select one of listed network cards to use for the DHCP server.</p>"),
-
+	//Optional field - used with LDAP support
 	"ldap_server_name" : _("Optionally, you can also specify <b>DHCP server name</b>
 (the name of dhcpServer LDAP object), if it is different from your hostname."),
 
