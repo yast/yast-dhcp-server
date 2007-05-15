@@ -22,7 +22,7 @@ import "Hostname";
 import "Progress";
 import "DialogTree";
 import "CWMServiceStart";
-import "ProductFeatures";
+//import "ProductFeatures";
 import "NetworkDevices";
 import "Report";
 import "Mode";
@@ -34,7 +34,7 @@ include "dhcp-server/dns-server-management.ycp";
 include "dhcp-server/dns-server-wizard.ycp";
 
 /* Using expert UI */
-define boolean expert_ui = (ProductFeatures::GetFeature ("globals", "ui_mode") == "expert");
+//define boolean expert_ui = (ProductFeatures::GetFeature ("globals", "ui_mode") == "expert");
 
 /* Start of common configuration section */
 
@@ -209,20 +209,9 @@ void CardSelectionInit (string key)
 
     list <string> dhcp_ifaces = DhcpServer::GetAllowedInterfaces ();
     
-    // expert UI allows to set more interfaces
-    if (expert_ui) {
-	foreach (string iface, map <string, any> settings, DhcpServerUI::ifaces, {
-	    if (contains(dhcp_ifaces, iface)) DhcpServerUI::ifaces[iface,"active"] = true;
-	});
-    // simple UI allows to set only _ONE_ interface
-    // because of only one subnet in the simple UI dialogs
-    } else {
-	if ( size(dhcp_ifaces) > 1 ) {
-	    y2warning ("More than one interface allowed, using the first one only.");
-	}
-	dhcp_ifaces = [dhcp_ifaces[0]:""];
-	DhcpServerUI::ifaces[dhcp_ifaces[0]:"","active"] = true;
-    }
+    foreach (string iface, map <string, any> settings, DhcpServerUI::ifaces, {
+        if (contains(dhcp_ifaces, iface)) DhcpServerUI::ifaces[iface,"active"] = true;
+    });
 
     RedrawInterfacesTable();
 }
@@ -234,22 +223,10 @@ symbol CardSelectionHandle (string key, map event) {
 
     current_item_iface = item_id;
 
-    if (expert_ui) {
-	if (event["ID"]:nil == "add") {
-	    DhcpServerUI::ifaces[item_id,"active"] = true;
-	} else if (event["ID"]:nil == "remove") {
-	    DhcpServerUI::ifaces[item_id,"active"] = false;
-	}
-    } else {
-	if (event["ID"]:nil == "add") {
-	    // only one can be selected
-	    foreach (string iface, map <string, any> settings, DhcpServerUI::ifaces, {
-		DhcpServerUI::ifaces[iface,"active"] = false;
-	    });
-	    DhcpServerUI::ifaces[item_id,"active"] = true;
-	} else if (event["ID"]:nil == "remove") {
-	    DhcpServerUI::ifaces[item_id,"active"] = false;
-	}
+    if (event["ID"]:nil == "add") {
+        DhcpServerUI::ifaces[item_id,"active"] = true;
+    } else if (event["ID"]:nil == "remove") {
+        DhcpServerUI::ifaces[item_id,"active"] = false;
     }
 
     RedrawInterfacesTable();
@@ -309,9 +286,7 @@ Really use this interface?"));
  * @return term for Get_CommonDialog()
  */
 term Common_GlobalSettingsDialog() {
-    term ldap = `Empty();
-
-    if (expert_ui) ldap = `VBox(
+    term ldap = `VBox(
 	// configuration will be saved in ldap?
 	`HBox (
     	    `Left(`CheckBox(`id("ldap"), `opt( `notify), _("&LDAP Support"), true)),
@@ -469,12 +444,10 @@ void GlobalSettingsInit (string key)
     UI::ChangeWidget ( `id ("defaultleasetime"), `Value, tostring (value) );
     UI::ChangeWidget ( `id ("defaultleasetimeunits"), `Value, unit );
     
-    if (expert_ui) {
-	boolean ldap_in_use = DhcpServer::GetUseLdap();
-	UI::ChangeWidget (`id ("ldap"), `Value, ldap_in_use);
-	UI::ChangeWidget (`id ("ldap-dhcp-server-cn"), `Value, DhcpServer::GetLdapDHCPServerCN());
-	UI::ChangeWidget (`id ("ldap-dhcp-server-cn"), `Enabled, ldap_in_use);
-    }
+    boolean ldap_in_use = DhcpServer::GetUseLdap();
+    UI::ChangeWidget (`id ("ldap"), `Value, ldap_in_use);
+    UI::ChangeWidget (`id ("ldap-dhcp-server-cn"), `Value, DhcpServer::GetLdapDHCPServerCN());
+    UI::ChangeWidget (`id ("ldap-dhcp-server-cn"), `Enabled, ldap_in_use);
 
     GlobalSettingsValidChars ();
 }
@@ -1686,8 +1659,9 @@ map<string, map<string, any> > tabs = $[
     "start_up" : $[
 	"contents"	: `VBox (
 	    "auto_start_up",
-	    `VSpacing(),
+//	    `VSpacing(),
 	    "use_ldap",
+	    `VSpacing(),
 	    "start_stop",
 	    `VSpacing(),
 	    "other_options",
@@ -1833,7 +1807,7 @@ map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
 	"store"		: CardSelectionStore,
 	"validate_type"	: `function,
 	"validate_function"	: CardSelectionValidate,
-	"help"		: (expert_ui ? HELPS["card_selection_expert"]:"" : HELPS["card_selection_simple"]:""),
+	"help"		:  HELPS["card_selection_expert"]:"",
     ],
     "global_settings" : $[
 	"widget"	: `custom,
@@ -1843,8 +1817,7 @@ map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
 	"validate_type"	: `function,
 	"validate_function" : GlobalSettingsValidate,
 	"store"		: GlobalSettingsStore,
-	"help"		: (expert_ui ?  (HELPS["ldap_support"]:"" + HELPS["ldap_server_name"]:"" + HELPS["global_settings"]:"")
-			   : HELPS["global_settings"]:""),
+	"help"		: HELPS["ldap_support"]:"" + HELPS["ldap_server_name"]:"" + HELPS["global_settings"]:""
     ],
     "dynamic_dhcp" : $[
 	"widget"	: `custom,
@@ -1890,14 +1863,8 @@ map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
  * @return symbol for the wizard sequencer
  */
 symbol CommonConfigDialog () {
-    list<string> ids_order= [];
-    if (expert_ui) {
-	ids_order = ["start_up", "card_selection", "global_settings",
+    list <string> ids_order = ["start_up", "card_selection", "global_settings",
 	    "dynamic_dhcp", "host_management", "expert_settings"];
-    } else {
-	ids_order = ["start_up", "card_selection",
-	    "global_settings", "dynamic_dhcp"];
-    }
     return DialogTree::ShowAndRun ($[
 	"ids_order" : ids_order,
 	"initial_screen" : "start_up",
