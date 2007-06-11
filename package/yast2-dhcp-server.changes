@@ -1,5 +1,17 @@
 -------------------------------------------------------------------
-Mon Jan 22 18:27:48 CET 2007 - kmachalkova@suse.cz
+Mon Jun 11 10:48:16 CEST 2007 - kmachalkova@suse.cz
+
+- Merged changes from trunk back into SP2 branch (r35612:38374)
+  - Allow getting/setting 'dynamic-bootp' flag for IP range (#151806)
+    + related facelift of 'Dynamic DHCP' dialog
+  - removed outdated translations from .desktop-files (#271209)
+    (by jsrain)
+  - Dropped simple vs. expert UI mode support (ProductFeatures): 
+    expert mode is now default
+- 2.13.13
+
+-------------------------------------------------------------------
+Mon Jan 22 18:31:01 CET 2007 - kmachalkova@suse.cz
 
 - If gathering interface information by parsing ifconfig output 
   fails, use NetworkDevices data. Inform user that interface has no
