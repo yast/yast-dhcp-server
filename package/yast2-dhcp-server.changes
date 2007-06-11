@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Jun 11 10:48:16 CEST 2007 - kmachalkova@suse.cz
+
+- Allow getting/setting 'dynamic-bootp' flag for IP range (#151806)
+  + related facelift of 'Dynamic DHCP' dialog
+- 2.15.3 
+
+-------------------------------------------------------------------
 Fri May 25 13:30:04 CEST 2007 - jsrain@suse.cz
 
 - removed outdated translations from .desktop-files (#271209)
