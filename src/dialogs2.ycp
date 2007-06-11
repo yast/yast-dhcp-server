@@ -665,46 +665,57 @@ boolean GlobalSettingsValidate (string key, map event)
 term Common_DynamicDHCPDialog() {
     term dialog = 
 	`VBox(
-            `VBox(
-		// frame
-                `Frame (_("IP Address Range") ,
-		    `VBox(
-
-		    `HBox (
-			`HWeight (2,
-			    // TRANSLATORS: informative text entry (filled up, disabled)
-			    `TextEntry( `id("current_network"), _("Current &Network") )
-			),
-			`HWeight (2,
-			    // TRANSLATORS: informative text entry (filled up, disabled)
-			    `TextEntry( `id("current_netmask"), _("Current Net&mask") )
-			),
-			`HWeight (1,
-			    // TRANSLATORS: informative text entry (filled up, disabled)
-			    `TextEntry( `id("current_bits"),    _("Netmask Bi&ts"))
-			)
-		    ),
-
-		    `VSpacing(1),
-
-		    `HBox (
-			`VBox (
-			    // text entry
-			    `Left( `TextEntry ( `id ("from_ip"), _("&First IP Address") ) ),
-			    // text entry
-			    `Left( `TextEntry ( `id ("to_ip"), _("&Last IP Address") ) )
-			),
-			`VBox (
-			    // text entry
-			    `Left( `TextEntry ( `id ("from_ip_min"), _("Min&imum IP Address") ) ),
-			    // text entry
-			    `Left( `TextEntry ( `id ("to_ip_max"), _("Ma&ximum IP Address") ) )
-			)
+	    // frame
+            `Frame (_("Subnet Information") ,
+	        `VBox(
+	            `HBox (
+	                `HWeight (2,
+	                    // TRANSLATORS: informative text entry (filled up, disabled)
+	                    `TextEntry( `id("current_network"), _("Current &Network") )
+	                ),
+	                `HWeight (2,
+	                    // TRANSLATORS: informative text entry (filled up, disabled)
+	                    `TextEntry( `id("current_netmask"), _("Current Net&mask") )
+	                ),
+	                `HWeight (1,
+	                    // TRANSLATORS: informative text entry (filled up, disabled)
+	                    `TextEntry( `id("current_bits"),    _("Netmask Bi&ts"))
+	                )
+	            ),
+		    `HBox(
+	                `HWeight (2,
+		        // text entry
+		            `TextEntry ( `id ("from_ip_min"), _("Min&imum IP Address") )
+		        ),
+	                `HWeight (2,
+		            // text entry
+		            `TextEntry ( `id ("to_ip_max"), _("Ma&ximum IP Address") )
+		        ),
+	                `HWeight (1,
+		            `HStretch()
+		        )
 		    )
-
-		    )
-		) 
-            ),
+	        )
+	    ),
+	    `VSpacing(1),
+	    `Frame (_("IP Address Range") ,
+		`VBox(
+	            `HBox (
+	                `HWeight (2,
+		        // text entry
+		            `TextEntry ( `id ("from_ip"), _("&First IP Address") )
+		        ),
+	                `HWeight (2,
+		        // text entry
+		            `TextEntry ( `id ("to_ip"), _("&Last IP Address") )
+		        ),
+	                `HWeight (1,
+		            `HStretch()
+		        )
+	            ),
+		    `Left(`CheckBox( `id("dyn_bootp"), _("Allow Dynamic &BOOTP")))
+		)
+	    ),
 	    `VSpacing (1),
             `Frame(
 		// frame label
@@ -868,8 +879,14 @@ void DynamicDHCPInit (string key)
 	    if ( opt["key"]:nil == "range" )
 	    {
 		list<string> range = splitstring ( opt["value"]:"", " " );
-		UI::ChangeWidget ( `id ("from_ip"), `Value, range[0]:"" );
-		UI::ChangeWidget ( `id ("to_ip"), `Value, range[1]:"" );
+		integer idx = 0;
+		if (range[0]:"" == "dynamic-bootp") {
+		    UI::ChangeWidget ( `id("dyn_bootp"), `Value, true);
+		    idx = 1;
+		}
+		UI::ChangeWidget ( `id ("from_ip"), `Value, range[ idx ]:"" );
+		UI::ChangeWidget ( `id ("to_ip"), `Value, range[ idx+1 ]:"" );
+
 	    }
 	    else if ( opt["key"]:nil == "default-lease-time" )
 	    {
@@ -997,6 +1014,7 @@ void DynamicDHCPStore (string key, map event)
 
     string from_ip = (string) UI::QueryWidget ( `id ("from_ip"), `Value );
     string to_ip = (string) UI::QueryWidget ( `id ("to_ip"), `Value );
+    boolean dyn_bootp = (boolean) UI::QueryWidget( `id("dyn_bootp"), `Value ); 
     
     // FIXME: validation
     
@@ -1012,7 +1030,8 @@ void DynamicDHCPStore (string key, map event)
     if ( size(from_ip) != 0 && size(to_ip) != 0 )
     {
 	directives = add ( directives, 
-	    $[ "key" : "range" , "value" : from_ip + " " + to_ip ]
+	    $[ "key" : "range" ,
+	       "value" : (dyn_bootp ? "dynamic-bootp " : "") + from_ip + " " + to_ip ]
 	);
     }
 
