@@ -560,6 +560,7 @@
 "option nwip.autoretry-secs" :  "uint8",
 "option nwip.nwip-1-1" :  "uint8",
 "option nwip.primary-dss" :  "ip-address",
+"option vendor-class-identifier" : "quoted_string", 
 
 "allow" : "adi",
 "deny" : "adi",
