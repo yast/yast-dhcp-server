@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Jul 10 13:40:06 CEST 2007 - kmachalkova@suse.cz
+
+- Validate option vendor-class-identifier as quoted string (#143164) 
+- i18n: Marked strings for translation (#252103)
+- 2.15.4
+
+-------------------------------------------------------------------
 Mon Jun 11 10:48:16 CEST 2007 - kmachalkova@suse.cz
 
 - Allow getting/setting 'dynamic-bootp' flag for IP range (#151806)
