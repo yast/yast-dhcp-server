@@ -1871,7 +1871,7 @@ map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
     ],
     "other_options" : $[
 	"widget"	: `custom,
-	"custom_widget" : `TextEntry (`id("other_opts"), "DHCP Server Start-Up Arguments"),
+	"custom_widget" : `TextEntry (`id("other_opts"), _("DHCP Server Start-Up Arguments")),
 	"init"		: OtherOptionsInit,
 	"validate_type"	: `function,
 	"validate_function" : OtherOptionsValidate,
