@@ -270,8 +270,13 @@ global define symbol chrootHandle (string id, map event) ``{
  */
 global define void ldapInit (string id) ``{
     boolean ul = DhcpServer::GetUseLdap();
+    boolean ldap_available = DhcpServer::GetLdapAvailable();
     UI::ChangeWidget (`id (id), `Value, ul);
-    ldapHandle (id, $[ "ID" : "start" ]);
+
+    if (ldap_available)
+        ldapHandle (id, $[ "ID" : "start" ]);
+    else
+        UI::ChangeWidget (`id (id), `Enabled, ldap_available);
 }
 
 /**
