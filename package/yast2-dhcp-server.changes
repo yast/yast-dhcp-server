@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Fri Sep  7 19:51:44 CEST 2007 - kmachalkova@suse.cz
+
+- Do not use obsolete getcfg-interface to get network device name  
+  from hw description (mac address) (#308258)
+- If hostname cannot be found, disable selecting LDAP support, 
+  do not abort the module (#307019) 
+- 2.15.5
+
+-------------------------------------------------------------------
 Tue Jul 10 13:40:06 CEST 2007 - kmachalkova@suse.cz
 
 - Validate option vendor-class-identifier as quoted string (#143164) 
