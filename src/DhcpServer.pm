@@ -1455,9 +1455,9 @@ Aborting now."));
     }
     if (! (defined ($dhcp_server) && defined($dhcp_server_fqdn)))
     {
-	# error report, %1 is server name
-Report->Error (sformat(__("Cannot determine the hostname of %1."), $dhcp_server_fqdn));
-	return 0;
+	# error report 
+Report->Error (__("Cannot determine hostname. LDAP-based configuration of 
+DHCP server will not be available."));
     }
 
 # Firewall settings
@@ -1543,7 +1543,10 @@ configured yet. Create a new configuration?");
 	$was_configured = 0;
     }
 
-    $self->LdapInit ($ag_settings_ref, 0);
+    if ( ! $ldap_available )
+    {
+        $self->LdapInit ($ag_settings_ref, 0);
+    }
     
     if ( ! $use_ldap )
     {
@@ -2218,26 +2221,26 @@ sub GetInterfaceInformation {
     my $bcast = "";
     my $netmask = "";
 
-    y2milestone ("Getting information about interface $interface");
-    my %out = %{SCR->Execute (".target.bash_output",
-	"/sbin/getcfg-interface $interface") || {}};
-    if ($out{"exit"} != 0)
-    {
-	y2error ("getcfg-interface exited with code $out{\"exit\"}");
-	return {};
-    }
-    if ($out{"stdout"} eq "0")
-    {
-	y2error ("getcfg-interface returned strange interface \"0\"");
-	return {};
-    }
-    my $iface = $out{"stdout"};
+    #y2milestone ("Getting information about interface $interface");
+    #my %out = %{SCR->Execute (".target.bash_output",
+    #    "/sbin/getcfg-interface $interface") || {}};
+    #if ($out{"exit"} != 0)
+    #{
+    #    y2error ("getcfg-interface exited with code $out{\"exit\"}");
+    #    return {};
+    #}
+    #if ($out{"stdout"} eq "0")
+    #{
+    #    y2error ("getcfg-interface returned strange interface \"0\"");
+    #    return {};
+    #}
+    #my $iface = $out{"stdout"};
 
-    %out = %{SCR->Execute (".target.bash_output",
-	"LANG=en_EN /sbin/ifconfig $iface") || {}};
+    my %out = %{SCR->Execute (".target.bash_output",
+	"LANG=en_EN /sbin/ifconfig $interface") || {}};
     if ($out{"exit"} != 0)
     {
-	y2error ("getcfg-interface exited with code $out{\"exit\"}");
+	y2error ("ifconfig exited with code $out{\"exit\"}");
 	return {};
     }
 
@@ -2252,8 +2255,8 @@ sub GetInterfaceInformation {
     }
     else 
     {
-	chomp($iface);
-        y2warning ("ifconfig didn't return meaningful data about $iface, asking NetworkDevices");
+	chomp($interface);
+        y2warning ("ifconfig didn't return meaningful data about $interface, asking NetworkDevices");
 	$ip = NetworkDevices->GetValue($interface, "IPADDR");
 	$bcast = NetworkDevices->GetValue($interface, "BROADCAST");
 	$netmask = NetworkDevices->GetValue($interface, "NETMASK");
@@ -2272,7 +2275,7 @@ sub GetInterfaceInformation {
     }
     else
     {
-	y2error("Cannot get any data about $iface, it may have no configuration");
+	y2error("Cannot get any data about $interface, it may have no configuration");
 	return {};
     }	
 
