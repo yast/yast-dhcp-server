@@ -72,7 +72,7 @@ my $adapt_ddns_settings = 0;
 
 my $use_ldap = 0;
 
-my $ldap_available = 0;
+my $ldap_available = 1;
 
 my $ldap_config_dn = "";
 
@@ -1338,6 +1338,12 @@ sub SetUseLdap {
 
     $self->SetModified ();
 }
+BEGIN{$TYPEINFO{GetLdapAvailable} = ["function", "boolean"];}
+sub GetLdapAvailable {
+    my $self = shift;
+
+    return Boolean($ldap_available);
+}
 BEGIN{$TYPEINFO{GetOtherOptions} = ["function", "string"];}
 sub GetOtherOptions {
     my $self = shift;
@@ -1458,6 +1464,7 @@ Aborting now."));
 	# error report 
 Report->Error (__("Cannot determine hostname. LDAP-based configuration of 
 DHCP server will not be available."));
+        $ldap_available = 0;
     }
 
 # Firewall settings
@@ -2287,7 +2294,6 @@ sub LdapInit {
     my $settings_ref = shift;
     my $report_errors = shift;
 
-    $ldap_available = 0;
     $use_ldap = 0;
     my $configured_ldap = 0;
 

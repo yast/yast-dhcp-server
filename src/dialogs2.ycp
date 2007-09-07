@@ -445,9 +445,15 @@ void GlobalSettingsInit (string key)
     UI::ChangeWidget ( `id ("defaultleasetimeunits"), `Value, unit );
     
     boolean ldap_in_use = DhcpServer::GetUseLdap();
-    UI::ChangeWidget (`id ("ldap"), `Value, ldap_in_use);
-    UI::ChangeWidget (`id ("ldap-dhcp-server-cn"), `Value, DhcpServer::GetLdapDHCPServerCN());
-    UI::ChangeWidget (`id ("ldap-dhcp-server-cn"), `Enabled, ldap_in_use);
+    boolean ldap_available = DhcpServer::GetLdapAvailable();
+
+    if (ldap_available){
+        UI::ChangeWidget (`id ("ldap"), `Value, ldap_in_use);
+        UI::ChangeWidget (`id ("ldap-dhcp-server-cn"), `Value, DhcpServer::GetLdapDHCPServerCN());
+        UI::ChangeWidget (`id ("ldap-dhcp-server-cn"), `Enabled, ldap_in_use);
+    }
+    else
+        UI::ChangeWidget (`id ("ldap"), `Enabled, ldap_available);
 
     GlobalSettingsValidChars ();
 }
