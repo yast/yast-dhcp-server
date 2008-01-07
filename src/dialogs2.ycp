@@ -274,9 +274,10 @@ boolean CardSelectionValidate (string key, map event) {
     if (size(configured_interfaces) <= 0) {
 	// TRANSLATORS: popup error, DHCP Server requires selected interface to have 
 	//              at least minimal configuration 
-	return Popup::ContinueCancel(_("Selected network interface has currently no configuration (no assigned IP address 
-and netmask). Using it in DHCP server configuration may not work.
-Really use this interface?"));
+	return Popup::ContinueCancel(_("The selected network interface has currently no configuration (no assigned IP address 
+and netmask). Using it in the DHCP server configuration may not work.
+Really use this interface?
+"));
     }
     return true;
 }
@@ -1660,12 +1661,14 @@ boolean OtherOptionsValidate(string key, map event) {
 	    }
 	    if(k == "cf") {
 		UI::SetFocus(`id("other_opts"));
-		correct = (Popup::ContinueCancel(sformat(_("You have specified an alternate configuration file for DHCP server.\n
-This is not supported by YaST, as DHCP server module can only read and write
-/etc/dhcpd.conf. New configuration from %1 will not be imported and all changes 
+		correct = (Popup::ContinueCancel(sformat(_("You have specified an alternate configuration file for the DHCP server.
+
+This is not supported by YaST, as the DHCP server module can only read and write
+/etc/dhcpd.conf. The new configuration from %1 will not be imported and all changes 
 will be saved to the default configuration file.
  
-Really continue?"), v))); 
+Really continue?
+"), v))); 
 		break;
 	    }
 	}
