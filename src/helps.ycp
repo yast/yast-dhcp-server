@@ -188,8 +188,9 @@ netmask and minimum and maximum IP addresses available for the clients.
 Set the <b>First IP Address</b> and the <b>Last IP Address</b>
 to lease to the clients.  These addresses must have the same netmask.
 For instance, <tt>192.168.1.1</tt> and <tt>192.168.1.64</tt>. Check <b>
-Allow Dynamic BOOTP</b> flag in the specified range may be dynamically
-assigned to BOOTP clients as well as DHCP clients</p>") +
+Allow Dynamic BOOTP</b> flag if the specified range may be dynamically
+assigned to BOOTP clients as well as DHCP clients</p>.
+") +
 
 	// Wizard Installation - Step 3 3/4
 	_("<p><b><big>Lease Time</big></b><br>

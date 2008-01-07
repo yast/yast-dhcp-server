@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Mon Jan  7 12:11:11 CET 2008 - kmachalkova@suse.cz
+
+- Merged proofread texts 
+
+-------------------------------------------------------------------
 Fri Sep  7 19:51:44 CEST 2007 - kmachalkova@suse.cz
 
 - Do not use obsolete getcfg-interface to get network device name  

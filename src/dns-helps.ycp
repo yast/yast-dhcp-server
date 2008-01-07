@@ -18,7 +18,7 @@
     string new_range_help = _("<p><big><b>Adding a New Range of DNS Records</b></big><br />
 <b>First IP Address</b> defines
 the starting address of the range. <b>Last IP Address</b> defines
-the last one. <b>Hostname Base</b> is a string that sets how hostnames
+the last one. <b>Hostname Base</b> is a string that determines how hostnames
 should be created (such as <tt>dhcp-%i</tt> or <tt>e25-%i-a</tt>).
 <tt>%i</tt> is replaced with the number of the host in the range.
 If no <tt>%i</tt> is defined, the number is added at the end of the
@@ -30,7 +30,7 @@ hostname. Hostnames are created incrementally.</p>
     map <string, string> DNS_HELPS = $[
 	// TRANSLATORS: DNS Wizard - step 1 (part 1)
 	"wizard-zones" : _("<p><big><b>DNS Wizard</b></big><br />
-This wizard can help you to create a new DNS zone
+This wizard helps you create a new DNS zone
 directly from the DHCP server configuration. This DNS zone is important
 if you also want to identify your DHCP clients by hostname. The DNS zone
 translates names to IP addresses assigned to them. You can also
@@ -49,15 +49,16 @@ to contain reverse entries of the main DNS zone.</p>
 
 	// TRANSLATORS: DNS Wizard - step 2 (part 1)
 	"wizard-nameservers" : _("<p><big><b>Name Servers</b></big><br />
-Name servers are needed for the proper DNS server functionality.
-They administer all the DNS zone records.</p>") +
+Name servers are needed for proper DNS server functionality.
+They administer all the DNS zone records.</p>
+") +
 
 	// TRANSLATORS: DNS Wizard - step 2 (part 2)
 	_("<p><big><b>DNS Queries</b></big><br />
 Every DNS query that must find out, for example, an IP address for a
 hostname in a DNS zone, first asks the parent zone
 (<tt>com</tt> for <tt>example.com</tt>) for the current zone
-name servers then sends a DNS query to these name servers to get
+name servers, and then sends a DNS query to these name servers to get
 a reply containing the desired IP address.<br />
 This is why you should mention the current DNS server hostname as one of
 the zone name servers.</p>

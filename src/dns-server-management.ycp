@@ -470,7 +470,7 @@
 	    Report::Error (sformat (
 		// TRANSLATORS: popup error, %1 is the zone name
 		// please, do not translate 'master' (exact DNS definition)
-		_("Zone %1 is not type master.
+		_("Zone %1 is not of the type master.
 The DNS server cannot write any records to it.
 "),
 		current_settings["reverse_domain"]:""
