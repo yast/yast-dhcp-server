@@ -23,7 +23,7 @@ import "Progress";
 import "DialogTree";
 import "CWMServiceStart";
 //import "ProductFeatures";
-import "NetworkDevices";
+import "NetworkInterfaces";
 import "Report";
 import "Mode";
 import "Netmask";
@@ -187,20 +187,20 @@ void CardSelectionInit (string key)
 {
     Wizard::DisableBackButton();
 
-    foreach (string iface, NetworkDevices::List(""), {
+    foreach (string iface, NetworkInterfaces::List(""), {
 	if (iface != "" && !issubstring(iface, "lo") && !issubstring(iface, "sit")) {
-	    string device_name = NetworkDevices::GetValue(iface, "NAME");
+	    string device_name = NetworkInterfaces::GetValue(iface, "NAME");
 	    if (size(device_name) > 40) {
 		device_name = substring (device_name, 0, 37) + "...";
 	    }
 	    
 	    DhcpServerUI::ifaces[iface] = $[
 		"device" : device_name,
-		"ipaddr" : (NetworkDevices::GetValue(iface, "BOOTPROTO") == "dhcp" ?
+		"ipaddr" : (NetworkInterfaces::GetValue(iface, "BOOTPROTO") == "dhcp" ?
 		    // TRANSLATORS: Table items; Informs that the IP is a DHCP Address
 		    _("DHCP address")
 		    :
-		    NetworkDevices::GetValue(iface, "IPADDR")
+		    NetworkInterfaces::GetValue(iface, "IPADDR")
 		),
 		"active" : false,
 	    ];
