@@ -104,7 +104,7 @@ YaST::YCP::Import ("IP");
 YaST::YCP::Import ("Ldap");
 YaST::YCP::Import ("LdapServerAccess");
 YaST::YCP::Import ("Mode");
-YaST::YCP::Import ("NetworkDevices");
+YaST::YCP::Import ("NetworkInterfaces");
 YaST::YCP::Import ("Netmask");
 YaST::YCP::Import ("PackageSystem");
 #YaST::YCP::Import ("ProductFeatures");
@@ -1416,10 +1416,10 @@ sub Read {
 
     # Reading current network configuration
     if (!Mode->config()) {
-	NetworkDevices->Read();
+	NetworkInterfaces->Read();
     }
     my $ifaces_found = 0;
-    foreach my $iface (@{ NetworkDevices->List("") }) {
+    foreach my $iface (@{ NetworkInterfaces->List("") }) {
     	next if ($iface =~ /^lo/i);
 	next if ($iface =~ /^sit/i);
 	$ifaces_found = 1;
@@ -2263,10 +2263,10 @@ sub GetInterfaceInformation {
     else 
     {
 	chomp($interface);
-        y2warning ("ifconfig didn't return meaningful data about $interface, asking NetworkDevices");
-	$ip = NetworkDevices->GetValue($interface, "IPADDR");
-	$bcast = NetworkDevices->GetValue($interface, "BROADCAST");
-	$netmask = NetworkDevices->GetValue($interface, "NETMASK");
+        y2warning ("ifconfig didn't return meaningful data about $interface, asking NetworkInterfaces");
+	$ip = NetworkInterfaces->GetValue($interface, "IPADDR");
+	$bcast = NetworkInterfaces->GetValue($interface, "BROADCAST");
+	$netmask = NetworkInterfaces->GetValue($interface, "NETMASK");
     }
 
     #at least IP and netmask must be defined

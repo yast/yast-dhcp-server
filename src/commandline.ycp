@@ -12,7 +12,7 @@
 
 import "CommandLine";
 import "DhcpServer";
-import "NetworkDevices";
+import "NetworkInterfaces";
 
 textdomain "dhcp-server";
 
@@ -166,8 +166,8 @@ define boolean HostHandler (map options) {
   * @return boolean true if settings have been changed
   */
 boolean InterfaceHandler (map options) {
-    NetworkDevices::Read ();
-    list<string> all_interfaces = NetworkDevices::List ("");
+    NetworkInterfaces::Read ();
+    list<string> all_interfaces = NetworkInterfaces::List ("");
     all_interfaces = filter (string i, all_interfaces, {
 	return i != "lo";
     });
