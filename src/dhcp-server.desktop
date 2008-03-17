@@ -26,3 +26,4 @@ Exec=/sbin/yast2 dhcp-server
 Name=DHCP Server
 GenericName=Configure a DHCP server
 X-KDE-SubstituteUID=true
+StartupNotify=true
