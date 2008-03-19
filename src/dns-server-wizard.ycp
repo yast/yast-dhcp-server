@@ -546,7 +546,7 @@ Really use the new one?
 	    contents,
 	    DNS_HELPS["wizard-summary"]:"",
 	    Label::BackButton(),
-	    Label::AcceptButton()
+	    Label::FinishButton()
 	);	
     }
 
