@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Mar 19 16:54:06 CET 2008 - juhliarik@suse.cz
+
+- fate #120373: Unified Button Labels
+- 2.16.7  
+
+-------------------------------------------------------------------
 Mon Mar 17 12:43:32 CET 2008 - jsrain@suse.cz
 
 - added 'StartupNotify=true' to the desktop file (bnc #304964)
