@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Mar 28 14:47:23 CET 2008 - kmachalkova@suse.cz
+
+- i18n: Marked strings for translation (bnc#370860)
+- 2.13.14 
+
+-------------------------------------------------------------------
 Mon Jun 11 10:48:16 CEST 2007 - kmachalkova@suse.cz
 
 - Merged changes from trunk back into SP2 branch (r35612:38374)
