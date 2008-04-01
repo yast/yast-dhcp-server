@@ -15,9 +15,9 @@
 	//     DNS Wizard - step 3 (part 4)
 	//       and
 	//     DNS for Experts (editing current settings) (part 5)
-    string new_range_help = _("<p><big><b>Adding a New Range of DNS Records</b></big><br />
+    string new_range_help = _("<p><b><big>Adding a New Range of DNS Records</big></b><br />
 <b>First IP Address</b> defines
-the starting address of the range. <b>Last IP Address</b> defines
+the starting address of the range and <b>Last IP Address</b> defines
 the last one. <b>Hostname Base</b> is a string that determines how hostnames
 should be created (such as <tt>dhcp-%i</tt> or <tt>e25-%i-a</tt>).
 <tt>%i</tt> is replaced with the number of the host in the range.
@@ -29,7 +29,7 @@ hostname. Hostnames are created incrementally.</p>
 
     map <string, string> DNS_HELPS = $[
 	// TRANSLATORS: DNS Wizard - step 1 (part 1)
-	"wizard-zones" : _("<p><big><b>DNS Wizard</b></big><br />
+	"wizard-zones" : _("<p><b><big>DNS Wizard</big></b><br />
 This wizard helps you create a new DNS zone
 directly from the DHCP server configuration. This DNS zone is important
 if you also want to identify your DHCP clients by hostname. The DNS zone
@@ -38,8 +38,8 @@ create a reverse zone that translates IP addresses to names.</p>
 ") + 
 
 	// TRANSLATORS: DNS Wizard - step 1 (part 2)
-	_("<p>You cannot change <b>New Zone Name</b> or <b>Reverse Zone Name</b>
-because they are taken from your current DHCP server and network settings.</p>
+	_("<p><b>New Zone Name</b> or <b>Reverse Zone Name</b>
+are taken from your current DHCP server and network settings and, therefore, cannot be changed.</p>
 ") +
 
 	// TRANSLATORS: DNS Wizard - step 1 (part 3)
@@ -54,7 +54,7 @@ They administer all the DNS zone records.</p>
 ") +
 
 	// TRANSLATORS: DNS Wizard - step 2 (part 2)
-	_("<p><big><b>DNS Queries</b></big><br />
+	_("<p><b><big>DNS Queries</big></b><br />
 Every DNS query that must find out, for example, an IP address for a
 hostname in a DNS zone, first asks the parent zone
 (<tt>com</tt> for <tt>example.com</tt>) for the current zone
@@ -66,7 +66,7 @@ the zone name servers.</p>
 
 	// TRANSLATORS: DNS Wizard - step 2 (part 3)
 	_("<p>To add a <b>New Name Server</b>, click <b>Add</b>, complete the form,
-then click <b>OK</b>. If the new name server name is included in the current
+then click <b>Ok</b>. If the new name server name is included in the current
 DNS zone, also enter its IP address. This is mandatory because it is used
 during the zone creation.</p>
 ") +
@@ -77,7 +77,7 @@ during the zone creation.</p>
 "),
 
 	// TRANSLATORS: DNS Wizard - step 3 (part 1)
-	"wizard-ranges" : _("<p><big><b>DNS Records</b></big><br />
+	"wizard-ranges" : _("<p><b><big>DNS Records</big></b><br />
 Here, define DNS hostnames for all DHCP clients. You do not need to define
 all hostnames one by one. Only set one or more simple rules for how
 the hostnames are created. These rules define the ranges of IP addresses to use
@@ -85,7 +85,7 @@ and the string that is used to generate hostnames for a range.</p>
 ") +
 
 	// TRANSLATORS: DNS Wizard - step 3 (part 2)
-	_("<p><big><b>Range of DNS Records</b></big><br />
+	_("<p><b><big>Range of DNS Records</big></b><br />
 For example, create a set of hostnames from <tt>dhcp-133-a</tt>
 to <tt>dhcp-233-a</tt> with IP addresses from <tt>192.168.5.88</tt>
 to <tt>192.168.5.188</tt>.</p>
@@ -93,7 +93,7 @@ to <tt>192.168.5.188</tt>.</p>
 
 	// TRANSLATORS: DNS Wizard - step 3 (part 3)
 	_("<p>To add a new range of DNS records</b>, click <b>Add</b>,
-complete the form, then click <b>OK</b>.</p>
+complete the form, then click <b>Ok</b>.</p>
 ") +
 
 	// TRANSLATORS: DNS Wizard - step 3 (part 4)
@@ -117,7 +117,7 @@ DHCP server configuration.</p>
 "),
 
 	// TRANSLATORS: DNS for Experts (editing current settings) (part 1)
-	"edit-current-settings" : _("<p><big><b>DNS Synchronization</b></big><br />
+	"edit-current-settings" : _("<p><b><big>DNS Synchronization</big></b><br />
 This is an advanced tool for editing DNS server settings to match your
 DHCP settings. Only 'A' records--DNS records that convert hostnames to
 IP addresses--are maintained here.</p>

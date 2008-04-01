@@ -970,7 +970,7 @@ symbol DynamicDHCPHandle (string key, map event) {
     if (event["ID"]:nil == `dns_advanced_zone_info) {
 	Report::Message (sformat (
 	    _("DNS zone %1 is not a master zone.
-This means that you cannot change it here.
+Therefore, you cannot change it here.
 "),
 	    current_settings["domain"]:""
 	));

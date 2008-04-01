@@ -136,11 +136,13 @@ consult dhcpd manual page. If left blank, default values will be used.</p>"),
 
 	// Wizard Installation - Step 1 (version for expert UI)
 	"card_selection_expert" : _("<p><b><big>Network Card Selection</big></b><br>
-Select one or more of listed network cards to use for the DHCP server.</p>"),
+Select one or more of the listed network cards to use for the DHCP server.</p>
+"),
 
 	//Optional field - used with LDAP support
-	"ldap_server_name" : _("Optionally, you can also specify <b>DHCP server name</b>
-(the name of dhcpServer LDAP object), if it is different from your hostname."),
+	"ldap_server_name" : _("Optionally, you can also specify <b>DHCP Server Name</b>
+(the name of dhcpServer LDAP object), if it differs from your hostname.
+"),
 
 	// Wizard Installation - Step 2 1/9
 	"global_settings" : _("<p><b><big>Global Settings</big></b><br>
@@ -181,7 +183,8 @@ and the client must ask for an IP again.</p>"),
 	"dynamic_dhcp" :_("<p><b><big>Subnet Information</big></b></br>
 Here you can view the information about the current subnet, such as its address,
 netmask and minimum and maximum IP addresses available for the clients.
-</p>") +
+</p>
+") +
  
 	// Wizard Installation - Step 3 2/4
 	 _("<p><b><big>IP Address Range</big></b><br>
