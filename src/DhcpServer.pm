@@ -391,12 +391,12 @@ sub PreprocessSettingsFromLdap {
     my %record = %{ $found[0] || {}};
     
     # determine type
-    my @classes = @{ $record { "objectclass" } || [] };
+    my @classes = @{ $record { "objectClass" } || [] };
 
-    if ( grep ( /dhcpOptions/, @classes ) && defined $record { "dhcpoption" } )
+    if ( grep ( /dhcpOptions/, @classes ) && defined $record { "dhcpOption" } )
     {
 	# there are some options to gather
-	my @opts = @{ $record { "dhcpoption" } };
+	my @opts = @{ $record { "dhcpOption" } };
 	foreach my $opt (@opts) {
 	    # split by spaces
 	    my @single = split (/ +/, $opt);
@@ -417,9 +417,9 @@ sub PreprocessSettingsFromLdap {
 	}
     }
     
-    if ( defined $record { "dhcpstatements" } )
+    if ( defined $record { "dhcpStatements" } )
     {
-	my @statements = @{ $record { "dhcpstatements" } };
+	my @statements = @{ $record { "dhcpStatements" } };
 	# there are some directives to gather
 	foreach my $stmt (@statements) {
 	    # split by spaces
@@ -442,22 +442,22 @@ sub PreprocessSettingsFromLdap {
     }
     
     # now handle also special case statements
-    if ( $type eq "host" && defined $record { "dhcphwaddress" } )
+    if ( $type eq "host" && defined $record { "dhcpHWAddress" } )
     {
 	my %directive_rec = (
 		"key" => "hardware",
-		"value" => $record { "dhcphwaddress" }->[0],
+		"value" => $record { "dhcpHWAddress" }->[0],
 		"type" => "directive",
 		"comment_before" => "",
 		"comment_after" => ""
 	    );
 	push @directives, \%directive_rec;
     }
-    elsif ( ($type eq "pool" || $type eq "subnet" ) && defined $record { "dhcprange" } )
+    elsif ( ($type eq "pool" || $type eq "subnet" ) && defined $record { "dhcpRange" } )
     {
 	my %directive_rec = (
 		"key" => "range",
-		"value" => $record { "dhcprange" }->[0],
+		"value" => $record { "dhcpRange" }->[0],
 		"type" => "directive",
 		"comment_before" => "",
 		"comment_after" => ""
@@ -497,7 +497,7 @@ sub PreprocessSettingsFromLdap {
 	my $r_type = undef;
 
 	# determine type
-	my @classes = @{ $child_record { "objectclass" } };
+	my @classes = @{ $child_record { "objectClass" } };
 
 	if ( grep ( /dhcpPool/, @classes ) )
 	{
@@ -533,7 +533,7 @@ sub PreprocessSettingsFromLdap {
 
 	if ($r_type eq "subnet")
 	{
-	    my @netmasks = @{ $child_record { "dhcpnetmask" } };
+	    my @netmasks = @{ $child_record { "dhcpNetMask" } };
 	    my $netmask = $netmasks[0];
 	    $netmask = Netmask->FromBits ($netmask);
 	    $r_id = "$r_id netmask $netmask";
@@ -650,12 +650,12 @@ sub SaveToLdap {
 	    @lval = grep { $_ ne ''; } @lval;
 	    $val = join (" ", @lval);
 	    $val = lc ($val);
-	    $to_save { "dhcphwaddress" } = $val;
+	    $to_save { "dhcpHWAddress" } = $val;
 	}
 	elsif ( ($record { "type" } eq "pool" || $record { "type" } eq "subnet" ) 
 	    && $r { "key" } eq "range" )
 	{
-	    $to_save { "dhcprange" } = $r { "value" };
+	    $to_save { "dhcpRange" } = $r { "value" };
 	}
 	else 
 	{
@@ -668,8 +668,8 @@ sub SaveToLdap {
 	}
     }
 
-    $to_save { "dhcpoption" } = \@options;
-    $to_save { "dhcpstatements" } = \@directives;
+    $to_save { "dhcpOption" } = \@options;
+    $to_save { "dhcpStatements" } = \@directives;
     
     # now, add the type-specific options (required attributes)
     if ( $record {"type"} eq "subnet" )
@@ -678,9 +678,9 @@ sub SaveToLdap {
 	$record { "id" } =~ m/^\s*(\S+)\s+netmask\s+([^ \t]+)[ \t]*$/;
 	my $id = $1;
 	my $netmask = $2;
-	$to_save { "dhcpnetmask" } = \@{ [ Netmask->ToBits ( $netmask ) ] };
+	$to_save { "dhcpNetMask" } = \@{ [ Netmask->ToBits ( $netmask ) ] };
 	
-	$to_save { "objectclass" } = \@{ [ "dhcpSubNet", "dhcpOptions", "top" ] };
+	$to_save { "objectClass" } = \@{ [ "dhcpSubNet", "dhcpOptions", "top" ] };
 	$to_save { "cn" } = \@{ [ $id ] };
     }
     elsif ( $record {"type"} eq "pool" )
@@ -688,7 +688,7 @@ sub SaveToLdap {
 	$record { "id" } =~ m/^\s*(\S+)\s*$/;
 	my $id = $1;
 	
-	$to_save { "objectclass" } = \@{ [ "dhcpPool", "dhcpOptions", "top" ] };
+	$to_save { "objectClass" } = \@{ [ "dhcpPool", "dhcpOptions", "top" ] };
 	$to_save { "cn" } = \@{ [ $id ] };
     }
     elsif ( $record {"type"} eq "class" )
@@ -696,7 +696,7 @@ sub SaveToLdap {
 	$record { "id" } =~ m/^\s*(\S+)\s*$/;
 	my $id = $1;
 	
-	$to_save { "objectclass" } = \@{ [ "dhcpClass", "dhcpOptions", "top" ] };
+	$to_save { "objectClass" } = \@{ [ "dhcpClass", "dhcpOptions", "top" ] };
 	$to_save { "cn" } = \@{ [ $id ] };
     }
     elsif ( $record {"type"} eq "host" )
@@ -704,7 +704,7 @@ sub SaveToLdap {
 	$record { "id" } =~ m/^\s*(\S+)\s*$/;
 	my $id = $1;
 	
-	$to_save { "objectclass" } = \@{ [ "dhcpHost", "dhcpOptions", "top" ] };
+	$to_save { "objectClass" } = \@{ [ "dhcpHost", "dhcpOptions", "top" ] };
 	$to_save { "cn" } = \@{ [ $id ] };
     }
     elsif ( $record {"type"} eq "sharednetwork" )
@@ -712,7 +712,7 @@ sub SaveToLdap {
 	$record { "id" } =~ m/^\s*(\S+)\s*$/;
 	my $id = $1;
 	
-	$to_save { "objectclass" } = \@{ [ "dhcpSharedNetwork", "dhcpOptions", "top" ] };
+	$to_save { "objectClass" } = \@{ [ "dhcpSharedNetwork", "dhcpOptions", "top" ] };
 	$to_save { "cn" } = \@{ [ $id ] };
     }
     elsif ( $record {"type"} eq "group" )
@@ -720,7 +720,7 @@ sub SaveToLdap {
 	$record { "id" } =~ m/^\s*(\S+)\s*$/;
 	my $id = $1;
 	
-	$to_save { "objectclass" } = \@{ [ "dhcpGroup", "dhcpOptions", "top" ] };
+	$to_save { "objectClass" } = \@{ [ "dhcpGroup", "dhcpOptions", "top" ] };
 	$to_save { "cn" } = \@{ [ $id ] };
     }
     elsif ( $record {"type"} eq "")
@@ -728,8 +728,8 @@ sub SaveToLdap {
 	$where_rec{"dn"} =~ m/cn=([^,]+),.*/;
 	my $root_cn = $1;
 	$to_save{"cn"} = $root_cn if (defined ($root_cn));
-	$to_save{"objectclass"} = [ "dhcpService", "dhcpOptions", "top"];
-	$to_save{"dhcpprimarydn"} = $dhcp_server_dn;
+	$to_save{"objectClass"} = [ "dhcpService", "dhcpOptions", "top"];
+	$to_save{"dhcpPrimaryDN"} = $dhcp_server_dn;
     }
     
     if ( $record {"type"} ne "" )
@@ -2482,7 +2482,7 @@ sub LdapInit {
 	    $dhcp_conf_dn = $keys[0];
 	    %found = %{$found{$dhcp_conf_dn}};
 	    # check if base DN for dhcp config is defined
-	    my @bases = @{ $found{"susedefaultbase"} || [] };
+	    my @bases = @{ $found{"suseDefaultBase"} || [] };
 	    if (@bases > 0)
 	    {
 		$base_config_dn = $bases[0];
@@ -2530,12 +2530,12 @@ sub LdapInit {
 	    y2milestone ("Choosing server $dhcp_server_dn");
 	    y2milestone ("Using LDAP server $dhcp_server_dn");
 	    my %server_entry = %{ $servers{$dhcp_server_dn} };
-	    if (scalar (@{$server_entry{"dhcpservicedn"}}) > 1)
+	    if (scalar (@{$server_entry{"dhcpServiceDN"}}) > 1)
 	    {
 		# error report
 		Report->Error (__("Support for multiple dhcpServiceDN not implemented."));
 	    }
-	    $ldap_dhcp_config_dn = $server_entry{"dhcpservicedn"}[0];
+	    $ldap_dhcp_config_dn = $server_entry{"dhcpServiceDN"}[0];
 	    if (!(defined ($ldap_dhcp_config_dn) && $ldap_dhcp_config_dn =~ /\S+/))
 	    {
 		# error report
@@ -2569,7 +2569,7 @@ sub LdapInit {
 	}
 	else
 	{
-	    my $pri_dn = $found[0]{"dhcpprimarydn"}[0] || "";
+	    my $pri_dn = $found[0]{"dhcpPrimaryDN"}[0] || "";
 	    y2milestone ("Primary DN: $pri_dn");
 	    if ($dhcp_server_dn ne $pri_dn)
 	    {
@@ -2678,7 +2678,7 @@ y included");
 	my %ldap_object = (
 	    'objectclass'     => [ 'top', 'suseDhcpConfiguration' ],
 	    'cn'              => [ 'defaultDHCP' ],
-	    'susedefaultbase' => [ $base_config_dn ],
+	    'suseDefaultBase' => [ $base_config_dn ],
 	);
 	my %ldap_request = (
 	    "dn" => $dhcp_conf_dn
@@ -2707,11 +2707,11 @@ y included");
     }
 
     # check if base DN for dhcp config is defined
-    my @bases = @{ $found{"susedefaultbase"} || [] };
+    my @bases = @{ $found{"suseDefaultBase"} || [] };
     if (@bases == 0)
     {
 	my %ldap_object = %found;
-	$ldap_object{"susedefaultbase"} = [$base_config_dn];
+	$ldap_object{"suseDefaultBase"} = [$base_config_dn];
         my %ldap_request = (
 	    "dn" => "$dhcp_conf_dn",
 	);
@@ -2742,7 +2742,7 @@ y included");
     if (@dhcps == 0)
     {
 	my %ldap_object = (
-	    "objectclass" => [ "top", "organizationalUnit" ],
+	    "objectClass" => [ "top", "organizationalUnit" ],
 	    "ou" => [ "DHCP" ],
 	);
 	my %ldap_request = (
@@ -2779,8 +2779,8 @@ y included");
 	y2milestone ("DHCP server not found in LDAP, creating ".
 	    $dhcp_server_dn);
 	my %server_entry = (
-	    "objectclass" => [ "top", "dhcpServer", "dhcpOptions" ],
-	    "dhcpservicedn" => [ $ldap_dhcp_config_dn ],
+	    "objectClass" => [ "top", "dhcpServer", "dhcpOptions" ],
+	    "dhcpServiceDN" => [ $ldap_dhcp_config_dn ],
 	    "cn" => [ $dhcp_server ],
 	);
 	my %ldap_request = (
@@ -2815,9 +2815,9 @@ y included");
 	my @cn = split(/=/, shift (@ldap_config_dn_elements));
 	my $cn = $cn[1];
 	my %ldap_object = ( 
-	    "objectclass"   => [ "top", "dhcpService", "dhcpOptions" ],
+	    "objectClass"   => [ "top", "dhcpService", "dhcpOptions" ],
 	    "cn"            => [ $cn ],
-	    "dhcpprimarydn" => [ "$dhcp_server_dn" ],
+	    "dhcpPrimaryDN" => [ "$dhcp_server_dn" ],
 	);
 	my %ldap_request = (
 	    "dn" => "$ldap_dhcp_config_dn",
