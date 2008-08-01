@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Aug  1 10:24:10 CEST 2008 - juhliarik@suse.cz
+
+- update dhcp-server depend on LDAP changes 
+- 2.17.0
+
+-------------------------------------------------------------------
 Fri May 16 16:40:22 CEST 2008 - jsrain@suse.cz
 
 - added categories Settings and System into desktop file
