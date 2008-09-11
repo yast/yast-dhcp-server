@@ -33,9 +33,8 @@ hostname. Hostnames are created incrementally.</p>
 This wizard helps you create a new DNS zone
 directly from the DHCP server configuration. This DNS zone is important
 if you also want to identify your DHCP clients by hostname. The DNS zone
-translates names to IP addresses assigned to them. You can also
-create a reverse zone that translates IP addresses to names.</p>
-") + 
+translates names to the IP addresses assigned to them. You can also
+create a reverse zone that translates IP addresses to names.</p>\n") + 
 
 	// TRANSLATORS: DNS Wizard - step 1 (part 2)
 	_("<p><b>New Zone Name</b> or <b>Reverse Zone Name</b>
