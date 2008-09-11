@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Thu Sep 11 08:25:28 CEST 2008 - jsrain@suse.cz
+
+- merged texts from proofread
+
+-------------------------------------------------------------------
 Fri Aug  1 10:24:10 CEST 2008 - juhliarik@suse.cz
 
 - update dhcp-server depend on LDAP changes 
