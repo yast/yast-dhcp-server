@@ -9,7 +9,7 @@ $filename = $default_filename;
 $group_counter = 0;
 $pool_counter = 0;
 
-@parSed_file = ();
+@parsed_file = ();
 
 sub get_lines {
     my $orig_line = "";
