@@ -1550,7 +1550,7 @@ configured yet. Create a new configuration?");
 	$was_configured = 0;
     }
 
-    if ( ! $ldap_available )
+    if ( $ldap_available )
     {
         $self->LdapInit ($ag_settings_ref, 0);
     }
