@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Nov  6 14:41:23 CET 2008 - juhliarik@suse.cz
+
+- added fix for problem with loading LDAP settings (bug #350634)
+- 2.17.2 
+
+-------------------------------------------------------------------
 Tue Sep 30 17:50:24 CEST 2008 - juhliarik@suse.cz
 
 - added fix for problem with typo (bug #423181)
