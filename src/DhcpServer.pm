@@ -1495,7 +1495,7 @@ DHCP server will not be available."));
 	foreach my $iface (@allowed_interfaces) {
 	    my $iface_zone = SuSEFirewall->GetZoneOfInterface($iface);
 	    if (defined $iface_zone) {
-		$open_firewall = SuSEFirewall->IsServiceSupportedInZone("dhcp-server", $iface_zone);
+		$open_firewall = SuSEFirewall->IsServiceSupportedInZone("service:dhcp-server", $iface_zone);
 	    } else {
 		$open_firewall = 0;
 	    }
@@ -1691,10 +1691,10 @@ sub Write {
 	foreach my $iface (@{SuSEFirewall->GetAllKnownInterfaces()}) {
 	    push @all_ifaces, $iface->{'id'};
 	}
-	SuSEFirewall->SetServices (["dhcp-server"], \@all_ifaces, 0);
+	SuSEFirewall->SetServices (["service:dhcp-server"], \@all_ifaces, 0);
 	if ($open_firewall) {
 	    # allowing on selected interfaces
-	    SuSEFirewall->SetServices (["dhcp-server"], \@allowed_interfaces, 1);
+	    SuSEFirewall->SetServices (["service:dhcp-server"], \@allowed_interfaces, 1);
 	}
     }
 

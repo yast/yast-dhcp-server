@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Jan  5 15:51:22 CET 2009 - juhliarik@suse.cz
+
+- fix for enable dhcp-server in SuSEFirewall (bnc #460238) 
+- 2.17.3
+
+-------------------------------------------------------------------
 Thu Nov  6 14:41:23 CET 2008 - juhliarik@suse.cz
 
 - added fix for problem with loading LDAP settings (bug #350634)
