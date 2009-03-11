@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Mar 11 14:13:06 CET 2009 - juhliarik@suse.cz
+
+- updated button labeling (bnc#440530)
+- 2.18.0
+
+-------------------------------------------------------------------
 Thu Nov  6 14:41:23 CET 2008 - juhliarik@suse.cz
 
 - added fix for problem with loading LDAP settings (bug #350634)

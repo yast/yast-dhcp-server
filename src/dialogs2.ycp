@@ -1903,7 +1903,7 @@ symbol CommonConfigDialog () {
 	"widget_descr" : widgets,
 	"back_button" : "",
 	"abort_button" :  Label::CancelButton (),
-	"next_button" : Label::FinishButton (),
+	"next_button" : Label::OKButton (),
 	"functions" : functions,
     ]);
 }
