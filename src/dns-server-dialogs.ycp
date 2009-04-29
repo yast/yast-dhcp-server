@@ -4,7 +4,7 @@
  * Summary:	Synchronization with DNS Server (shared dialogs)
  * Authors:	Lukas Ocilka <lukas.ocilka@suse.cz>
  *
- * $Id:$
+ * $Id$
  */
 
 {
