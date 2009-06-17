@@ -46,7 +46,7 @@ rnc_DATA = \
 EXTRA_DIST = $(client_DATA) $(ynclude_DATA) $(module_DATA) $(desktop_DATA) $(YaPI_perl_DATA) $(rnc_DATA)
 
 dhcp-server:
-	test -l dhcp-server || ln -s . dhcp-server
+	test -L dhcp-server || ln -s . dhcp-server
 
 ycpchook = dhcp-server
 
