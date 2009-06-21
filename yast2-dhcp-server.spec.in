@@ -15,7 +15,8 @@ BuildArchitectures:	noarch
 Summary:	YaST2 - DHCP Server Configuration
 
 %description
--
+This package contains the YaST2 component for DHCP server
+configuration.
 
 @PREP@
 
