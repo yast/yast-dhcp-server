@@ -1,3 +1,10 @@
+-------------------------------------------------------------------
+Fri Feb 12 11:05:53 CET 2010 - juhliarik@suse.cz
+
+- added fix for deleting options in "Configured Declaration"
+  (bnc#448013)
+- 2.19.0 
+
 ------------------------------------------------------------------
 Wed Jan 13 18:56:03 CET 2010 - kmachalkova@suse.cz
 
