@@ -533,7 +533,7 @@ global define void configTreeInit (string id) ``{
     ];
     UI::ReplaceWidget (`configtree_rp, `Tree (
 	`id ("configtree"),
-	`opt (`notify),
+	`opt (`immediate),
 	// tree widget
 	_("&Configured Declarations"),
         items
