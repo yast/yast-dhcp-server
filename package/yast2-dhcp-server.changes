@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Fri Apr 23 18:11:37 UTC 2010 - coolo@novell.com
+
+- reupdate the tar ball to fix build
+
+-------------------------------------------------------------------
 Fri Feb 12 11:05:53 CET 2010 - juhliarik@suse.cz
 
 - added fix for deleting options in "Configured Declaration"
