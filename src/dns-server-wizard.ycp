@@ -1066,7 +1066,7 @@ Really use the new one?
 
 	    if (Popup::YesNo (sformat (
 		// TRANSLATORS: popup question, %1 is a list of errors
-		_("Errors occured during DNS zone creation:
+		_("Errors occurred during DNS zone creation:
 
 %1
 Return to the wizard?
