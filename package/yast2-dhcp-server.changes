@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Mon Jul  4 11:12:40 CEST 2011 - snwint@suse.de
+
+- fixed typo (bnc #703097)
+
+-------------------------------------------------------------------
 Fri Apr 23 18:11:37 UTC 2010 - coolo@novell.com
 
 - reupdate the tar ball to fix build
