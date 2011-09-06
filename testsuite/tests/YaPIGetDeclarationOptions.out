@@ -6,7 +6,7 @@ Read	.sysconfig.dhcpd.DHCPD_INTERFACE "eth0 eth2"
 Read	.sysconfig.dhcpd.DHCPD_OTHER_ARGS "-p 111"
 Read	.etc.dhcpd_conf [$["key":"domain-name", "type":"option", "value":"\"example.net\""], $["key":"ddns-update-style", "type":"directive", "value":"none"], $["key":"192.168.0.0 netmask 255.255.255.0", "type":"subnet", "value":[$["key":"range", "type":"directive", "value":"192.168.0.100 192.168.0.200"], $["key":"h1", "type":"host", "value":[$["key":"fixed-address", "type":"directive", "value":"192.168.0.1"], $["key":"hardware", "type":"directive", "value":"ethernet 11:22:33:44:55:66"]]], $["key":"h2", "type":"host", "value":[$["key":"fixed-address", "type":"directive", "value":"192.168.0.2"], $["key":"hardware", "type":"directive", "value":"ethernet 11:22:33:44:55:77"]]]]]]
 Read	.target.size "/etc/dhcpd.conf" 5
-Execute	.target.bash "diff -q /etc/dhcpd.conf \\\n             /usr/share/doc/packages/dhcp-server/dhcpd.conf" 1
+Execute	.target.bash "rpm -q -V --file /etc/dhcpd.conf --nouser --nogroup --nomtime --nomode" 1
 Read	.target.stat "/var/lib/YaST2/dhcp_server_done_once" $[]
 Return	[]
 Dump	==========================================================
@@ -17,7 +17,7 @@ Read	.sysconfig.dhcpd.DHCPD_INTERFACE "eth0 eth2"
 Read	.sysconfig.dhcpd.DHCPD_OTHER_ARGS "-p 111"
 Read	.etc.dhcpd_conf [$["key":"domain-name", "type":"option", "value":"\"example.net\""], $["key":"ddns-update-style", "type":"directive", "value":"none"], $["key":"192.168.0.0 netmask 255.255.255.0", "type":"subnet", "value":[$["key":"range", "type":"directive", "value":"192.168.0.100 192.168.0.200"], $["key":"h1", "type":"host", "value":[$["key":"fixed-address", "type":"directive", "value":"192.168.0.1"], $["key":"hardware", "type":"directive", "value":"ethernet 11:22:33:44:55:66"]]], $["key":"h2", "type":"host", "value":[$["key":"fixed-address", "type":"directive", "value":"192.168.0.2"], $["key":"hardware", "type":"directive", "value":"ethernet 11:22:33:44:55:77"]]]]]]
 Read	.target.size "/etc/dhcpd.conf" 5
-Execute	.target.bash "diff -q /etc/dhcpd.conf \\\n             /usr/share/doc/packages/dhcp-server/dhcpd.conf" 1
+Execute	.target.bash "rpm -q -V --file /etc/dhcpd.conf --nouser --nogroup --nomtime --nomode" 1
 Read	.target.stat "/var/lib/YaST2/dhcp_server_done_once" $[]
 Return	[$["key":"domain-name", "type":"option", "value":"\"example.net\""]]
 Dump	==========================================================

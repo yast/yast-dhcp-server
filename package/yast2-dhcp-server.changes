@@ -2,6 +2,7 @@
 Tue Sep  6 16:35:43 CEST 2011 - locilka@suse.cz
 
 - Fixed detection of default exemplary config file (bnc #715473)
+- Adapted testsuite
 - 2.17.4
 
 -------------------------------------------------------------------
