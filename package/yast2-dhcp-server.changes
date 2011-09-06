@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Sep  6 16:35:43 CEST 2011 - locilka@suse.cz
+
+- Fixed detection of default exemplary config file (bnc #715473)
+- 2.21.0
+
+-------------------------------------------------------------------
 Fri Aug  5 12:31:23 CEST 2011 - tgoettlicher@suse.de
 
 - fixed .desktop file (bnc #681249)
