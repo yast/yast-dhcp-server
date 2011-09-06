@@ -1521,9 +1521,11 @@ DHCP server will not be available."));
     }
     else
     {
-	my $diff_out = SCR->Execute (".target.bash", "diff -q /etc/dhcpd.conf \\
-             /usr/share/doc/packages/dhcp-server/dhcpd.conf");
-	my $using_sample = int(0 == $diff_out);
+	# Checking whether the config file is the default one (just the content)
+	# 0 == no change
+	my $check = SCR->Execute (".target.bash", "rpm -q -V --file /etc/dhcpd.conf --nouser --nogroup --nomtime --nomode");
+	my $using_sample = int(0 == $check);
+
 	if ($using_sample)
 	{
 	    y2milestone ("Sample configuration file found");
@@ -2319,27 +2321,33 @@ sub LdapInit {
     $ldap_port      = "389";
     $ldap_server    = "";
     $base_config_dn = "";
+
     if ( defined ($settings{"ldap-server"}) and
          defined ($settings{"ldap-base-dn"}))
     {
-	if ($settings{"ldap-server"} =~ /^\"(\S+)\"$/)
+	if (defined $settings{"ldap-server"} && $settings{"ldap-server"} =~ /^\"(\S+)\"$/)
 	{
 	    $ldap_server = $1;
+	    y2milestone ("LDAP server: ".$ldap_server);
 	}
 
-	if ($settings{"ldap-base-dn"} =~ /^\"(.+)\"$/)
+	if (defined $settings{"ldap-base-dn"} && $settings{"ldap-base-dn"} =~ /^\"(.+)\"$/)
 	{
 	    $base_config_dn = $1;
+	    y2milestone ("Base Config DN: ".$base_config_dn);
 	}
 
-        if ($settings{"ldap-port"} =~ /^(\d+)$/)
+	# Otherwise default is used
+        if (defined $settings{"ldap-port"} && $settings{"ldap-port"} =~ /^(\d+)$/)
 	{
 	    $ldap_port      = $1 if($1 > 0 && $1 < 65535);
+	    y2milestone ("LDAP Port: ".$ldap_port);
 	}
 
 	if ($ldap_server ne "" and $base_config_dn ne "")
 	{
 	    $configured_ldap = 1;
+	    y2milestone ("LDAP Configured: ".Boolean ($configured_ldap));
 	}
     }
 
