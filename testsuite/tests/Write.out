@@ -1,8 +1,6 @@
 Write	.etc.dhcpd_conf [$["key":"ddns-update-style", "type":"directive", "value":"none"]] true
 Write	.sysconfig.dhcpd.DHCPD_RUN_CHROOTED "no" true
-Write	.sysconfig.dhcpd.DHCPD6_RUN_CHROOTED "no" true
 Write	.sysconfig.dhcpd.DHCPD_INTERFACE "" true
-Write	.sysconfig.dhcpd.DHCPD6_INTERFACE "" true
 Write	.sysconfig.dhcpd.DHCPD_OTHER_ARGS "" true
 Write	.sysconfig.dhcpd nil true
 Execute	.target.bash "/etc/init.d/dhcpd stop" 0
@@ -12,9 +10,7 @@ Return	nil
 Dump	===============================
 Write	.etc.dhcpd_conf [$["comment_after":"", "comment_before":"# dhcpd.conf", "key":"domain-name", "type":"option", "value":"\"example.org\""], $["comment_after":"", "comment_before":"", "key":"domain-name-servers", "type":"option", "value":"ns1.example.org, ns2.example.org"], $["comment_after":"", "comment_before":"", "key":"policy-filter", "type":"option", "value":"{ a1, a2 }, { a1, a2 }, { a3, a4 }"], $["key":"ddns-update-style", "type":"directive", "value":"none"]] true
 Write	.sysconfig.dhcpd.DHCPD_RUN_CHROOTED "yes" true
-Write	.sysconfig.dhcpd.DHCPD6_RUN_CHROOTED "yes" true
 Write	.sysconfig.dhcpd.DHCPD_INTERFACE "eth0 eth2" true
-Write	.sysconfig.dhcpd.DHCPD6_INTERFACE "eth0 eth2" true
 Write	.sysconfig.dhcpd.DHCPD_OTHER_ARGS "-p 111" true
 Write	.sysconfig.dhcpd nil true
 Execute	.target.bash "/etc/init.d/dhcpd stop" 0

@@ -287,7 +287,6 @@ sub AdaptDDNS {
     @includes = sort (keys (%includes));
     $includes = join (" ", @includes);
     SCR->Write (".sysconfig.dhcpd.DHCPD_CONF_INCLUDE_FILES", $includes);
-    SCR->Write (".sysconfig.dhcpd.DHCPD6_CONF_INCLUDE_FILES", $includes);
     SCR->Write (".sysconfig.dhcpd", undef);
 
     if ($adapt_ddns_settings)
@@ -1721,17 +1720,15 @@ sub Write {
     Progress->NextStage ();
 
     SCR->Write (".sysconfig.dhcpd.DHCPD_RUN_CHROOTED", $chroot ? "yes" : "no");
-    SCR->Write (".sysconfig.dhcpd.DHCPD6_RUN_CHROOTED", $chroot ? "yes" : "no");
 
     my $ifaces_list = join (" ", @allowed_interfaces);
     # in (auto)installation only
     if ((Mode->autoinst() || Mode->installation()) && scalar(@allowed_interfaces) == 0) {
 	# "ANY" means ANY interface
-	y2warning("Activating \"ANY\" for DHCPD_INTERFACE and DHCPD6_INTERFACE");
+	y2warning("Activating \"ANY\" for DHCPD_INTERFACE");
 	$ifaces_list = "ANY";
     }    
     SCR->Write (".sysconfig.dhcpd.DHCPD_INTERFACE", $ifaces_list);
-    SCR->Write (".sysconfig.dhcpd.DHCPD6_INTERFACE", $ifaces_list);
     SCR->Write (".sysconfig.dhcpd.DHCPD_OTHER_ARGS", $other_options);
     SCR->Write (".sysconfig.dhcpd", undef);
  	
