@@ -10,7 +10,9 @@ Execute	.target.bash "rpm -q -V --file /etc/dhcpd.conf --nouser --nogroup --nomt
 Read	.target.stat "/var/lib/YaST2/dhcp_server_done_once" $[]
 Write	.etc.dhcpd_conf [$["key":"domain-name", "type":"option", "value":"\"example.net\""], $["key":"ddns-update-style", "type":"directive", "value":"none"], $["comment_after":nil, "comment_before":nil, "key":"192.168.0.0 netmask 255.255.255.0", "type":"subnet", "value":[$["key":"range", "type":"directive", "value":"192.168.0.100 192.168.0.200"], $["comment_after":nil, "comment_before":nil, "key":"h2", "type":"host", "value":[$["key":"fixed-address", "type":"directive", "value":"192.168.0.2"], $["key":"hardware", "type":"directive", "value":"ethernet 11:22:33:44:55:77"]]]]], $["comment_after":nil, "comment_before":nil, "key":"h1", "type":"host", "value":[$["key":"fixed-address", "type":"directive", "value":"192.168.0.1"], $["key":"hardware", "type":"directive", "value":"ethernet 11:22:33:44:55:66"]]]] true
 Write	.sysconfig.dhcpd.DHCPD_RUN_CHROOTED "no" true
+Write	.sysconfig.dhcpd.DHCPD6_RUN_CHROOTED "no" true
 Write	.sysconfig.dhcpd.DHCPD_INTERFACE "eth0 eth2" true
+Write	.sysconfig.dhcpd.DHCPD6_INTERFACE "eth0 eth2" true
 Write	.sysconfig.dhcpd.DHCPD_OTHER_ARGS "-p 111" true
 Write	.sysconfig.dhcpd nil true
 Execute	.target.bash "/etc/init.d/dhcpd stop" 1
