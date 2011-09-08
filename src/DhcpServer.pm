@@ -8,6 +8,7 @@ package DhcpServer;
 use strict;
 
 use YaST::YCP qw(:LOGGING Boolean sformat);
+YaST::YCP::Import ("FileUtils");
 
 #YaST::YCP::debug (1);
 
@@ -275,9 +276,18 @@ sub AdaptDDNS {
 	}
     }
 
+    my $yast_cert = '/etc/ssl/certs/YaST-CA.pem';
+    if (FileUtils->Exists ($yast_cert)) {
+	if (! exists ($includes{$yast_cert})) {
+	    y2warning ("Adding file $yast_cert to copy to chroot");
+	    $includes{$yast_cert} = 1;
+	}
+    }
+
     @includes = sort (keys (%includes));
     $includes = join (" ", @includes);
     SCR->Write (".sysconfig.dhcpd.DHCPD_CONF_INCLUDE_FILES", $includes);
+    SCR->Write (".sysconfig.dhcpd.DHCPD6_CONF_INCLUDE_FILES", $includes);
     SCR->Write (".sysconfig.dhcpd", undef);
 
     if ($adapt_ddns_settings)
@@ -1711,16 +1721,17 @@ sub Write {
     Progress->NextStage ();
 
     SCR->Write (".sysconfig.dhcpd.DHCPD_RUN_CHROOTED", $chroot ? "yes" : "no");
+    SCR->Write (".sysconfig.dhcpd.DHCPD6_RUN_CHROOTED", $chroot ? "yes" : "no");
 
     my $ifaces_list = join (" ", @allowed_interfaces);
     # in (auto)installation only
     if ((Mode->autoinst() || Mode->installation()) && scalar(@allowed_interfaces) == 0) {
-	# bug #173861
-	# " " means ANY interface
-	y2warning("Activating \" \" for DHCPD_INTERFACE");
-	$ifaces_list = " ";
+	# "ANY" means ANY interface
+	y2warning("Activating \"ANY\" for DHCPD_INTERFACE and DHCPD6_INTERFACE");
+	$ifaces_list = "ANY";
     }    
     SCR->Write (".sysconfig.dhcpd.DHCPD_INTERFACE", $ifaces_list);
+    SCR->Write (".sysconfig.dhcpd.DHCPD6_INTERFACE", $ifaces_list);
     SCR->Write (".sysconfig.dhcpd.DHCPD_OTHER_ARGS", $other_options);
     SCR->Write (".sysconfig.dhcpd", undef);
  	
