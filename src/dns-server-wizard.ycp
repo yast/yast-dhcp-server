@@ -1147,7 +1147,7 @@ Return to the wizard?
 	];
     
 	Wizard::CreateDialog();
-	Wizard::SetDesktopIcon ("dhcp-server");
+	Wizard::SetDesktopTitleAndIcon ("dhcp-server");
 
 	map dns_server_settings = DnsServer::Export();
 	symbol ret = Sequencer::Run (aliases, sequence);

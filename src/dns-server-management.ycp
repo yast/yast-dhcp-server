@@ -934,7 +934,7 @@ Really cancel this operation?
 	    DNS_HELPS["edit-current-settings"]:"",
 	    Label::CancelButton(), Label::OKButton()
 	);
-	Wizard::SetDesktopIcon("dhcp-server");
+	Wizard::SetDesktopTitleAndIcon("dhcp-server");
 
 	InitDNSServerConfiguration(current_settings);
 	
