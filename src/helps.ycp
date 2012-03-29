@@ -181,16 +181,16 @@ and the client must ask for an IP again.</p>"),
 
 	// Wizard Installation - Step 3 1/4
 	"dynamic_dhcp" :_("<p><b><big>Subnet Information</big></b></br>
-Here you can view the information about the current subnet, such as its address,
-netmask and minimum and maximum IP addresses available for the clients.
+View information about the current subnet, such as its address,
+netmask, minimum and maximum IP addresses available for the clients.
 </p>
 ") +
  
 	// Wizard Installation - Step 3 2/4
 	 _("<p><b><big>IP Address Range</big></b><br>
 Set the <b>First IP Address</b> and the <b>Last IP Address</b>
-to lease to the clients.  These addresses must have the same netmask.
-For instance, <tt>192.168.1.1</tt> and <tt>192.168.1.64</tt>. Check <b>
+of the address range to be leased to clients. These addresses must have the same netmask.
+For instance, <tt>192.168.1.1</tt> and <tt>192.168.1.64</tt>. Check the <b>
 Allow Dynamic BOOTP</b> flag if the specified range may be dynamically
 assigned to BOOTP clients as well as DHCP clients</p>.
 ") +

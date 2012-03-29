@@ -19,7 +19,7 @@
 <b>First IP Address</b> defines
 the starting address of the range and <b>Last IP Address</b> defines
 the last one. <b>Hostname Base</b> is a string that determines how hostnames
-should be created (such as <tt>dhcp-%i</tt> or <tt>e25-%i-a</tt>).
+are created (such as <tt>dhcp-%i</tt> or <tt>e25-%i-a</tt>).
 <tt>%i</tt> is replaced with the number of the host in the range.
 If no <tt>%i</tt> is defined, the number is added at the end of the
 string. <tt>%i</tt> can be used only once in <b>Hostname Base</b>.
@@ -30,15 +30,16 @@ hostname. Hostnames are created incrementally.</p>
     map <string, string> DNS_HELPS = $[
 	// TRANSLATORS: DNS Wizard - step 1 (part 1)
 	"wizard-zones" : _("<p><b><big>DNS Wizard</big></b><br />
-This wizard helps you create a new DNS zone
+In this wizard, create a new DNS zone
 directly from the DHCP server configuration. This DNS zone is important
-if you also want to identify your DHCP clients by hostname. The DNS zone
-translates names to the IP addresses assigned to them. You can also
-create a reverse zone that translates IP addresses to names.</p>\n") + 
+if you want to identify your DHCP clients by hostname. The DNS zone
+translates names to the assigned IP addresses. You can also
+create a reverse zone that translates IP addresses to names.</p>
+") + 
 
 	// TRANSLATORS: DNS Wizard - step 1 (part 2)
 	_("<p><b>New Zone Name</b> or <b>Reverse Zone Name</b>
-are taken from your current DHCP server and network settings and, therefore, cannot be changed.</p>
+are taken from your current DHCP server and network settings and cannot be changed.</p>
 ") +
 
 	// TRANSLATORS: DNS Wizard - step 1 (part 3)
@@ -54,12 +55,12 @@ They administer all the DNS zone records.</p>
 
 	// TRANSLATORS: DNS Wizard - step 2 (part 2)
 	_("<p><b><big>DNS Queries</big></b><br />
-Every DNS query that must find out, for example, an IP address for a
-hostname in a DNS zone, first asks the parent zone
+Every DNS query (for example searching an IP address for a
+hostname in a DNS zone) first asks the parent zone
 (<tt>com</tt> for <tt>example.com</tt>) for the current zone
-name servers, and then sends a DNS query to these name servers to get
-a reply containing the desired IP address.<br />
-This is why you should mention the current DNS server hostname as one of
+name servers. Then it sends a DNS query to these name servers requesting
+the desired IP address.<br />
+Therefore, always specify the current DNS server hostname as one of
 the zone name servers.</p>
 ") +
 
@@ -77,10 +78,10 @@ during the zone creation.</p>
 
 	// TRANSLATORS: DNS Wizard - step 3 (part 1)
 	"wizard-ranges" : _("<p><b><big>DNS Records</big></b><br />
-Here, define DNS hostnames for all DHCP clients. You do not need to define
-all hostnames one by one. Only set one or more simple rules for how
+Define DNS hostnames for all DHCP clients. You do not need to define
+all hostnames one by one. Set simple rules for how
 the hostnames are created. These rules define the ranges of IP addresses to use
-and the string that is used to generate hostnames for a range.</p>
+and the string from which hostnames are generated for a range.</p>
 ") +
 
 	// TRANSLATORS: DNS Wizard - step 3 (part 2)
@@ -125,7 +126,7 @@ IP addresses--are maintained here.</p>
 	// TRANSLATORS: DNS for Experts (editing current settings) (part 2)
 	_("<b>Current Subnet</b> and <b>Netmask</b> show the current network settings.
 <b>Domain</b> is taken from the current DHCP configuration.
-<b>First IP Address</b> and <b>Second ID Address</b> match the current
+<b>First IP Address</b> and <b>Second IP Address</b> match the current
 Dynamic DHCP range.</p>
 ") +
 

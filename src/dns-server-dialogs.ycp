@@ -158,7 +158,7 @@ the current network %2/%3.
 	if (last_ip_mask != network_bits) {
 	    Report::Error (
 		sformat (_("IP address %1 does not match
-the current network %2/%3
+the current network %2/%3.
 "),
 		last_ip, current_d_settings["network"]:"", current_d_settings["netmask"]:""
 	    ));
@@ -190,7 +190,8 @@ the current network %2/%3
 	    Report::Error (sformat (
 		// TRANSLATORS: popup error, %1 an IP address
 		// %2 is the first IP address of the range, %3 is the last one
-		_("The IP address %1 is out of the current
+		_("The IP address %1 is
+outside the current
 dynamic DHCP range %2-%3.
 "),
 		first_ip, current_d_settings["from_ip"]:"", current_d_settings["to_ip"]:""
@@ -204,7 +205,7 @@ dynamic DHCP range %2-%3.
 		// TRANSLATORS: popup error, %1 an IP address
 		// %2 is the first IP address of the range, %3 is the last one
 		_("The IP address %1 is
-out of the current
+outside the current
 dynamic DHCP range %2-%3.
 "),
 		last_ip, current_d_settings["from_ip"]:"", current_d_settings["to_ip"]:""

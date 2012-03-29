@@ -195,8 +195,7 @@ Really abort?
 		    UI::SetFocus (`id("ip"));
 		    // TRANSLATORS: popup question
 		    if (! Popup::YesNo(_("No IP address has been provided for a name server in the current DNS zone.
-This might not work because each zone needs its name server name and IP 
-defined. 
+This may not work because each zone needs the name and IP of its name server defined. 
 Really use the current settings?
 "))) continue;
 		}
