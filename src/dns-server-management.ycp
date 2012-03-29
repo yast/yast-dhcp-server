@@ -737,7 +737,7 @@ Create it?
 		}
 		
 		// TRANSLATORS: popup question - canceling dns synchronization with dhcp
-		if (Popup::YesNo(_("If you cancel, all changes made in the DNS server will be lost.
+		if (Popup::YesNo(_("If you cancel, all changes made to the DNS server will be lost.
 Really cancel this operation?
 "))) {
 		    // Changes currently made will be reverted

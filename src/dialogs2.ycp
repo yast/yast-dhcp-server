@@ -274,7 +274,7 @@ boolean CardSelectionValidate (string key, map event) {
     if (size(configured_interfaces) <= 0) {
 	// TRANSLATORS: popup error, DHCP Server requires selected interface to have 
 	//              at least minimal configuration 
-	return Popup::ContinueCancel(_("The selected network interface has currently no configuration (no assigned IP address 
+	return Popup::ContinueCancel(_("The selected network interface is not configured (no assigned IP address 
 and netmask). Using it in the DHCP server configuration may not work.
 Really use this interface?
 "));
@@ -1663,9 +1663,9 @@ boolean OtherOptionsValidate(string key, map event) {
 		UI::SetFocus(`id("other_opts"));
 		correct = (Popup::ContinueCancel(sformat(_("You have specified an alternate configuration file for the DHCP server.
 
-This is not supported by YaST, as the DHCP server module can only read and write
-/etc/dhcpd.conf. The new configuration from %1 will not be imported and all changes 
-will be saved to the default configuration file.
+YaST does not supported this. The DHCP server module can only read and write
+/etc/dhcpd.conf. The new configuration from %1 will not be imported. All
+changes will be saved to the default configuration file.
  
 Really continue?
 "), v))); 
@@ -1880,7 +1880,7 @@ map<string,map<string,any> > new_widgets = (map<string,map<string,any> >)union (
     ],
     "other_options" : $[
 	"widget"	: `custom,
-	"custom_widget" : `TextEntry (`id("other_opts"), _("DHCP Server Start-Up Arguments")),
+	"custom_widget" : `TextEntry (`id("other_opts"), _("DHCP Server Start-up Arguments")),
 	"init"		: OtherOptionsInit,
 	"validate_type"	: `function,
 	"validate_function" : OtherOptionsValidate,
