@@ -88,9 +88,8 @@
 		    )
 		)
 	    )),
-	    `HBox (
+	    `ButtonBox (
 		`PushButton (`id(`ok), Label::OKButton()),
-		`HSpacing (1),
 		`PushButton (`id(`cancel), Label::CancelButton())
 	    )
 	));
