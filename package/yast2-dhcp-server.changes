@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Thu Apr 19 10:57:31 UTC 2012 - jsrain@suse.cz
+
+- use the ButtonBox widget (bnc#684863)
+
+-------------------------------------------------------------------
 Thu Mar 29 14:28:18 CEST 2012 - jsuchome@suse.cz
 
 - merged proofed texts

@@ -129,7 +129,7 @@ Really abort?
 			)
 		    )
 		),
-		`HBox (
+		`ButtonBox (
 		    `PushButton (`id(`ok),     Label::OKButton()),
 		    `PushButton (`id(`cancel), Label::CancelButton())
 		)

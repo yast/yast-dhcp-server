@@ -206,9 +206,8 @@
 		    `TextEntry (`id ("new_ip"),       _("&IP Address"))
 		)
 	    )),
-	    `HBox (
+	    `ButtonBox (
 		`PushButton (`id(`ok), Label::OKButton()),
-		`HSpacing (1),
 		`PushButton (`id(`cancel), Label::CancelButton())
 	    )
 	));
@@ -309,9 +308,8 @@
 		    `HWeight (1, `TextEntry (`id ("last_ip"),  _("&Last IP Address")))
 		)
 	    )),
-	    `HBox (
+	    `ButtonBox (
 		`PushButton (`id(`ok), Label::OKButton()),
-		`HSpacing (1),
 		`PushButton (`id(`cancel), Label::CancelButton())
 	    )
 	));
