@@ -1,5 +1,5 @@
 {
-    // testedfiles: DnsServer.pm DNSD.pm
+    // testedfiles: DHCPD.pm
 
     include "testsuite.ycp";
 
