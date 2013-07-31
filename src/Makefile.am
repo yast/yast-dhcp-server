@@ -1,54 +1,47 @@
-#
-# Makefile.am for devtools/devtools/skeletons/config/src
-#
+# Sources for dhcp-server
+
+module_DATA = \
+  modules/DhcpServerUI.rb \
+  modules/DhcpServer.pm
+
+module1dir = @moduledir@/YaPI
+module1_DATA = \
+  modules/YaPI/DHCPD.pm
+
+client_DATA = \
+  clients/dhcp-server.rb \
+  clients/dhcp-server_auto.rb
 
 yncludedir = @yncludedir@/dhcp-server
+ynclude_DATA = \
+  include/dhcp-server/widgets.rb \
+  include/dhcp-server/wizards.rb \
+  include/dhcp-server/options.rb \
+  include/dhcp-server/dns-server-dialogs.rb \
+  include/dhcp-server/commandline.rb \
+  include/dhcp-server/misc.rb \
+  include/dhcp-server/dns-helps.rb \
+  include/dhcp-server/dialogs2.rb \
+  include/dhcp-server/dialogs.rb \
+  include/dhcp-server/dns-server-management.rb \
+  include/dhcp-server/dns-server-wizard.rb \
+  include/dhcp-server/routines.rb \
+  include/dhcp-server/helps.rb
 
-YCPCFLAGS = -M . -I .
+scrconf_DATA = \
+  scrconf/etc_dhcpd_conf.scr \
+  scrconf/cfg_dhcpd.scr
 
-client_DATA =			\
-	dhcp-server.ycp		\
-	dhcp-server_auto.ycp
+agent_SCRIPTS = \
+  servers_non_y2/ag_dhcpd_conf
 
-ynclude_DATA =			\
-	helps.ycp		\
-	dialogs.ycp		\
-	dialogs2.ycp		\
-	wizards.ycp		\
-	routines.ycp		\
-	widgets.ycp		\
-	options.ycp		\
-	commandline.ycp		\
-	misc.ycp		\
-	dns-helps.ycp		\
-	dns-server-wizard.ycp	\
-	dns-server-dialogs.ycp	\
-	dns-server-management.ycp
+schemafilesdir = $(schemadir)/autoyast/rnc
+schemafiles_DATA = \
+  autoyast-rnc/dhcp-server.rnc
 
-desktop_DATA =                  \
-	dhcp-server.desktop
+desktop_DATA = \
+  desktop/dhcp-server.desktop
 
-module_DATA =			\
-	DhcpServerUI.ycp	\
-	DhcpServer.pm
-
-YaPI_perldir = @moduledir@/YaPI
-
-YaPI_perl_DATA = \
-	DHCPD.pm
-
-rncdir= $(schemadir)/autoyast/rnc
-
-rnc_DATA = \
-	dhcp-server.rnc
-
-
-EXTRA_DIST = $(client_DATA) $(ynclude_DATA) $(module_DATA) $(desktop_DATA) $(YaPI_perl_DATA) $(rnc_DATA)
-
-dhcp-server:
-	test -L dhcp-server || ln -s . dhcp-server
-
-ycpchook = dhcp-server
+EXTRA_DIST = $(module_DATA) $(module1_DATA) $(client_DATA) $(ynclude_DATA) $(scrconf_DATA) $(agent_SCRIPTS) $(schemafiles_DATA) $(desktop_DATA)
 
 include $(top_srcdir)/Makefile.am.common
-
