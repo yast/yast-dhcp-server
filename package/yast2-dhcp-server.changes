@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Jul 31 08:28:23 UTC 2013 - yast-devel@opensuse.org
+
+- converted from YCP to Ruby by YCP Killer
+  (https://github.com/yast/ycp-killer)
+- version 3.0.0
+
+-------------------------------------------------------------------
 Thu Apr 19 10:57:31 UTC 2012 - jsrain@suse.cz
 
 - use the ButtonBox widget (bnc#684863)
