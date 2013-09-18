@@ -9,7 +9,7 @@ config.log
 config.status
 config.sub
 configure
-configure.in
+configure.ac
 depcomp
 install-sh
 missing
@@ -18,3 +18,4 @@ stamp-h
 dhcp-server.pot
 autom4te.cache
 Makefile.am.common
+*.ami
