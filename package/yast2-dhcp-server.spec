@@ -26,7 +26,7 @@ Source0:        %{name}-%{version}.tar.bz2
 Group:          System/YaST
 License:        GPL-2.0
 BuildRequires:	perl-Digest-SHA1 perl-X500-DN perl-XML-Writer docbook-xsl-stylesheets doxygen libxslt perl-XML-Writer popt-devel sgml-skel update-desktop-files yast2 yast2-perl-bindings yast2-testsuite yast2-dns-server
-BuildRequires:  yast2-devtools >= 3.0.6
+BuildRequires:  yast2-devtools >= 3.1.10
 
 Requires:       perl-gettext yast2-perl-bindings bind-utils perl-X500-DN yast2-ldap perl-Digest-SHA1 perl-Parse-RecDescent
 # Address::CheckMAC && Address::ValidMAC (2.13.73)
