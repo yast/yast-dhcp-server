@@ -64,7 +64,15 @@ module Yast
         }
       }
       @WRITE = {}
-      @EXEC = { "target" => { "bash_output" => {} } }
+      @EXEC = {
+        "target" => {
+          "bash_output" => {
+            "exit" => 0,
+            "stderr" => "",
+            "stdout" => "",
+          }
+        }
+      }
 
       DhcpServer.SetModified
 
