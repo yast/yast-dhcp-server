@@ -613,13 +613,13 @@ module Yast
       if Ops.less_or_equal(Builtins.size(configured_interfaces), 0)
         # TRANSLATORS: popup error, DHCP Server requires selected interface to have
         #              at least minimal configuration
-        return Popup.ContinueCancel(
+        Report.Error(
           _(
             "The selected network interface is not configured (no assigned IP address \n" +
-              "and netmask). Using it in the DHCP server configuration may not work.\n" +
-              "Really use this interface?\n"
+              "and netmask)."
           )
         )
+        return false
       end
       true
     end
