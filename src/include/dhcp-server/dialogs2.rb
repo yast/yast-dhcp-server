@@ -588,6 +588,11 @@ module Yast
       nil
     end
 
+    # Checks if selected devices are suitable to run dhcp server
+    #
+    # A device is valid when:
+    # - it has an IP already assigned
+    # - it has statically configured IP
     def CardSelectionValidate(key, event)
       return true if Ops.get(event, "ID") == :abort
 
