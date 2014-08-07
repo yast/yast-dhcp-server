@@ -594,17 +594,14 @@ module Yast
     # - it has an IP already assigned
     # - it has statically configured IP
     def CardSelectionValidate(key, event)
-      return true if Ops.get(event, "ID") == :abort
+      return true if event["ID"] == :abort
+      return false if !@ifaces
 
-      allowed_interfaces = []
-      configured_interfaces = []
-      Builtins.foreach(@ifaces) do |iface, settings|
-        if Ops.get_boolean(@ifaces, [iface, "active"], false) == true
-          allowed_interfaces << iface
-          configured_interfaces << iface if !DhcpServer.GetInterfaceInformation(iface).empty?
-          raise Break
-        end
+      allowed_interfaces = @ifaces.select { |i, s| s && s["active"] }
+      unconfigured_interface = allowed_interfaces.any? do |iface, settings|
+        DhcpServer.GetInterfaceInformation(iface).empty?
       end
+
       if allowed_interfaces.empty?
         # TRANSLATORS: popup error, DHCP Server needs to run on one or more interfaces,
         #              currently no one is selected
@@ -612,12 +609,12 @@ module Yast
         return false
       end
 
-      if configured_interfaces.empty?
+      if unconfigured_interface
         # TRANSLATORS: popup error, DHCP Server requires selected interface to have
         #              at least minimal configuration
         Report.Error(
           _(
-            "The selected network interface is not configured (no assigned IP address \n" +
+            "One or more selected network interfaces is not configured (no assigned IP address \n" +
               "and netmask)."
           )
         )
