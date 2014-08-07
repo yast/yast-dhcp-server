@@ -588,38 +588,37 @@ module Yast
       nil
     end
 
+    # Checks if selected devices are suitable to run dhcp server
+    #
+    # A device is valid when:
+    # - it has an IP already assigned
+    # - it has statically configured IP
     def CardSelectionValidate(key, event)
-      event = deep_copy(event)
-      return true if Ops.get(event, "ID") == :abort
+      return true if event["ID"] == :abort
+      return false if !@ifaces
 
-      allowed_interfaces = []
-      configured_interfaces = []
-      Builtins.foreach(@ifaces) do |iface, settings|
-        if Ops.get_boolean(@ifaces, [iface, "active"], false) == true
-          allowed_interfaces = Builtins.add(allowed_interfaces, iface)
-          if DhcpServer.GetInterfaceInformation(iface) != {}
-            configured_interfaces = Builtins.add(configured_interfaces, iface)
-          end
-          raise Break
-        end
+      allowed_interfaces = @ifaces.select { |i, s| s && s["active"] }
+      unconfigured_interface = allowed_interfaces.any? do |iface, settings|
+        DhcpServer.GetInterfaceInformation(iface).empty?
       end
-      if Ops.less_or_equal(Builtins.size(allowed_interfaces), 0)
+
+      if allowed_interfaces.empty?
         # TRANSLATORS: popup error, DHCP Server needs to run on one or more interfaces,
         #              currently no one is selected
         Report.Error(_("At least one network interface must be selected."))
         return false
       end
 
-      if Ops.less_or_equal(Builtins.size(configured_interfaces), 0)
+      if unconfigured_interface
         # TRANSLATORS: popup error, DHCP Server requires selected interface to have
         #              at least minimal configuration
-        return Popup.ContinueCancel(
+        Report.Error(
           _(
-            "The selected network interface is not configured (no assigned IP address \n" +
-              "and netmask). Using it in the DHCP server configuration may not work.\n" +
-              "Really use this interface?\n"
+            "One or more selected network interfaces is not configured (no assigned IP address \n" +
+              "and netmask)."
           )
         )
+        return false
       end
       true
     end
