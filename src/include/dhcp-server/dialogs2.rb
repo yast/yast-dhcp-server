@@ -589,28 +589,25 @@ module Yast
     end
 
     def CardSelectionValidate(key, event)
-      event = deep_copy(event)
       return true if Ops.get(event, "ID") == :abort
 
       allowed_interfaces = []
       configured_interfaces = []
       Builtins.foreach(@ifaces) do |iface, settings|
         if Ops.get_boolean(@ifaces, [iface, "active"], false) == true
-          allowed_interfaces = Builtins.add(allowed_interfaces, iface)
-          if DhcpServer.GetInterfaceInformation(iface) != {}
-            configured_interfaces = Builtins.add(configured_interfaces, iface)
-          end
+          allowed_interfaces << iface
+          configured_interfaces << iface if !DhcpServer.GetInterfaceInformation(iface).empty?
           raise Break
         end
       end
-      if Ops.less_or_equal(Builtins.size(allowed_interfaces), 0)
+      if allowed_interfaces.empty?
         # TRANSLATORS: popup error, DHCP Server needs to run on one or more interfaces,
         #              currently no one is selected
         Report.Error(_("At least one network interface must be selected."))
         return false
       end
 
-      if Ops.less_or_equal(Builtins.size(configured_interfaces), 0)
+      if configured_interfaces.empty?
         # TRANSLATORS: popup error, DHCP Server requires selected interface to have
         #              at least minimal configuration
         Report.Error(
