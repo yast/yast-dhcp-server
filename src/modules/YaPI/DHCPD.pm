@@ -73,6 +73,7 @@ YaST::YCP::Import ("Progress");
 our $VERSION='1.0.0';
 our @CAPABILITIES = ('SLES9');
 our %TYPEINFO;
+our $SERVICE = "dhcpd";
 
 use strict;
 use Errno qw(ENOENT);
@@ -106,8 +107,7 @@ sub StopDhcpService {
     my $self = shift;
     my $config_options = shift;
 
-    return 0 == SCR->Execute (".target.bash",
-	"/etc/init.d/dhcpd stop");
+    return Service->Stop($SERVICE);
 }
 
 =item *
@@ -135,8 +135,7 @@ sub StartDhcpService {
     my $self = shift;
     my $config_options = shift;
 
-    return 0 == SCR->Execute (".target.bash",
-	"/etc/init.d/dhcpd restart");
+    return Service->Restart($SERVICE);
 }
 
 =item *
@@ -164,8 +163,7 @@ sub GetDhcpServiceStatus {
     my $self = shift;
     my $config_options = shift;
 
-    return 0 == SCR->Execute (".target.bash",
-	"/etc/init.d/dhcpd status") ? 1 : 0;
+    return Service->Active($SERVICE);
 }
 
 =item *

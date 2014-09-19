@@ -19,7 +19,7 @@ module Yast
     def main
       Yast.include self, "testsuite.rb"
 
-      # testedfiles: DhcpServer.pm
+      # testedfiles: DhcpServer.pm systemctl.rb
 
       TESTSUITE_INIT([], nil)
       Yast.import "Progress"
