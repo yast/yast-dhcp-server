@@ -3,7 +3,7 @@
 module Yast
   class YaPISetDeclarationOptionsClient < Client
     def main
-      # testedfiles: DhcpServer.pm
+      # testedfiles: DhcpServer.pm systemctl.rb
 
       Yast.include self, "testsuite.rb"
 

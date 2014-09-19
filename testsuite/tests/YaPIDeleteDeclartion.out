@@ -1,6 +1,7 @@
 Dump	==========================================================
 Execute	.target.bash_output "/bin/hostname --short" $["exit":0, "stderr":"localhost", "stdout":"localhost"]
 Execute	.target.bash_output "/bin/hostname --fqdn" $["exit":0, "stderr":"localhost", "stdout":"localhost"]
+Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password show dhcpd.service  --property=Id  --property=MainPID  --property=Description  --property=LoadState  --property=ActiveState  --property=SubState  --property=UnitFileState  --property=FragmentPath " $["exit":0, "stderr":"localhost", "stdout":"localhost"]
 Read	.sysconfig.dhcpd.DHCPD_RUN_CHROOTED "no"
 Read	.sysconfig.dhcpd.DHCPD_INTERFACE "eth0 eth2"
 Read	.sysconfig.dhcpd.DHCPD_OTHER_ARGS "-p 111"
@@ -13,11 +14,13 @@ Write	.sysconfig.dhcpd.DHCPD_RUN_CHROOTED "no" true
 Write	.sysconfig.dhcpd.DHCPD_INTERFACE "eth0 eth2" true
 Write	.sysconfig.dhcpd.DHCPD_OTHER_ARGS "-p 111" true
 Write	.sysconfig.dhcpd nil true
-Execute	.target.bash "/etc/init.d/dhcpd stop" 1
+Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password show dhcpd.service  --property=Id  --property=MainPID  --property=Description  --property=LoadState  --property=ActiveState  --property=SubState  --property=UnitFileState  --property=FragmentPath " $["exit":0, "stderr":"localhost", "stdout":"localhost"]
+Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password show dhcpd.service  --property=Id  --property=MainPID  --property=Description  --property=LoadState  --property=ActiveState  --property=SubState  --property=UnitFileState  --property=FragmentPath " $["exit":0, "stderr":"localhost", "stdout":"localhost"]
 Return	true
 Dump	==========================================================
 Execute	.target.bash_output "/bin/hostname --short" $["exit":0, "stderr":"localhost", "stdout":"localhost"]
 Execute	.target.bash_output "/bin/hostname --fqdn" $["exit":0, "stderr":"localhost", "stdout":"localhost"]
+Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password show dhcpd.service  --property=Id  --property=MainPID  --property=Description  --property=LoadState  --property=ActiveState  --property=SubState  --property=UnitFileState  --property=FragmentPath " $["exit":0, "stderr":"localhost", "stdout":"localhost"]
 Read	.sysconfig.dhcpd.DHCPD_RUN_CHROOTED "no"
 Read	.sysconfig.dhcpd.DHCPD_INTERFACE "eth0 eth2"
 Read	.sysconfig.dhcpd.DHCPD_OTHER_ARGS "-p 111"
@@ -30,6 +33,7 @@ Write	.sysconfig.dhcpd.DHCPD_RUN_CHROOTED "no" true
 Write	.sysconfig.dhcpd.DHCPD_INTERFACE "eth0 eth2" true
 Write	.sysconfig.dhcpd.DHCPD_OTHER_ARGS "-p 111" true
 Write	.sysconfig.dhcpd nil true
-Execute	.target.bash "/etc/init.d/dhcpd stop" 1
+Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password show dhcpd.service  --property=Id  --property=MainPID  --property=Description  --property=LoadState  --property=ActiveState  --property=SubState  --property=UnitFileState  --property=FragmentPath " $["exit":0, "stderr":"localhost", "stdout":"localhost"]
+Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password show dhcpd.service  --property=Id  --property=MainPID  --property=Description  --property=LoadState  --property=ActiveState  --property=SubState  --property=UnitFileState  --property=FragmentPath " $["exit":0, "stderr":"localhost", "stdout":"localhost"]
 Return	true
 Dump	==========================================================

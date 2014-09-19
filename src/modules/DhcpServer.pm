@@ -22,6 +22,7 @@ textdomain("dhcp-server");
 #use check_routines;
 
 our %TYPEINFO;
+our $SERVICE = "dhcpd";
 
 # persistent variables
 
@@ -1490,7 +1491,7 @@ DHCP server will not be available."));
 
     Progress->NextStage ();
 
-    $start_service = Service->Enabled ("dhcpd");
+    $start_service = Service->Enabled ($SERVICE);
     y2milestone ("Service start: $start_service");
     $chroot = ((SCR->Read (".sysconfig.dhcpd.DHCPD_RUN_CHROOTED")||"") ne "no")
 	? 1
@@ -1736,13 +1737,13 @@ sub Write {
     if ($start_service)
     {
 	y2milestone ("Enabling the DHCP service");
-	my $ret = 0;
+	my $ret = 1;
 	if (! $write_only)
 	{
-	    $ret = SCR->Execute (".target.bash", "/etc/init.d/dhcpd restart");
+	    $ret = Service->Restart ($SERVICE);
 	}
-	Service->Enable ("dhcpd");
-	if (0 != $ret)
+	Service->Enable ($SERVICE);
+	if (!$ret)
 	{
 	    # error report
 	    Report->Error (__("Error occurred while restarting the DHCP daemon."));
@@ -1754,9 +1755,9 @@ sub Write {
 	y2milestone ("Disabling the DHCP service");
 	if (! $write_only)
 	{
-	    SCR->Execute (".target.bash", "/etc/init.d/dhcpd stop");
+	    Service->Stop ($SERVICE);
 	}
-	Service->Disable ("dhcpd");
+	Service->Disable ($SERVICE);
     }
 
     Progress->NextStage ();
