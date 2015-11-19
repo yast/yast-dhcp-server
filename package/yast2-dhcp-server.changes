@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Tue Nov 17 09:43:38 UTC 2015 - igonzalezsosa@suse.com
+
+- Fix validation of AutoYaST profiles (bsc#954412)
+
+-------------------------------------------------------------------
 Thu Dec  4 09:50:01 UTC 2014 - jreidinger@suse.com
 
 - remove X-KDE-Library from desktop file (bnc#899104)
