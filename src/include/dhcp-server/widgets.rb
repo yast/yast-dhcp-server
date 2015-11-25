@@ -5,9 +5,10 @@
 # Summary:	Data for configuration of dhcp-server,
 #              input and output functions.
 # Authors:	Jiri Srain <jsrain@suse.cz>
-#
-# $Id$
-#
+
+require "yast"
+require "ui/service_status"
+
 # Representation of the configuration of dhcp-server.
 # Input and output routines.
 module Yast
@@ -26,6 +27,10 @@ module Yast
       Yast.import "TablePopup"
       Yast.import "SuSEFirewall"
       Yast.import "Mode"
+
+      # Init ServiceStatus widget
+      @service = SystemdService.find(DhcpServer.ServiceName())
+      @status_widget = ::UI::ServiceStatus.new(@service, reload_label: :restart)
     end
 
     # Function for deleting entry from section
@@ -916,6 +921,29 @@ module Yast
       :main
     end
 
+    def handle_apply(_key, event)
+      event_id = event["ID"]
+      if event_id == "apply"
+        SaveAndRestart()
+      end
+      nil
+    end
+
+    def init_start_stop(_key)
+      # If UI::ServiceStatus is used, do not let DnsServer manage the service
+      # status, let the user decide
+      DhcpServer.SetWriteOnly(true)
+      nil
+    end
+
+    def handle_start_stop(_key, event)
+      event_id = event["ID"]
+      if @status_widget.handle_input(event_id) == :enabled_changed
+        DhcpServer.SetStartService(@status_widget.enabled?)
+      end
+      nil
+    end
+
     # Initialize widgets
     # Create description map and copy it into appropriate variable of the
     #  DhcpServer module
@@ -1063,6 +1091,19 @@ module Yast
           "handle" => fun_ref(method(:startHandle), "symbol (string, map)"),
           "store"  => fun_ref(method(:startStore), "void (string, map)"),
           "opt"    => [:notify]
+        },
+        "start_stop"           => {
+          "widget" => :custom,
+          "custom_widget" => @status_widget.widget,
+          "init"   => fun_ref(method(:init_start_stop), "void (string)"),
+          "handle" => fun_ref(method(:handle_start_stop), "symbol (string, map)"),
+          "help"   => @status_widget.help
+        },
+        "apply"           => {
+          "widget" => :custom,
+          "custom_widget" => PushButton(Id("apply"), _("Apply Changes")),
+          "handle" => fun_ref(method(:handle_apply), "symbol (string, map)"),
+          "help"   => ""
         },
         "chroot"               => {
           "widget" => :checkbox,

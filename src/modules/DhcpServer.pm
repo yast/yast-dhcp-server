@@ -185,6 +185,12 @@ sub IsDnsServerAvailable () {
     return $dns_server_available;
 }
 
+BEGIN {$TYPEINFO{ServiceName} = [ "function", "string" ];}
+sub ServiceName () {
+    # returns systemd name for the DHCP service
+    return $SERVICE;
+}
+
 sub InitTSIGKeys {
     my $self = shift;
 
@@ -1284,6 +1290,13 @@ sub SetWriteOnly {
     my $self = shift;
 
     $write_only = shift;
+}
+
+BEGIN{$TYPEINFO{GetWriteOnly} = ["function", "boolean"];}
+sub GetWriteOnly {
+    my $self = shift;
+
+    return Boolean ($write_only);
 }
 
 BEGIN{$TYPEINFO{GetAllowedInterfaces} = ["function", ["list", "string"] ];}

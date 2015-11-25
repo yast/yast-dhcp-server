@@ -80,14 +80,15 @@ module Yast
       @tabs = {
         "start_up"        => {
           "contents"        => VBox(
-            "auto_start_up",
-            #	    `VSpacing(),
-            "use_ldap",
-            VSpacing(),
             "start_stop",
             VSpacing(),
+            "use_ldap",
+            VSpacing(),
             HBox("other_options", HStretch()),
-            VStretch()
+            VStretch(),
+            Right(
+              "apply"
+            )
           ),
           # dialog caption
           "caption"         => _("DHCP Server: Start-Up"),
@@ -96,11 +97,11 @@ module Yast
           # tree item
           "tree_item_label" => _("Start-Up"),
           "widget_names"    => [
-            "auto_start_up",
-            "use_ldap",
             "start_stop",
+            "use_ldap",
             "expert_settings",
-            "other_options"
+            "other_options",
+            "apply"
           ]
         },
         "card_selection"  => {
@@ -211,44 +212,6 @@ module Yast
                   _("When Booting"),
                   # part of help text - radio button label, NO SHORTCUT!!!
                   _("Manually")
-                )
-              }
-            ),
-            "start_stop"      => CWMServiceStart.CreateStartStopWidget(
-              {
-                "service_id"                => "dhcpd",
-                # label - service status
-                "service_running_label"     => _(
-                  "DHCP server is running"
-                ),
-                # label - service status
-                "service_not_running_label" => _(
-                  "DHCP server is not running"
-                ),
-                # push button
-                "start_now_button"          => _(
-                  "&Start DHCP Server Now"
-                ),
-                # push button
-                "stop_now_button"           => _(
-                  "S&top DHCP Server Now"
-                ),
-                "save_now_action"           => fun_ref(
-                  method(:SaveAndRestart),
-                  "void ()"
-                ),
-                # push button
-                "save_now_button"           => _(
-                  "Save Settings and Restart DHCP Server &Now"
-                ),
-                "help"                      => Builtins.sformat(
-                  CWMServiceStart.StartStopHelpTemplate(true),
-                  # part of help text - push button label, NO SHORTCUT!!!
-                  _("Start DHCP Server Now"),
-                  # part of help text - push button label, NO SHORTCUT!!!
-                  _("Stop DHCP Server Now"),
-                  # part of help text - push button label, NO SHORTCUT!!!
-                  _("Save Settings and Restart DHCP Server Now")
                 )
               }
             ),
@@ -2187,15 +2150,6 @@ module Yast
 
     def SetStartService(start)
       DhcpServer.SetStartService(start)
-
-      nil
-    end
-
-    def SaveAndRestart
-      Wizard.CreateDialog
-      Wizard.RestoreHelp(Ops.get(@HELPS, "write", ""))
-      DhcpServer.Write
-      UI.CloseDialog
 
       nil
     end

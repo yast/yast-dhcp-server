@@ -46,6 +46,9 @@ module Yast
       Builtins.y2milestone("Running write dialog")
       Wizard.RestoreHelp(Ops.get(@HELPS, "write", ""))
       ret = DhcpServer.Write
+      if ret && restart?
+        @service.restart
+      end
       # yes-no popup
       if !ret &&
           Popup.YesNo(
@@ -56,6 +59,16 @@ module Yast
       ret ? :next : :abort
     end
 
+    # Write settings without quitting
+    def SaveAndRestart
+      Wizard.CreateDialog
+      Wizard.RestoreHelp(Ops.get(@HELPS, "write", ""))
+      DhcpServer.Write
+      @service.restart if restart?
+      UI.CloseDialog
+
+      nil
+    end
 
     # Run main dialog
     # @return [Symbol] for wizard sequencer
@@ -610,6 +623,15 @@ module Yast
     def ConfigTypeSwitch
       return :expert if Mode.config
       DhcpServer.IsConfigurationSimple ? :simple : :expert
+    end
+
+  private
+
+    # Checks if the service must be restarted after saving
+    # @return [Boolean]
+    def restart?
+      # If ServiceStatus is used, DhcpServer must be set to write-only
+      DhcpServer.GetWriteOnly() && @status_widget && @status_widget.reload?
     end
   end
 end
