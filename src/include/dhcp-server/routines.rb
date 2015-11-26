@@ -16,13 +16,6 @@ module Yast
       textdomain "dhcp-server"
     end
 
-    # Restart the DHCP daemon
-    def RestartDhcpDaemon
-      Service.RunInitScript("dhcpd", "restart")
-
-      nil
-    end
-
     # Merge section id and key together to one identifier
     # @param [String] type string section type
     # @param [String] id string section identifier

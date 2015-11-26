@@ -46,6 +46,10 @@ module Yast
       Builtins.y2milestone("Running write dialog")
       Wizard.RestoreHelp(Ops.get(@HELPS, "write", ""))
       ret = DhcpServer.Write
+      if ret && restart?
+        # Restart only if it's already running
+        @service.try_restart
+      end
       # yes-no popup
       if !ret &&
           Popup.YesNo(
@@ -56,29 +60,58 @@ module Yast
       ret ? :next : :abort
     end
 
+    # Write settings without quitting
+    def SaveAndRestart(event)
+      return nil unless CWM.validate_current_widgets(event)
+      CWM.save_current_widgets(event)
+
+      Wizard.CreateDialog
+      Wizard.RestoreHelp(Ops.get(@HELPS, "write", ""))
+      ret = DhcpServer.Write
+      if ret
+        # Restart only if it's already running
+        @service.try_restart if restart?
+      else
+        Report.Error(_("Saving the configuration failed"))
+      end
+      UI.CloseDialog
+
+      nil
+    end
 
     # Run main dialog
     # @return [Symbol] for wizard sequencer
     def OldMainDialog
       Builtins.y2milestone("Running main dialog")
       w = CWM.CreateWidgets(
-        ["start", "chroot", "ldap_support", "configtree"],
+        [
+          "service_status", "chroot", "ldap_support",
+          "configtree", "advanced", "apply"
+        ],
         @widgets
       )
-      contents = HBox(
-        HSpacing(2),
-        VBox(
-          VSpacing(1),
-          Left(Ops.get_term(w, [0, "widget"]) { VSpacing(0) }),
-          VSpacing(1),
-          Left(Ops.get_term(w, [1, "widget"]) { VSpacing(0) }),
-          VSpacing(1),
-          Left(Ops.get_term(w, [2, "widget"]) { VSpacing(0) }),
-          VSpacing(1),
-          Ops.get_term(w, [3, "widget"]) { VSpacing(0) },
-          VSpacing(1)
+      contents = VBox(
+        HBox(
+          HSpacing(2),
+          VBox(
+            VSpacing(1),
+            Left(Ops.get_term(w, [0, "widget"]) { VSpacing(0) }),
+            VSpacing(1),
+            Left(Ops.get_term(w, [1, "widget"]) { VSpacing(0) }),
+            VSpacing(1),
+            Left(Ops.get_term(w, [2, "widget"]) { VSpacing(0) }),
+            VSpacing(1),
+            Ops.get_term(w, [3, "widget"]) { VSpacing(0) }
+          ),
+          HSpacing(2)
         ),
-        HSpacing(2)
+        VSpacing(1),
+        Right(
+          HBox(
+            w[4]["widget"],
+            w[5]["widget"]
+          )
+        )
       )
       # dialog caption
       caption = _("DHCP Server Configuration")
@@ -610,6 +643,15 @@ module Yast
     def ConfigTypeSwitch
       return :expert if Mode.config
       DhcpServer.IsConfigurationSimple ? :simple : :expert
+    end
+
+  private
+
+    # Checks if the service must be restarted after saving
+    # @return [Boolean]
+    def restart?
+      # If ServiceStatus is used, DhcpServer must be set to write-only
+      DhcpServer.GetWriteOnly() && @status_widget && @status_widget.reload?
     end
   end
 end

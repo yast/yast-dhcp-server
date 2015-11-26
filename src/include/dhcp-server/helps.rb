@@ -35,12 +35,6 @@ module Yast
             "This option is only available if the firewall\n" +
             "is enabled.</p>"
         ),
-        # help text 1/5
-        "start"                 => _(
-          "<p><b><big>DHCP Server</big></b></p>\n" +
-            "<p>To run the DHCP server every time your computer is started, set\n" +
-            "<b>Start DHCP Server</b>.</p>"
-        ),
         # help text 2/5
         "chroot"                => _(
           "<p>\n" +
@@ -61,15 +55,15 @@ module Yast
             "To add a new declaration, select a declaration that should include\n" +
             "the new declaration and click <b>Add</b>.\n" +
             "To delete a declaration, select it and click <b>Delete</b>.</p>"
-        ) +
-          # help text 5/5
-          _(
-            "<p><b><big>Advanced Functions</big></b><br>\n" +
-              "Use <b>Advanced</b> to display the log of the DHCP server,\n" +
-              "change network interfaces to which the DHCP server listens,\n" +
-              "or manage TSIG keys that can be used for authentication of \n" +
-              "dynamic DNS updates.</p>"
-          ),
+        ),
+        # help text 5/5
+        "advanced"              => _(
+          "<p><b><big>Advanced Functions</big></b><br>\n" +
+            "Use <b>Advanced</b> to display the log of the DHCP server,\n" +
+            "change network interfaces to which the DHCP server listens,\n" +
+            "or manage TSIG keys that can be used for authentication of \n" +
+            "dynamic DNS updates.</p>"
+        ),
         # help text 1/3, alt. 1
         "subnet"                => _(
           "<p><b><big>Subnet Configuration</big></b><br>\nSet the <b>Network Address</b> and <b>Network Mask</b> of the subnet.</p>"
