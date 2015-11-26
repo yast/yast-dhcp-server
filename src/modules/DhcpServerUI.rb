@@ -152,7 +152,6 @@ module Yast
     publish :function => :getOptionsTableWidget, :type => "map <string, any> (list)"
     publish :function => :confirmAbort, :type => "boolean ()"
     publish :function => :confirmAbortIfChanged, :type => "boolean ()"
-    publish :function => :dhcpEnabledOrDisabled, :type => "void (string, map)"
     publish :function => :startInit, :type => "void (string)"
     publish :function => :startStore, :type => "void (string, map)"
     publish :function => :startHandle, :type => "symbol (string, map)"

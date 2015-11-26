@@ -80,7 +80,7 @@ module Yast
       @tabs = {
         "start_up"        => {
           "contents"        => VBox(
-            "start_stop",
+            "service_status",
             VSpacing(),
             "use_ldap",
             VSpacing(),
@@ -97,7 +97,7 @@ module Yast
           # tree item
           "tree_item_label" => _("Start-Up"),
           "widget_names"    => [
-            "start_stop",
+            "service_status",
             "use_ldap",
             "expert_settings",
             "other_options",

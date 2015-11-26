@@ -190,51 +190,6 @@ module Yast
       confirmAbort
     end
 
-    # Enable or disable a widget according the current status of the service
-    # @param [String] id string widget id
-    # @param [Hash] event map event that caused storing process
-    def dhcpEnabledOrDisabled(id, event)
-      event = deep_copy(event)
-      ev_id = Ops.get(event, "ID")
-      if ev_id == "boot" || ev_id == "never"
-        enabled = UI.QueryWidget(Id("start"), :CurrentButton) != "never"
-        UI.ChangeWidget(Id(id), :Enabled, enabled)
-      end
-
-      nil
-    end
-
-    # Initialize the widget
-    # @param [String] id any widget id
-    def startInit(id)
-      ss = DhcpServer.GetStartService
-      UI.ChangeWidget(Id("start"), :Value, ss)
-
-      nil
-    end
-
-    # Store settings of the widget
-    # @param [String] id string widget id
-    # @param [Hash] event map event that caused storing process
-    def startStore(id, event)
-      event = deep_copy(event)
-      ss = Convert.to_boolean(UI.QueryWidget(Id("start"), :Value))
-      DhcpServer.SetStartService(ss)
-
-      nil
-    end
-
-    # Handle function of the widget
-    # @param [String] id string widget id
-    # @param [Hash] event map event that caused storing process
-    # @return [Symbol] always nil
-    def startHandle(id, event)
-      event = deep_copy(event)
-      start = Convert.to_boolean(UI.QueryWidget(Id("start"), :Value))
-      DhcpServer.SetModified if start != DhcpServer.GetStartService
-      nil
-    end
-
     # chroot widget
 
     # Initialize the widget
@@ -242,7 +197,6 @@ module Yast
     def chrootInit(id)
       ss = DhcpServer.GetChrootJail
       UI.ChangeWidget(Id(id), :Value, ss)
-      chrootHandle(id, { "ID" => "start" })
 
       nil
     end
@@ -264,11 +218,6 @@ module Yast
     # @return [Symbol] always nil
     def chrootHandle(id, event)
       event = deep_copy(event)
-      if Ops.get(event, "ID") == "start"
-        en = Convert.to_boolean(UI.QueryWidget(Id("start"), :Value))
-        UI.ChangeWidget(Id(id), :Enabled, en)
-        return nil
-      end
       start = Convert.to_boolean(UI.QueryWidget(Id(id), :Value))
       DhcpServer.SetModified if start != DhcpServer.GetChrootJail
       nil
@@ -282,12 +231,7 @@ module Yast
       ul = DhcpServer.GetUseLdap
       ldap_available = DhcpServer.GetLdapAvailable
       UI.ChangeWidget(Id(id), :Value, ul)
-
-      if ldap_available
-        ldapHandle(id, { "ID" => "start" })
-      else
-        UI.ChangeWidget(Id(id), :Enabled, ldap_available)
-      end
+      UI.ChangeWidget(Id(id), :Enabled, ldap_available)
 
       nil
     end
@@ -311,11 +255,6 @@ module Yast
     # @return [Symbol] always nil
     def ldapHandle(id, event)
       event = deep_copy(event)
-      if Ops.get(event, "ID") == "start"
-        en = Convert.to_boolean(UI.QueryWidget(Id("start"), :Value))
-        UI.ChangeWidget(Id(id), :Enabled, en)
-        return nil
-      end
       ldap = Convert.to_boolean(UI.QueryWidget(Id(id), :Value))
       if ldap != DhcpServer.GetUseLdap
         SetUseLdap(ldap)
@@ -392,7 +331,7 @@ module Yast
               ),
               Builtins.mergestring(ifaces_not_in_fw, "\n")
             )
-          ) 
+          )
           #return false;
           # FIXME: dialog for adding interfaces into firewall zones
           # only one
@@ -405,7 +344,7 @@ module Yast
               ),
               Ops.get(ifaces_not_in_fw, 0, "")
             )
-          ) 
+          )
           #return false;
           # FIXME: dialog for adding interfaces into firewall zones
         end
@@ -414,16 +353,10 @@ module Yast
       true
     end
 
-
-    # Handle function of the widget
-    # @param [String] id string widget id
-    # @param [Hash] event map event that caused storing process
-    # @return [Symbol] always nil
-    def configTreeHandle(id, event)
-      event = deep_copy(event)
-      if Mode.config &&
-          (Ops.get(event, "ID") == :log || Ops.get(event, "ID") == :interfaces ||
-            Ops.get(event, "ID") == :tsig_keys)
+    # Handle function for the advanced options dropdown
+    def handle_advanced(_id, event)
+      event_id = event["ID"]
+      if Mode.config && [:log, :interfaces, :tsig_keys].include?(event_id)
         # popup message
         Popup.Message(
           _(
@@ -432,54 +365,39 @@ module Yast
         )
         return nil
       end
-      enabled = Convert.to_boolean(UI.QueryWidget(Id("start"), :Value))
-      if Ops.get(event, "ID") == "start"
-        UI.ChangeWidget(Id("configtree"), :Enabled, enabled)
-        UI.ChangeWidget(Id(:adv), :Enabled, enabled)
-        UI.ChangeWidget(Id(:edit), :Enabled, enabled)
-      end
-      if Ops.get(event, "ID") == :log
+      if event_id == :log
         LogView.Display(
           {
             "file"    => "/var/log/messages",
             "grep"    => "dhcpd",
-            "save"    => true,
-            "actions" => [
-              # menubutton entry, try to keep short
-              [
-                _("Restart DHCP Server"),
-                fun_ref(method(:RestartDhcpDaemon), "void ()")
-              ],
-              # menubutton entry, try to keep short
-              [
-                _("Save Settings and Restart DHCP Server"),
-                fun_ref(DhcpServer.method(:Write), "boolean ()")
-              ]
-            ]
+            "save"    => true
           }
         )
         return nil
       end
-      return :interfaces if Ops.get(event, "ID") == :interfaces
-      return :tsig_keys if Ops.get(event, "ID") == :tsig_keys
+      return :interfaces if event_id == :interfaces
+      return :tsig_keys if event_id == :tsig_keys
+
+      nil
+    end
+
+    # Handle function of the widget
+    # @param [String] id string widget id
+    # @param [Hash] event map event that caused storing process
+    # @return [Symbol] always nil
+    def configTreeHandle(id, event)
+      event = deep_copy(event)
       current_item = Convert.to_string(
         UI.QueryWidget(Id("configtree"), :CurrentItem)
       )
-      if current_item == " " || !enabled
-        UI.ChangeWidget(Id(:delete), :Enabled, false) 
-        #	UI::ChangeWidget (`id (`move), `Enabled, false);
-      else
-        UI.ChangeWidget(Id(:delete), :Enabled, true) 
-        #	UI::ChangeWidget (`id (`move), `Enabled, true);
-      end
+      UI.ChangeWidget(Id(:delete), :Enabled, current_item != " ")
       selected = key2typeid(current_item)
       if selected == nil
         Builtins.y2error("Unexistent entry selected")
         return nil
       end
       sel_type = Ops.get(selected, "type", "")
-      if sel_type == "pool" || sel_type == "class" || sel_type == "host" ||
-          !enabled
+      if ["pool", "class", "host"].include?(sel_type)
         UI.ChangeWidget(Id(:add), :Enabled, false)
       else
         UI.ChangeWidget(Id(:add), :Enabled, true)
@@ -527,7 +445,7 @@ module Yast
         )
         configTreeInit(id)
       elsif Ops.get(event, "ID") == :move
-        return nil 
+        return nil
         # TODO move button
       end
       # if (event["ID"]:nil == `add || event["ID"]:nil == `edit)
@@ -555,7 +473,6 @@ module Yast
         )
       )
       UI.ChangeWidget(Id("configtree"), :CurrentItem, " ")
-      configTreeHandle(id, { "ID" => "start" })
       nil
     end
 
@@ -921,26 +838,36 @@ module Yast
       :main
     end
 
+    # Handle function for the 'Apply' button
     def handle_apply(_key, event)
       event_id = event["ID"]
       if event_id == "apply"
-        SaveAndRestart()
+        SaveAndRestart(event)
       end
       nil
     end
 
-    def init_start_stop(_key)
+    def init_service_status(_key)
       # If UI::ServiceStatus is used, do not let DnsServer manage the service
       # status, let the user decide
       DhcpServer.SetWriteOnly(true)
       nil
     end
 
-    def handle_start_stop(_key, event)
+    # Handle function for the ServiceStatus widget
+    def handle_service_status(_key, event)
       event_id = event["ID"]
       if @status_widget.handle_input(event_id) == :enabled_changed
-        DhcpServer.SetStartService(@status_widget.enabled?)
+        DhcpServer.SetModified if @status_widget.enabled? != DhcpServer.GetStartService
       end
+      nil
+    end
+
+    # Store settings of the widget
+    # @param [String] id string widget id
+    # @param [Hash] event map event that caused storing process
+    def store_service_status(_key, _event)
+      DhcpServer.SetStartService(@status_widget.enabled?)
       nil
     end
 
@@ -1082,22 +1009,13 @@ module Yast
           #FIXME CWM should be able to handle virtual widgets
           "widget"        => :textentry
         },
-        "start"                => {
-          "widget" => :checkbox,
-          # check box
-          "label"  => _("&Start DHCP Server"),
-          "help"   => Ops.get(@HELPS, "start", ""),
-          "init"   => fun_ref(method(:startInit), "void (string)"),
-          "handle" => fun_ref(method(:startHandle), "symbol (string, map)"),
-          "store"  => fun_ref(method(:startStore), "void (string, map)"),
-          "opt"    => [:notify]
-        },
-        "start_stop"           => {
+        "service_status"         => {
           "widget" => :custom,
           "custom_widget" => @status_widget.widget,
-          "init"   => fun_ref(method(:init_start_stop), "void (string)"),
-          "handle" => fun_ref(method(:handle_start_stop), "symbol (string, map)"),
-          "help"   => @status_widget.help
+          "help"   => @status_widget.help,
+          "init"   => fun_ref(method(:init_service_status), "void (string)"),
+          "handle" => fun_ref(method(:handle_service_status), "symbol (string, map)"),
+          "store"  => fun_ref(method(:store_service_status), "void (string, map)")
         },
         "apply"           => {
           "widget" => :custom,
@@ -1127,7 +1045,7 @@ module Yast
           "widget"        => :custom,
           "custom_widget" => VWeight(
             1,
-            VBox(
+            HBox(
               VWeight(
                 1,
                 ReplacePoint(
@@ -1140,25 +1058,10 @@ module Yast
                   )
                 )
               ),
-              HBox(
+              VBox(
                 PushButton(Id(:add), Label.AddButton),
                 PushButton(Id(:edit), Label.EditButton),
                 PushButton(Id(:delete), Label.DeleteButton),
-                #			`PushButton (`id (`move), _("&Move")),
-                HStretch(),
-                # menu button
-                MenuButton(
-                  Id(:adv),
-                  _("Ad&vanced"),
-                  [
-                    # item of a menu button
-                    Item(Id(:log), _("Display &Log")),
-                    # item of a menu button
-                    Item(Id(:interfaces), _("&Interface Configuration")),
-                    # item of a menu button
-                    Item(Id(:tsig_keys), _("TSIG Key Management"))
-                  ]
-                )
               )
             )
           ),
@@ -1168,6 +1071,22 @@ module Yast
             method(:configTreeHandle),
             "symbol (string, map)"
           )
+        },
+        "advanced"             => {
+          "widget"        => :custom,
+          "custom_widget" => MenuButton(
+            Id(:adv),
+            _("Ad&vanced"),
+            [
+              # item of a menu button
+              Item(Id(:log), _("Display &Log")),
+              # item of a menu button
+              Item(Id(:interfaces), _("&Interface Configuration")),
+              # item of a menu button
+              Item(Id(:tsig_keys), _("TSIG Key Management"))
+            ]
+          ),
+          "handle"        => fun_ref(method(:handle_advanced), "symbol (string, map)")
         },
         "subnet"               => {
           "widget"        => :custom,
