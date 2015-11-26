@@ -375,10 +375,11 @@ module Yast
         )
         return nil
       end
-      return :interfaces if event_id == :interfaces
-      return :tsig_keys if event_id == :tsig_keys
-
-      nil
+      if [:interfaces, :tsig_keys].include?(event_id)
+        event_id
+      else
+        nil
+      end
     end
 
     # Handle function of the widget
@@ -1018,8 +1019,8 @@ module Yast
           "store"  => fun_ref(method(:store_service_status), "void (string, map)")
         },
         "apply"           => {
-          "widget" => :custom,
-          "custom_widget" => PushButton(Id("apply"), _("Apply Changes")),
+          "widget" => :push_button,
+          "label"  => _("Apply Changes"),
           "handle" => fun_ref(method(:handle_apply), "symbol (string, map)"),
           "help"   => ""
         },
