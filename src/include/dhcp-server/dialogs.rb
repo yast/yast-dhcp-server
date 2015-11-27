@@ -651,7 +651,7 @@ module Yast
     # @return [Boolean]
     def restart?
       # If ServiceStatus is used, DhcpServer must be set to write-only
-      DhcpServer.GetWriteOnly() && @status_widget && @status_widget.reload?
+      DhcpServer.GetWriteOnly() && @status_widget && @status_widget.reload_flag?
     end
   end
 end

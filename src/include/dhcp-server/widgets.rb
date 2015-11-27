@@ -30,7 +30,7 @@ module Yast
 
       # Init ServiceStatus widget
       @service = SystemdService.find(DhcpServer.ServiceName())
-      @status_widget = ::UI::ServiceStatus.new(@service, reload_label: :restart)
+      @status_widget = ::UI::ServiceStatus.new(@service, reload_flag_label: :restart)
     end
 
     # Function for deleting entry from section
@@ -858,8 +858,8 @@ module Yast
     # Handle function for the ServiceStatus widget
     def handle_service_status(_key, event)
       event_id = event["ID"]
-      if @status_widget.handle_input(event_id) == :enabled_changed
-        DhcpServer.SetModified if @status_widget.enabled? != DhcpServer.GetStartService
+      if @status_widget.handle_input(event_id) == :enabled_flag
+        DhcpServer.SetModified
       end
       nil
     end
@@ -868,7 +868,7 @@ module Yast
     # @param [String] id string widget id
     # @param [Hash] event map event that caused storing process
     def store_service_status(_key, _event)
-      DhcpServer.SetStartService(@status_widget.enabled?)
+      DhcpServer.SetStartService(@status_widget.enabled_flag?)
       nil
     end
 
