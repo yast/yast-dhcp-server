@@ -102,7 +102,6 @@ module Yast
       zone_counter = -1
       zone_found = false
 
-      filtered_zone = {}
       Builtins.foreach(all_zones) do |one_zone|
         zone_counter = Ops.add(zone_counter, 1)
         if Ops.get(one_zone, "zone") == zone_name
@@ -629,7 +628,6 @@ module Yast
         return nil
       end
 
-      ret = nil
       all_records = DnsServer.FetchZones
 
       zone_counter = -1

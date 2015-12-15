@@ -380,8 +380,6 @@ module Yast
     end
 
     def seconds2time(seconds)
-      unit = "seconds"
-      count = seconds
       if Ops.modulo(seconds, 60 * 60 * 24) == 0
         return {
           "unit"  => "days",
@@ -942,9 +940,6 @@ module Yast
       timeserver = Convert.to_string(UI.QueryWidget(Id("timeserver"), :Value))
       printserver = Convert.to_string(UI.QueryWidget(Id("printserver"), :Value))
       winsserver = Convert.to_string(UI.QueryWidget(Id("winsserver"), :Value))
-      defaultleasetime = Convert.to_string(
-        UI.QueryWidget(Id("defaultleasetime"), :Value)
-      )
 
       # FIXME:	it is not defined which of values must be filled (must be lease time defined?)
       #		shouldn't be lease time controlled for too small or too big value?
@@ -1491,12 +1486,6 @@ module Yast
       event = deep_copy(event)
       from_ip = Convert.to_string(UI.QueryWidget(Id("from_ip"), :Value))
       to_ip = Convert.to_string(UI.QueryWidget(Id("to_ip"), :Value))
-      defaultleasetime = Convert.to_string(
-        UI.QueryWidget(Id("defaultleasetime"), :Value)
-      )
-      maxleasetime = Convert.to_string(
-        UI.QueryWidget(Id("maxleasetime"), :Value)
-      )
 
       if from_ip == "" && to_ip == ""
         # disable dynamic IP assigning
