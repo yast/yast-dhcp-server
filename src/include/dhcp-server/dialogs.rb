@@ -299,7 +299,6 @@ module Yast
       Wizard.RestoreAbortButton
 
       return CWM.Run(w, @functions)
-      :back
     end
 
     # Run group dialog
@@ -368,7 +367,6 @@ module Yast
       Wizard.RestoreAbortButton
 
       return CWM.Run(w, @functions)
-      :back
     end
 
     # Run shared network dialog
@@ -381,9 +379,9 @@ module Yast
       while par_id != ""
         parents = Builtins.add(parents, par_type)
 
-        p = DhcpServer.GetEntryParent(par_type, par_id)
-        par_type = Ops.get(p, "type", "")
-        par_id = Ops.get(p, "id", "")
+        par = DhcpServer.GetEntryParent(par_type, par_id)
+        par_type = Ops.get(par, "type", "")
+        par_id = Ops.get(par, "id", "")
       end
       possible = ["subnet", "host", "shared-network", "group", "pool", "class"]
       if Builtins.contains(parents, "class") ||
