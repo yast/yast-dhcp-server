@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Dec 15 13:35:10 UTC 2015 - mvidner@suse.com
+
+- Fix "One or more selected network interfaces is not configured"
+  when ifconfig is not installed (boo#958525).
+- 3.1.8
+
+-------------------------------------------------------------------
 Fri Nov 27 09:19:18 UTC 2015 - ancor@suse.com
 
 - Adapted to latest changes in UI::ServiceStatus API (fate#318771)
