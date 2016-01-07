@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Jan  7 16:29:01 UTC 2016 - ancor@suse.com
+
+- Fixed crash when dhcp-server is not installed (bsc#959730)
+- 3.1.8
+
+-------------------------------------------------------------------
 Fri Nov 27 09:19:18 UTC 2015 - ancor@suse.com
 
 - Adapted to latest changes in UI::ServiceStatus API (fate#318771)
