@@ -27,10 +27,22 @@ module Yast
       Yast.import "TablePopup"
       Yast.import "SuSEFirewall"
       Yast.import "Mode"
+      Yast.import "DhcpServerUI"
+    end
 
-      # Init ServiceStatus widget
-      @service = SystemdService.find(DhcpServer.ServiceName())
-      @status_widget = ::UI::ServiceStatus.new(@service, reload_flag_label: :restart)
+    # Widget to handle the status of the service
+    #
+    # @return [::UI::ServiceStatus] nil if the service is not found (dhcp server
+    #                               not installed)
+    def status_widget
+      return @status_widget unless @status_widget.nil?
+
+      service = DhcpServerUI.service
+      if service
+        @status_widget = ::UI::ServiceStatus.new(service, reload_flag_label: :restart)
+      else
+        nil
+      end
     end
 
     # Function for deleting entry from section
@@ -858,7 +870,7 @@ module Yast
     # Handle function for the ServiceStatus widget
     def handle_service_status(_key, event)
       event_id = event["ID"]
-      if @status_widget.handle_input(event_id) == :enabled_flag
+      if status_widget.handle_input(event_id) == :enabled_flag
         DhcpServer.SetModified
       end
       nil
@@ -868,8 +880,15 @@ module Yast
     # @param [String] id string widget id
     # @param [Hash] event map event that caused storing process
     def store_service_status(_key, _event)
-      DhcpServer.SetStartService(@status_widget.enabled_flag?)
+      DhcpServer.SetStartService(status_widget.enabled_flag?)
       nil
+    end
+
+    # Checks if the service must be restarted after saving
+    # @return [Boolean]
+    def restart_after_writing?
+      # If ServiceStatus is used, DhcpServer must be set to write-only
+      DhcpServer.GetWriteOnly() && status_widget && status_widget.reload_flag?
     end
 
     # Initialize widgets
@@ -1012,8 +1031,8 @@ module Yast
         },
         "service_status"         => {
           "widget" => :custom,
-          "custom_widget" => @status_widget.widget,
-          "help"   => @status_widget.help,
+          "custom_widget" => status_widget.widget,
+          "help"   => status_widget.help,
           "init"   => fun_ref(method(:init_service_status), "void (string)"),
           "handle" => fun_ref(method(:handle_service_status), "symbol (string, map)"),
           "store"  => fun_ref(method(:store_service_status), "void (string, map)")
