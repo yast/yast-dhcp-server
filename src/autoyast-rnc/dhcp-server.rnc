@@ -15,8 +15,8 @@ dhcp-server = element dhcp-server {
 allowed_interfaces = 
   element allowed_interfaces {
     LIST,
-    allowed_interface+
-}  
+    allowed_interface*
+}
 
 allowed_interface = element allowed_interface { text }
 
