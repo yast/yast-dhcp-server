@@ -17,7 +17,7 @@
 
 
 Name:           yast2-dhcp-server
-Version:        3.1.5
+Version:        3.1.5.1
 Release:        0
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
