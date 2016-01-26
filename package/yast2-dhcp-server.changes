@@ -1,8 +1,20 @@
 -------------------------------------------------------------------
-Tue Dec 15 13:35:10 UTC 2015 - mvidner@suse.com
+Tue Jan 26 13:14:57 UTC 2016 - mvidner@suse.com
 
 - Fix "One or more selected network interfaces is not configured"
   when ifconfig is not installed (boo#958525).
+- 3.1.10
+
+-------------------------------------------------------------------
+Thu Jan 14 15:46:22 UTC 2016 - igonzalezsosa@suse.com
+
+- Fix validation of AutoYaST profiles (bsc#954412)
+- 3.1.9
+
+-------------------------------------------------------------------
+Thu Jan  7 16:29:01 UTC 2016 - ancor@suse.com
+
+- Fixed crash when dhcp-server is not installed (bsc#959730)
 - 3.1.8
 
 -------------------------------------------------------------------
@@ -22,6 +34,7 @@ Thu Nov 26 10:36:14 UTC 2015 - ancor@suse.com
 Thu Dec  4 09:50:01 UTC 2014 - jreidinger@suse.com
 
 - remove X-KDE-Library from desktop file (bnc#899104)
+- 3.1.5
 
 -------------------------------------------------------------------
 Fri Sep 19 08:28:57 UTC 2014 - ancor@suse.com

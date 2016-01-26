@@ -24,6 +24,7 @@ module Yast
       Yast.import "Report"
       Yast.import "Service"
       Yast.import "SuSEFirewall"
+      Yast.import "SystemdService"
 
       @current_entry_type = ""
       @current_entry_id = ""
@@ -79,6 +80,13 @@ module Yast
       )
 
       nil
+    end
+
+    # Object representing the DHCP service for its usage in the UI code
+    #
+    # @return [Yast::SystemdServiceClass::Service]
+    def service
+      @service ||= SystemdService.find(DhcpServer.ServiceName())
     end
 
     publish :variable => :current_entry_type, :type => "string"

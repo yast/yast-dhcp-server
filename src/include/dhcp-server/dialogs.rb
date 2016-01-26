@@ -17,6 +17,7 @@ module Yast
 
       Yast.import "Wizard"
       Yast.import "DhcpServer"
+      Yast.import "DhcpServerUI"
       Yast.import "CWM"
 
       Yast.import "Popup"
@@ -46,9 +47,9 @@ module Yast
       Builtins.y2milestone("Running write dialog")
       Wizard.RestoreHelp(Ops.get(@HELPS, "write", ""))
       ret = DhcpServer.Write
-      if ret && restart?
+      if ret && restart_after_writing?
         # Restart only if it's already running
-        @service.try_restart
+        DhcpServerUI.service.try_restart
       end
       # yes-no popup
       if !ret &&
@@ -70,7 +71,7 @@ module Yast
       ret = DhcpServer.Write
       if ret
         # Restart only if it's already running
-        @service.try_restart if restart?
+        DhcpServerUI.service.try_restart if restart_after_writing?
       else
         Report.Error(_("Saving the configuration failed"))
       end
@@ -641,15 +642,6 @@ module Yast
     def ConfigTypeSwitch
       return :expert if Mode.config
       DhcpServer.IsConfigurationSimple ? :simple : :expert
-    end
-
-  private
-
-    # Checks if the service must be restarted after saving
-    # @return [Boolean]
-    def restart?
-      # If ServiceStatus is used, DhcpServer must be set to write-only
-      DhcpServer.GetWriteOnly() && @status_widget && @status_widget.reload_flag?
     end
   end
 end
