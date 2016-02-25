@@ -63,8 +63,7 @@ module Yast
         "section_type_select" => [lambda { SelectEditationDialog() }, true],
         "store"               => [lambda { SectionStore() }, true],
         "tsig_keys"           => lambda { RunTsigKeysDialog(false) },
-        "tsig_keys_1"         => lambda { RunTsigKeysDialog(true) },
-        "commonsetup"         => lambda { CommonConfigDialog() }
+        "tsig_keys_1"         => lambda { RunTsigKeysDialog(true) }
       }
 
       sequence = {

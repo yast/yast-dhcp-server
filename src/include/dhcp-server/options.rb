@@ -159,7 +159,6 @@ module Yast
         "pid-file-name"                                 => "name",
         "ping-check"                                    => "onoff",
         "ping-timeout"                                  => "seconds",
-        "ping-timeout"                                  => "seconds",
         "server-identifier"                             => "hostname",
         "server-name"                                   => "name",
         "site-option-space"                             => "name",

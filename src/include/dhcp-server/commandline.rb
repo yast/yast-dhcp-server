@@ -133,12 +133,6 @@ module Yast
             ),
             "type" => "string"
           },
-          "list"               => {
-            # command line help text for an option
-            "help" => _(
-              "List all defined hosts with a fixed address"
-            )
-          },
           "select"             => {
             # command line help text for an option
             "help" => _(

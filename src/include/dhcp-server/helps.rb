@@ -223,12 +223,6 @@ module Yast
             "To enter the complete configuration of the DHCP server, click\n" +
             "<b>DHCP Server Expert Configuration</b>.</p>"
         ),
-        # help text 1/2
-        "interfaces"            => _(
-          "<p><b><big>Network Interfaces</big></b><br>\n" +
-            "Select the network interfaces to which the DHCP server should listen from\n" +
-            "<b>Available Interfaces</b>.</p>"
-        ),
         # host management help 1/3
         "host_management"       => _(
           "<p><b><big>Host Management</big></b><br>\nUse this dialog to edit hosts with static address binding.</p>"

@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Jan 26 13:14:57 UTC 2016 - mvidner@suse.com
+
+- Fix "One or more selected network interfaces is not configured"
+  when ifconfig is not installed (boo#958525).
+- 3.1.10
+
+-------------------------------------------------------------------
 Thu Jan 14 15:46:22 UTC 2016 - igonzalezsosa@suse.com
 
 - Fix validation of AutoYaST profiles (bsc#954412)

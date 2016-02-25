@@ -2267,27 +2267,29 @@ sub GetInterfaceInformation {
     #}
     #my $iface = $out{"stdout"};
 
+    # sample output:
+    # 9: virbr0	   inet 192.168.122.1/24 brd 192.168.122.255 scope global virbr0\	valid_lft forever preferred_lft forever
     my %out = %{SCR->Execute (".target.bash_output",
-	"LANG=en_EN /sbin/ifconfig $interface") || {}};
+	"LANG=C ip -4 -oneline addr show dev $interface") || {}};
     if ($out{"exit"} != 0)
     {
-	y2error ("ifconfig exited with code $out{\"exit\"}");
+	y2error ("'ip addr' exited with code $out{\"exit\"}");
 	return {};
     }
 
     my @lines = split /\n/, $out{"stdout"};
-    @lines = grep /inet addr:.*Bcast:.*Mask:.*/, @lines;
+    @lines = grep /inet .* brd .*/, @lines;
     my $line = $lines[0] || "";
-    if ($line =~ /inet addr:[ \t]*([0-9\.]+)[ \t]*Bcast:[ \t]*([0-9\.]+)[ \t]*Mask:[ \t]*([0-9\.]+)[ \t]*$/)
+    if ($line =~ /inet[ \t]*([0-9\.]+)\/([0-9\.]+)[ \t]*brd[ \t]*([0-9\.]+)/)
     {
 	$ip = $1;
-	$bcast = $2;
-	$netmask = $3;
+	$netmask = Netmask->FromBits($2);
+	$bcast = $3;
     }
-    else 
+    else
     {
 	chomp($interface);
-        y2warning ("ifconfig didn't return meaningful data about $interface, asking NetworkInterfaces");
+        y2warning ("'ip addr' didn't return meaningful data about $interface, asking NetworkInterfaces");
 	$ip = NetworkInterfaces->GetValue($interface, "IPADDR");
 	$bcast = NetworkInterfaces->GetValue($interface, "BROADCAST");
 	$netmask = NetworkInterfaces->GetValue($interface, "NETMASK");
