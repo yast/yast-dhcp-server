@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Jun  6 09:07:26 UTC 2016 - igonzalezsosa@suse.com
+
+- Stop generating autodocs (fate#320356)
+- 3.1.11
+
+-------------------------------------------------------------------
 Tue Jan 26 13:14:57 UTC 2016 - mvidner@suse.com
 
 - Fix "One or more selected network interfaces is not configured"
