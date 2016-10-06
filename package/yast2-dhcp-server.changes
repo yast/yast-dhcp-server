@@ -2,7 +2,7 @@
 Thu Oct  6 11:25:00 UTC 2016 - jreidinger@suse.com
 
 - prevent adding "pool" to global scope as it is allowed only in
-  network scope (bsc#937492)
+  network scope (bsc#737492)
 - 3.2.0
 
 -------------------------------------------------------------------
