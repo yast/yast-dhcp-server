@@ -388,8 +388,9 @@ module Yast
       if ["class", "host", "pool"].include?(parents)
         return :back
       end
-      filtered = []
+      filtered = ["pool"]
       if parents.include?("subnet")
+        filtered.delete("pool")
         filtered << "subnet"
         filtered << "shared-network"
         filtered << "shared-network"
