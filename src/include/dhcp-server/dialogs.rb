@@ -378,27 +378,26 @@ module Yast
       par_id = @parent_id
       par_type = @parent_type
       while par_id != ""
-        parents = Builtins.add(parents, par_type)
+        parents << par_type
 
         par = DhcpServer.GetEntryParent(par_type, par_id)
         par_type = Ops.get(par, "type", "")
         par_id = Ops.get(par, "id", "")
       end
       possible = ["subnet", "host", "shared-network", "group", "pool", "class"]
-      if Builtins.contains(parents, "class") ||
-          Builtins.contains(parents, "host") ||
-          Builtins.contains(parents, "pool")
+      if ["class", "host", "pool"].include?(parents)
         return :back
       end
-      f = []
-      if Builtins.contains(parents, "subnet")
-        f = Builtins.add(f, "subnet")
-        f = Builtins.add(f, "shared-network")
+      filtered = []
+      if parents.include?("subnet")
+        filtered << "subnet"
+        filtered << "shared-network"
+        filtered << "shared-network"
       end
-      if Builtins.contains(parents, "shared-network")
-        f = Builtins.add(f, "shared-network")
+      if parents.include?("shared-network")
+        filtered << "shared-network"
       end
-      possible = Builtins.filter(possible) { |s| !Builtins.contains(f, s) }
+      possible -= filtered
       return :back if possible == []
 
       labels = {
