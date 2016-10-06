@@ -389,16 +389,16 @@ module Yast
       if !(["class", "host", "pool"] & parents).empty?
         return :back
       end
-      filtered = ["pool"]
+      excluded = ["pool"]
       if parents.include?("subnet")
-        filtered.delete("pool")
-        filtered << "subnet"
-        filtered << "shared-network"
+        excluded.delete("pool")
+        excluded << "subnet"
+        excluded << "shared-network"
       end
       if parents.include?("shared-network")
-        filtered << "shared-network"
+        excluded << "shared-network"
       end
-      possible -= filtered
+      possible -= excluded
       return :back if possible == []
 
       labels = {
