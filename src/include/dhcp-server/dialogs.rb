@@ -385,14 +385,14 @@ module Yast
         par_id = Ops.get(par, "id", "")
       end
       possible = ["subnet", "host", "shared-network", "group", "pool", "class"]
-      if ["class", "host", "pool"].include?(parents)
+      # leaf nodes means, that we do not add anything below it
+      if !(["class", "host", "pool"] & parents).empty?
         return :back
       end
       filtered = ["pool"]
       if parents.include?("subnet")
         filtered.delete("pool")
         filtered << "subnet"
-        filtered << "shared-network"
         filtered << "shared-network"
       end
       if parents.include?("shared-network")
