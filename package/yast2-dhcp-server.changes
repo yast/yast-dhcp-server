@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Thu Oct 20 07:31:59 UTC 2016 - jreidinger@suse.com
+
+- allow empty string in primary name server field for dynamic DNS
+  option to allow what is suggested in documentation for local DNS
+  servers (bsc#736496)
+- 3.2.1
+
+-------------------------------------------------------------------
 Thu Oct  6 11:25:00 UTC 2016 - jreidinger@suse.com
 
 - prevent adding "pool" to global scope as it is allowed only in

@@ -702,27 +702,29 @@ module Yast
     # @param [String] id string widget id
     # @param [Hash] event map event that is handled
     # @return [Boolean] true if validation succeeded
-    def DNSZonesValidate(id, event)
-      event = deep_copy(event)
-      if !Convert.to_boolean(UI.QueryWidget(Id("ddns_enable"), :Value))
-        return true
-      end
-      ret = true
-      Builtins.foreach(["zone", "zone_ip", "reverse_zone", "reverse_ip"]) do |w|
-        value = Convert.to_string(UI.QueryWidget(Id(w), :Value))
+    def DNSZonesValidate(_id, _event)
+      return true if !UI.QueryWidget(Id("ddns_enable"), :Value)
+
+      ["zone", "zone_ip", "reverse_zone", "reverse_ip"].each do |w|
+        value = UI.QueryWidget(Id(w), :Value)
         if (w == "zone" || w == "reverse_zone") &&
             Builtins.regexpmatch(value, "^.*\\.$")
           value = Builtins.regexpsub(value, "^(.*)\\.$", "\\1")
         end
-        if !(Hostname.CheckFQ(value) ||
-            Builtins.contains(["zone_ip", "reverse_ip"], w) && IP.Check4(value))
+        ip_field = ["zone_ip", "reverse_ip"].include?(w)
+        # for primary dns ip can be used
+        valid_ip = ip_field && IP.Check4(value)
+        # for dns also empty value can be used
+        default_ip = ip_field && value.empty?
+
+        if !(Hostname.CheckFQ(value) || valid_ip || default_ip)
           UI.SetFocus(Id(w))
           Report.Error(Hostname.ValidFQ)
-          ret = false
-          raise Break
+          return false
         end
       end
-      ret
+
+      true
     end
 
 
