@@ -713,7 +713,10 @@ module Yast
         end
         # for primary dns ip can be used
         valid_ip = ["zone_ip", "reverse_ip"].include?(w) && IP.Check4(value)
-        if !(Hostname.CheckFQ(value) || valid_ip)
+        # for dns also empty value can be used
+        default_ip = ["zone_ip", "reverse_ip"].include?(w) && value.empty?
+
+        if !(Hostname.CheckFQ(value) || valid_ip || default_ip)
           UI.SetFocus(Id(w))
           Report.Error(Hostname.ValidFQ)
           return false
