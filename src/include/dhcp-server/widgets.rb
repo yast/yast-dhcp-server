@@ -711,10 +711,11 @@ module Yast
             Builtins.regexpmatch(value, "^.*\\.$")
           value = Builtins.regexpsub(value, "^(.*)\\.$", "\\1")
         end
+        ip_field = ["zone_ip", "reverse_ip"].include?(w)
         # for primary dns ip can be used
-        valid_ip = ["zone_ip", "reverse_ip"].include?(w) && IP.Check4(value)
+        valid_ip = ip_field && IP.Check4(value)
         # for dns also empty value can be used
-        default_ip = ["zone_ip", "reverse_ip"].include?(w) && value.empty?
+        default_ip = ip_field && value.empty?
 
         if !(Hostname.CheckFQ(value) || valid_ip || default_ip)
           UI.SetFocus(Id(w))
