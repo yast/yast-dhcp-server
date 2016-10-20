@@ -702,7 +702,7 @@ module Yast
     # @param [String] id string widget id
     # @param [Hash] event map event that is handled
     # @return [Boolean] true if validation succeeded
-    def DNSZonesValidate(id, _event)
+    def DNSZonesValidate(_id, _event)
       return true if !UI.QueryWidget(Id("ddns_enable"), :Value)
 
       ["zone", "zone_ip", "reverse_zone", "reverse_ip"].each do |w|
