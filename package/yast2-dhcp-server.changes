@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Tue Jan 24 10:52:56 CET 2017 - schubi@suse.de
+
+- Fixed a crash at start when the "dhcp-server" package was not
+  installed in the system, fixes also the AutoYaST cloning.
+  (bsc#1021635).
+- 3.1.12
+
+-------------------------------------------------------------------
 Mon Jun  6 09:07:26 UTC 2016 - igonzalezsosa@suse.com
 
 - Stop generating autodocs (fate#320356)

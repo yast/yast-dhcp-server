@@ -37,8 +37,13 @@ module Yast
       return :abort if !Confirm.MustBeRoot
 
       ret = DhcpServer.Read
-      return DhcpServer.WasConfigured ? :next : :wizard if ret
-      :abort
+      return :abort unless ret
+
+      # initialize the service widget, it needs the "dhcp-server" package
+      # which might be just installed by the DhcpServer.Read call
+      DhcpServerUI.InitServiceWidget
+
+      DhcpServer.WasConfigured ? :next : :wizard
     end
 
     # Write settings dialog

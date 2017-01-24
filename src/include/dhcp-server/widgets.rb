@@ -1029,14 +1029,6 @@ module Yast
           #FIXME CWM should be able to handle virtual widgets
           "widget"        => :textentry
         },
-        "service_status"         => {
-          "widget" => :custom,
-          "custom_widget" => status_widget.widget,
-          "help"   => status_widget.help,
-          "init"   => fun_ref(method(:init_service_status), "void (string)"),
-          "handle" => fun_ref(method(:handle_service_status), "symbol (string, map)"),
-          "store"  => fun_ref(method(:store_service_status), "void (string, map)")
-        },
         "apply"           => {
           "widget" => :push_button,
           "label"  => _("Apply Changes"),
@@ -1327,5 +1319,22 @@ module Yast
 
       nil
     end
+
+    # lazy initialization of the service status widget
+    # it needs the "dhcp-server" package already installed in the system
+    # otherwise it crashes
+    def InitServiceWidget
+      return if @widgets["service_status"]
+
+      @widgets["service_status"] = {
+        "widget" => :custom,
+        "custom_widget" => status_widget.widget,
+        "help"   => status_widget.help,
+        "init"   => fun_ref(method(:init_service_status), "void (string)"),
+        "handle" => fun_ref(method(:handle_service_status), "symbol (string, map)"),
+        "store"  => fun_ref(method(:store_service_status), "void (string, map)")
+      }
+    end
+
   end
 end
