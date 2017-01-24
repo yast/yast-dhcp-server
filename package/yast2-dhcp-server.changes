@@ -1,10 +1,8 @@
 -------------------------------------------------------------------
 Tue Jan 24 10:52:56 CET 2017 - schubi@suse.de
 
-- Fixed a crash at start when the "dhcp-server" package was not
-  installed in the system. The crash happens with the latest
-  yast2-core and yast2-ruby-bindings packages (it is related to the
-  bsc#932331 fix).
+- AutoYaST: Fixed a crash while cloning the system.
+  (bsc#1021635).
 - 3.1.12
 
 -------------------------------------------------------------------
