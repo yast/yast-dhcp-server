@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Tue Jan 24 10:52:56 CET 2017 - schubi@suse.de
+
+- Fixed a crash at start when the "dhcp-server" package was not
+  installed in the system. The crash happens with the latest
+  yast2-core and yast2-ruby-bindings packages (it is related to the
+  bsc#932331 fix).
+- 3.1.12
+
+-------------------------------------------------------------------
 Mon Jun  6 09:07:26 UTC 2016 - igonzalezsosa@suse.com
 
 - Stop generating autodocs (fate#320356)
