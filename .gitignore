@@ -22,13 +22,13 @@ Makefile.am.common
 doc/autodocs/*.html
 /testsuite/config/
 /testsuite/run/
-doc/autodocs/.yardoc/
-doc/autodocs/Yast/
-doc/autodocs/css/
-doc/autodocs/js/
+/doc
+!/doc/func_descr
+/.yardoc
 testsuite/*.exp
 testsuite/tmp.err.*
 testsuite/tmp.out.*
 testsuite/*.log
+testsuite/raw*
 testsuite/yast2-dhcp-server.sum
 testsuite/yast2-dhcp-server.test/
