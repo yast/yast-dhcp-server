@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Apr  6 14:29:44 UTC 2018 - mfilka@suse.com
+
+- bnc#1087957 - version bump
+- 4.0.0
+
+-------------------------------------------------------------------
 Wed Jan 18 11:52:24 UTC 2017 - lslezak@suse.cz
 
 - Fixed a crash at start when the "dhcp-server" package was not
