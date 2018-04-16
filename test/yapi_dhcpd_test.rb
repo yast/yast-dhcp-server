@@ -1,5 +1,9 @@
 #!/usr/bin/env rspec
 
+require_relative "test_helper"
+
+require "yast"
+
 module Yast
   import "YaPI::DHCPD"
   import "Service"
