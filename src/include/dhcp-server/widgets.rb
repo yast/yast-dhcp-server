@@ -7,7 +7,9 @@
 # Authors:	Jiri Srain <jsrain@suse.cz>
 
 require "yast"
-require "ui/service_status"
+require "yast2/system_service"
+require "cwm"
+require "cwm/service_widget"
 
 # Representation of the configuration of dhcp-server.
 # Input and output routines.
@@ -27,22 +29,13 @@ module Yast
       Yast.import "TablePopup"
       Yast.import "SuSEFirewall"
       Yast.import "Mode"
-      Yast.import "DhcpServerUI"
     end
 
-    # Widget to handle the status of the service
+    # Returns the service for DHCP
     #
-    # @return [::UI::ServiceStatus] nil if the service is not found (dhcp server
-    #                               not installed)
-    def status_widget
-      return @status_widget unless @status_widget.nil?
-
-      service = DhcpServerUI.service
-      if service
-        @status_widget = ::UI::ServiceStatus.new(service, reload_flag_label: :restart)
-      else
-        nil
-      end
+    # @return [Yast2::SystemService] status service
+    def dhcp_service
+      @service ||= Yast2::SystemService.find(DhcpServer.ServiceName)
     end
 
     # Function for deleting entry from section
@@ -855,47 +848,15 @@ module Yast
 
     # Handle function for the 'Apply' button
     def handle_apply(_key, event)
-      event_id = event["ID"]
-      if event_id == "apply"
-        SaveAndRestart(event)
-      end
-      nil
-    end
+      SaveAndRestart(event) if event["ID"] == "apply"
 
-    def init_service_status(_key)
-      # If UI::ServiceStatus is used, do not let DnsServer manage the service
-      # status, let the user decide
-      DhcpServer.SetWriteOnly(true)
       nil
-    end
-
-    # Handle function for the ServiceStatus widget
-    def handle_service_status(_key, event)
-      event_id = event["ID"]
-      if status_widget.handle_input(event_id) == :enabled_flag
-        DhcpServer.SetModified
-      end
-      nil
-    end
-
-    # Store settings of the widget
-    # @param [String] id string widget id
-    # @param [Hash] event map event that caused storing process
-    def store_service_status(_key, _event)
-      DhcpServer.SetStartService(status_widget.enabled_flag?)
-      nil
-    end
-
-    # Checks if the service must be restarted after saving
-    # @return [Boolean]
-    def restart_after_writing?
-      # If ServiceStatus is used, DhcpServer must be set to write-only
-      DhcpServer.GetWriteOnly() && status_widget && status_widget.reload_flag?
     end
 
     # Initialize widgets
+    #
     # Create description map and copy it into appropriate variable of the
-    #  DhcpServer module
+    # DhcpServer module
     def InitWidgets
       options = [
         "option subnet-mask",
@@ -1322,20 +1283,22 @@ module Yast
       nil
     end
 
+    def service_widget
+      @service_widget ||=
+        begin
+          widget = ::CWM::ServiceWidget.new(dhcp_service)
+          widget.widget_id = "service_status"
+          widget
+        end
+    end
+
     # lazy initialization of the service status widget
     # it needs the "dhcp-server" package already installed in the system
     # otherwise it crashes
     def InitServiceWidget
-      return if @widgets["service_status"]
+      return if @widgets[service_widget.widget_id]
 
-      @widgets["service_status"] = {
-        "widget" => :custom,
-        "custom_widget" => status_widget.widget,
-        "help"   => status_widget.help,
-        "init"   => fun_ref(method(:init_service_status), "void (string)"),
-        "handle" => fun_ref(method(:handle_service_status), "symbol (string, map)"),
-        "store"  => fun_ref(method(:store_service_status), "void (string, map)")
-      }
+      @widgets[service_widget.widget_id] = service_widget.cwm_definition
     end
   end
 end
