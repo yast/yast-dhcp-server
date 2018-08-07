@@ -10,6 +10,9 @@
 #
 # Representation of the configuration of dhcp-server.
 # Input and output routines.
+
+require "yast2/popup"
+
 module Yast
   module DhcpServerDialogsInclude
     include Yast::Logger
@@ -51,16 +54,14 @@ module Yast
     # Write settings dialog
     #
     # @return [Symbol] :next whether configuration is saved successfully
-    #                  :back if user decided to change settings
+    #                  :back if user decided go back to change settings
     #                  :abort otherwise
     def WriteDialog
-      log.info("Running write dialog")
-
       help_text = @HELPS.fetch("write") { "" }
       Wizard.RestoreHelp(help_text)
 
       return :next if write_settings
-      return :back if Popup.YesNo(_("Saving the configuration failed. Change the settings?"))
+      return :back if back_to_change_setting?
       :abort
     end
 
@@ -82,7 +83,7 @@ module Yast
 
     # Write DHCP server settings and save the service
     #
-    # NOTE: currently, the DhpcServer is a Perl module, reason why the write of
+    # @note currently, the DhpcServer is a Perl module, reason why the write of
     # settings is being performed in two separate steps.
     #
     # @return [Boolean] true if settings are saved successfully; false otherwise
@@ -90,9 +91,19 @@ module Yast
       DhcpServer.Write && dhcp_service.save
     end
 
+    # Shows a popup asking to user if wants to change settings
+    #
+    # @return [Boolean] true if user decides to go back to change settings; false otherwise
+    def back_to_change_setting?
+      change_settings_message = _("Saving the configuration failed. Change the settings?")
+      Yast2::Popup.show(change_settings_message, headline: :warning, buttons: :yes_no) == :yes
+    end
+
     # Validates and saves CWM widgets
     #
     # @param [Hash] event map that triggered saving
+    #
+    # @return [Boolean] true when widgets pass the validaton; false otherwise
     def validate_and_save_widgets(event)
       return false unless CWM.validate_current_widgets(event)
 

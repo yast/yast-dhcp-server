@@ -35,7 +35,14 @@ module Yast
     #
     # @return [Yast2::SystemService] status service
     def dhcp_service
-      @service ||= Yast2::SystemService.find(DhcpServer.ServiceName)
+      @dhcp_service ||= Yast2::SystemService.find(DhcpServer.ServiceName)
+    end
+
+    # Widget to define status and start mode of the service
+    #
+    # @return [::CWM::ServiceWidget]
+    def service_widget
+      @service_widget ||= ::CWM::ServiceWidget.new(dhcp_service)
     end
 
     # Function for deleting entry from section
@@ -1283,22 +1290,13 @@ module Yast
       nil
     end
 
-    def service_widget
-      @service_widget ||=
-        begin
-          widget = ::CWM::ServiceWidget.new(dhcp_service)
-          widget.widget_id = "service_status"
-          widget
-        end
-    end
-
     # lazy initialization of the service status widget
     # it needs the "dhcp-server" package already installed in the system
     # otherwise it crashes
     def InitServiceWidget
-      return if @widgets[service_widget.widget_id]
+      return if @widgets["service_widget"]
 
-      @widgets[service_widget.widget_id] = service_widget.cwm_definition
+      @widgets["service_widget"] = service_widget.cwm_definition
     end
   end
 end

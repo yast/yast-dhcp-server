@@ -10,8 +10,6 @@ module Yast
   end
 end
 
-
-
 describe "Yast::DhcpServerWidgetsInclude" do
   subject { Yast::Test.new }
 
