@@ -55,10 +55,10 @@ module Yast
     # Write settings dialog
     #
     # @return [Symbol] :next whether configuration is saved successfully
-    #                  :back if user decided go back to change settings
+    #                  :back if user decided to go back to change settings
     #                  :abort otherwise
     def WriteDialog
-      help_text = @HELPS.fetch("write") { "" }
+      help_text = @HELPS.fetch("write", "")
       Wizard.RestoreHelp(help_text)
 
       return :next if write_settings
@@ -70,7 +70,7 @@ module Yast
     def SaveAndRestart(event)
       return nil unless validate_and_save_widgets(event)
 
-      help_text = @HELPS.fetch("write") { "" }
+      help_text = @HELPS.fetch("write", "")
 
       Wizard.CreateDialog
       Wizard.RestoreHelp(help_text)

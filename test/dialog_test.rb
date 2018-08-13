@@ -27,6 +27,8 @@ require "cwm/service_widget"
 Yast.import "DhcpServer"
 
 describe "DhcpServerDialogsInclude" do
+    subject(:dialog) { TestDialog.new }
+
   class TestDialog
     include Yast::I18n
     include Yast::UIShortcuts
@@ -36,20 +38,20 @@ describe "DhcpServerDialogsInclude" do
       Yast.include self, "dhcp-server/widgets.rb"
       Yast.include self, "dhcp-server/dialogs.rb"
     end
+
+    def fun_ref(*args)
+    end
   end
 
   let(:widget) { instance_double(::CWM::ServiceWidget, cwm_definition: {}) }
   let(:service) { instance_double(Yast2::SystemService, save: true, currently_active?: true) }
 
   before do
-    allow_any_instance_of(TestDialog).to receive(:fun_ref)
     allow(::CWM::ServiceWidget).to receive(:new).and_return(widget)
     allow(Yast2::SystemService).to receive(:find).with("dhcpd").and_return(service)
   end
 
   describe "#WriteDialog" do
-    subject(:dialog) { TestDialog.new }
-
     let(:dhcp_configuration_written) { true }
 
     before do
@@ -100,7 +102,7 @@ describe "DhcpServerDialogsInclude" do
         dialog.WriteDialog
       end
 
-      it "aks for changing the current settings" do
+      it "asks for changing the current settings" do
         expect(Yast2::Popup).to receive(:show)
           .with(instance_of(String), hash_including(buttons: :yes_no))
 
