@@ -28,6 +28,7 @@ module Yast
       Yast.import "Popup"
       Yast.import "Label"
       Yast.import "Confirm"
+      Yast.import "Mode"
 
       @functions = { :abort => fun_ref(method(:confirmAbort), "boolean ()") }
     end
@@ -88,7 +89,7 @@ module Yast
     #
     # @return [Boolean] true if settings are saved successfully; false otherwise
     def write_settings
-      DhcpServer.Write && dhcp_service.save
+      DhcpServer.Write && dhcp_service.save(keep_state: Mode.auto)
     end
 
     # Shows a popup asking to user if wants to change settings
