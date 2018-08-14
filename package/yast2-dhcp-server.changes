@@ -1,4 +1,17 @@
 -------------------------------------------------------------------
+Tue Aug  13 12:00:22 UTC 2018 - dgonzalez@suse.com
+
+- Use CWM::ServiceWidget to manage the service status 
+  (part of fate#319428).
+- 4.1.0
+
+-------------------------------------------------------------------
+Mon Aug 13 10:32:56 UTC 2018 - igonzalezsosa@suse.com
+
+- Fix package building with yast2 4.0.84 (bsc#1104644).
+- 4.0.3
+
+-------------------------------------------------------------------
 Fri Aug  3 09:39:35 UTC 2018 - igonzalezsosa@suse.com
 
 - Fix package building with yast2 4.0.80 (bsc#1103691).

@@ -80,7 +80,7 @@ module Yast
       @tabs = {
         "start_up"        => {
           "contents"        => VBox(
-            "service_status",
+            "service_widget",
             VSpacing(),
             "use_ldap",
             VSpacing(),
@@ -97,7 +97,7 @@ module Yast
           # tree item
           "tree_item_label" => _("Start-Up"),
           "widget_names"    => [
-            "service_status",
+            "service_widget",
             "use_ldap",
             "expert_settings",
             "other_options",
@@ -192,29 +192,7 @@ module Yast
         Builtins.union(
           @widgets,
           {
-            "auto_start_up"   => CWMServiceStart.CreateAutoStartWidget(
-              {
-                "get_service_auto_start" => fun_ref(
-                  method(:GetStartService),
-                  "boolean ()"
-                ),
-                "set_service_auto_start" => fun_ref(
-                  method(:SetStartService),
-                  "void (boolean)"
-                ),
-                # radio button
-                "start_auto_button"      => _("When &Booting"),
-                # radio button
-                "start_manual_button"    => _("&Manually"),
-                "help"                   => Builtins.sformat(
-                  CWMServiceStart.AutoStartHelpTemplate,
-                  # part of help text - radio button label, NO SHORTCUT!!!
-                  _("When Booting"),
-                  # part of help text - radio button label, NO SHORTCUT!!!
-                  _("Manually")
-                )
-              }
-            ),
+            "auto_start_up"   => service_widget.cwm_definition,
             "use_ldap"        => CWMServiceStart.CreateLdapWidget(
               {
                 "get_use_ldap" => fun_ref(
@@ -2129,16 +2107,6 @@ module Yast
       params = Convert.to_string(UI.QueryWidget(Id("other_opts"), :Value))
 
       DhcpServer.SetOtherOptions(params)
-
-      nil
-    end
-
-    def GetStartService
-      DhcpServer.GetStartService
-    end
-
-    def SetStartService(start)
-      DhcpServer.SetStartService(start)
 
       nil
     end

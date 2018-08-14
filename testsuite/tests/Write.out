@@ -3,16 +3,6 @@ Write	.sysconfig.dhcpd.DHCPD_RUN_CHROOTED "no" true
 Write	.sysconfig.dhcpd.DHCPD_INTERFACE "" true
 Write	.sysconfig.dhcpd.DHCPD_OTHER_ARGS "" true
 Write	.sysconfig.dhcpd nil true
-Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password show dhcpd.service  --property=Id  --property=MainPID  --property=Description  --property=LoadState  --property=ActiveState  --property=SubState  --property=UnitFileState  --property=FragmentPath  --property=CanReload  --property=TriggeredBy " $["exit":0, "stderr":"", "stdout":""]
-Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password is-enabled dhcpd.service " $["exit":0, "stderr":"", "stdout":""]
-Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password stop dhcpd.service " $["exit":0, "stderr":"", "stdout":""]
-Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password show dhcpd.service  --property=Id  --property=MainPID  --property=Description  --property=LoadState  --property=ActiveState  --property=SubState  --property=UnitFileState  --property=FragmentPath  --property=CanReload  --property=TriggeredBy " $["exit":0, "stderr":"", "stdout":""]
-Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password is-enabled dhcpd.service " $["exit":0, "stderr":"", "stdout":""]
-Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password show dhcpd.service  --property=Id  --property=MainPID  --property=Description  --property=LoadState  --property=ActiveState  --property=SubState  --property=UnitFileState  --property=FragmentPath  --property=CanReload  --property=TriggeredBy " $["exit":0, "stderr":"", "stdout":""]
-Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password is-enabled dhcpd.service " $["exit":0, "stderr":"", "stdout":""]
-Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password disable dhcpd.service " $["exit":0, "stderr":"", "stdout":""]
-Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password show dhcpd.service  --property=Id  --property=MainPID  --property=Description  --property=LoadState  --property=ActiveState  --property=SubState  --property=UnitFileState  --property=FragmentPath  --property=CanReload  --property=TriggeredBy " $["exit":0, "stderr":"", "stdout":""]
-Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password is-enabled dhcpd.service " $["exit":0, "stderr":"", "stdout":""]
 Return	true
 Dump	===============================
 Return	nil
@@ -22,14 +12,4 @@ Write	.sysconfig.dhcpd.DHCPD_RUN_CHROOTED "yes" true
 Write	.sysconfig.dhcpd.DHCPD_INTERFACE "eth0 eth2" true
 Write	.sysconfig.dhcpd.DHCPD_OTHER_ARGS "-p 111" true
 Write	.sysconfig.dhcpd nil true
-Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password show dhcpd.service  --property=Id  --property=MainPID  --property=Description  --property=LoadState  --property=ActiveState  --property=SubState  --property=UnitFileState  --property=FragmentPath  --property=CanReload  --property=TriggeredBy " $["exit":0, "stderr":"", "stdout":""]
-Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password is-enabled dhcpd.service " $["exit":0, "stderr":"", "stdout":""]
-Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password stop dhcpd.service " $["exit":0, "stderr":"", "stdout":""]
-Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password show dhcpd.service  --property=Id  --property=MainPID  --property=Description  --property=LoadState  --property=ActiveState  --property=SubState  --property=UnitFileState  --property=FragmentPath  --property=CanReload  --property=TriggeredBy " $["exit":0, "stderr":"", "stdout":""]
-Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password is-enabled dhcpd.service " $["exit":0, "stderr":"", "stdout":""]
-Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password show dhcpd.service  --property=Id  --property=MainPID  --property=Description  --property=LoadState  --property=ActiveState  --property=SubState  --property=UnitFileState  --property=FragmentPath  --property=CanReload  --property=TriggeredBy " $["exit":0, "stderr":"", "stdout":""]
-Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password is-enabled dhcpd.service " $["exit":0, "stderr":"", "stdout":""]
-Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password disable dhcpd.service " $["exit":0, "stderr":"", "stdout":""]
-Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password show dhcpd.service  --property=Id  --property=MainPID  --property=Description  --property=LoadState  --property=ActiveState  --property=SubState  --property=UnitFileState  --property=FragmentPath  --property=CanReload  --property=TriggeredBy " $["exit":0, "stderr":"", "stdout":""]
-Execute	.target.bash_output " LANG=C TERM=dumb COLUMNS=1024 systemctl --no-legend --no-pager --no-ask-password is-enabled dhcpd.service " $["exit":0, "stderr":"", "stdout":""]
 Return	true

@@ -10,8 +10,13 @@
 #
 # Representation of the configuration of dhcp-server.
 # Input and output routines.
+
+require "yast2/popup"
+
 module Yast
   module DhcpServerDialogsInclude
+    include Yast::Logger
+
     def initialize_dhcp_server_dialogs(include_target)
       textdomain "dhcp-server"
 
@@ -23,6 +28,7 @@ module Yast
       Yast.import "Popup"
       Yast.import "Label"
       Yast.import "Confirm"
+      Yast.import "Mode"
 
       @functions = { :abort => fun_ref(method(:confirmAbort), "boolean ()") }
     end
@@ -47,42 +53,64 @@ module Yast
     end
 
     # Write settings dialog
-    # @return `abort if aborted and `next otherwise
+    #
+    # @return [Symbol] :next whether configuration is saved successfully
+    #                  :back if user decided to go back to change settings
+    #                  :abort otherwise
     def WriteDialog
-      Builtins.y2milestone("Running write dialog")
-      Wizard.RestoreHelp(Ops.get(@HELPS, "write", ""))
-      ret = DhcpServer.Write
-      if ret && restart_after_writing?
-        # Restart only if it's already running
-        DhcpServerUI.service.try_restart
-      end
-      # yes-no popup
-      if !ret &&
-          Popup.YesNo(
-            _("Saving the configuration failed. Change the settings?")
-          )
-        return :back
-      end
-      ret ? :next : :abort
+      help_text = @HELPS.fetch("write", "")
+      Wizard.RestoreHelp(help_text)
+
+      return :next if write_settings
+      return :back if back_to_change_setting?
+      :abort
     end
 
     # Write settings without quitting
     def SaveAndRestart(event)
-      return nil unless CWM.validate_current_widgets(event)
-      CWM.save_current_widgets(event)
+      return nil unless validate_and_save_widgets(event)
+
+      help_text = @HELPS.fetch("write", "")
 
       Wizard.CreateDialog
-      Wizard.RestoreHelp(Ops.get(@HELPS, "write", ""))
-      ret = DhcpServer.Write
-      if ret
-        # Restart only if it's already running
-        DhcpServerUI.service.try_restart if restart_after_writing?
-      else
-        Report.Error(_("Saving the configuration failed"))
-      end
-      UI.CloseDialog
+      Wizard.RestoreHelp(help_text)
+      Report.Error(_("Saving the configuration failed")) unless write_settings
+      Wizard.CloseDialog
+
+      service_widget.refresh
 
       nil
+    end
+
+    # Write DHCP server settings and save the service
+    #
+    # @note currently, the DhpcServer is a Perl module, reason why the write of
+    # settings is being performed in two separate steps.
+    #
+    # @return [Boolean] true if settings are saved successfully; false otherwise
+    def write_settings
+      DhcpServer.Write && dhcp_service.save(keep_state: Mode.auto)
+    end
+
+    # Shows a popup asking to user if wants to change settings
+    #
+    # @return [Boolean] true if user decides to go back to change settings; false otherwise
+    def back_to_change_setting?
+      change_settings_message = _("Saving the configuration failed. Change the settings?")
+      Yast2::Popup.show(change_settings_message, headline: :warning, buttons: :yes_no) == :yes
+    end
+
+    # Validates and saves CWM widgets
+    #
+    # @param [Hash] event map that triggered saving
+    #
+    # @return [Boolean] true when widgets pass the validaton; false otherwise
+    def validate_and_save_widgets(event)
+      return false unless CWM.validate_current_widgets(event)
+
+      CWM.save_current_widgets(event)
+
+      true
     end
 
     # Run main dialog

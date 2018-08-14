@@ -1745,33 +1745,6 @@ sub Write {
     SCR->Write (".sysconfig.dhcpd.DHCPD_INTERFACE", $ifaces_list);
     SCR->Write (".sysconfig.dhcpd.DHCPD_OTHER_ARGS", $other_options);
     SCR->Write (".sysconfig.dhcpd", undef);
- 	
-
-    if ($start_service)
-    {
-	y2milestone ("Enabling the DHCP service");
-	my $ret = 1;
-	if (! $write_only)
-	{
-	    $ret = Service->Restart ($SERVICE);
-	}
-	Service->Enable ($SERVICE);
-	if (!$ret)
-	{
-	    # error report
-	    Report->Error (__("Error occurred while restarting the DHCP daemon."));
-	    $ok = 0;
-	}
-    }
-    else
-    {
-	y2milestone ("Disabling the DHCP service");
-	if (! $write_only)
-	{
-	    Service->Stop ($SERVICE);
-	}
-	Service->Disable ($SERVICE);
-    }
 
     Progress->NextStage ();
 
