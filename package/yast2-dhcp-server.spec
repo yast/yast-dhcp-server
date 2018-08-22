@@ -17,7 +17,7 @@
 
 
 Name:           yast2-dhcp-server
-Version:        4.1.0
+Version:        4.1.1
 Release:        0
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
@@ -27,12 +27,12 @@ Group:          System/YaST
 License:        GPL-2.0-only
 BuildRequires:	perl-Digest-SHA1 perl-X500-DN perl-XML-Writer docbook-xsl-stylesheets doxygen libxslt perl-XML-Writer popt-devel sgml-skel update-desktop-files yast2-perl-bindings yast2-testsuite yast2-dns-server
 BuildRequires:  yast2-devtools >= 3.1.10
-# Yast2::ServiceWidget
-BuildRequires:  yast2 >= 4.1.0
+
+# Yast2::Systemd::Service
+BuildRequires:  yast2 >= 4.1.3
+Requires:       yast2 >= 4.1.3
 
 Requires:       perl-gettext yast2-perl-bindings bind-utils perl-X500-DN yast2-ldap perl-Digest-SHA1 perl-Parse-RecDescent
-# Yast2::ServiceWidget
-Requires:       yast2 >= 4.1.0
 # DnsServerAPI::IsServiceConfigurableExternally
 Requires:       yast2-dns-server >= 2.13.16
 

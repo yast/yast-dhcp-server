@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Aug 22 07:31:40 UTC 2018 - dgonzalez@suse.com
+
+- Update calls to YaST2 systemd classes (related to fate#319428)
+- 4.1.1
+
+-------------------------------------------------------------------
 Mon Aug 20 13:47:16 CEST 2018 - schubi@suse.de
 
 - Switched license in spec file from SPDX2 to SPDX3 format.

@@ -11,6 +11,7 @@
 # Representation of the configuration of dhcp-server.
 # Input and output routines.
 require "yast"
+require "yast2/system_service"
 
 module Yast
   class DhcpServerUIClass < Module
@@ -22,9 +23,7 @@ module Yast
       Yast.import "Mode"
       Yast.import "Popup"
       Yast.import "Report"
-      Yast.import "Service"
       Yast.import "SuSEFirewall"
-      Yast.import "SystemdService"
 
       @current_entry_type = ""
       @current_entry_id = ""
@@ -84,9 +83,9 @@ module Yast
 
     # Object representing the DHCP service for its usage in the UI code
     #
-    # @return [Yast::SystemdServiceClass::Service]
+    # @return [Yast2::Systemd::Service]
     def service
-      @service ||= SystemdService.find(DhcpServer.ServiceName())
+      @service ||= Yast2::SystemService.find(DhcpServer.ServiceName())
     end
 
     publish :variable => :current_entry_type, :type => "string"
