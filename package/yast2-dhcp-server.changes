@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Aug 23 09:38:55 UTC 2018 - dgonzalez@suse.com
+
+- Avoid module to crash if service is not installed
+  (related to fate#319428).
+- 4.1.1
+
+-------------------------------------------------------------------
 Mon Aug 20 13:47:16 CEST 2018 - schubi@suse.de
 
 - Switched license in spec file from SPDX2 to SPDX3 format.
