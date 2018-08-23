@@ -171,7 +171,7 @@ module Yast
         "inst_summary"    => {
           "contents"     => VBox(
             VSpacing(1),
-            "auto_start_up",
+            "service_widget",
             VSpacing(1),
             "config_summary",
             VSpacing(1),
@@ -181,7 +181,7 @@ module Yast
           # dialog caption
           "wizard"       => _("Start-Up"),
           "widget_names" => [
-            "auto_start_up",
+            "service_widget",
             "config_summary",
             "all_settings_button"
           ]
@@ -192,7 +192,6 @@ module Yast
         Builtins.union(
           @widgets,
           {
-            "auto_start_up"   => service_widget.cwm_definition,
             "use_ldap"        => CWMServiceStart.CreateLdapWidget(
               {
                 "get_use_ldap" => fun_ref(
