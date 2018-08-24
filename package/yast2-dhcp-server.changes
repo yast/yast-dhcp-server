@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Aug 24 14:21:19 UTC 2018 - dgonzalez@suse.com
+
+- Display an information message instead of the service widget
+  when service is not installed (related to fate#319428).
+- 4.1.2
+
+-------------------------------------------------------------------
 Thu Aug 23 09:38:55 UTC 2018 - dgonzalez@suse.com
 
 - Avoid module to crash if service is not installed
