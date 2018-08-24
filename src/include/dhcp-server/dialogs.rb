@@ -77,7 +77,7 @@ module Yast
       Report.Error(_("Saving the configuration failed")) unless write_settings
       Wizard.CloseDialog
 
-      service_widget.refresh
+      service_widget.refresh if service
 
       nil
     end
@@ -89,7 +89,10 @@ module Yast
     #
     # @return [Boolean] true if settings are saved successfully; false otherwise
     def write_settings
-      DhcpServer.Write && dhcp_service.save(keep_state: Mode.auto)
+      return false unless DhcpServer.Write
+      return true unless service
+
+      service.save(keep_state: Mode.auto)
     end
 
     # Shows a popup asking to user if wants to change settings

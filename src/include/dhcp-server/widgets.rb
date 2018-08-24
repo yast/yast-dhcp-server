@@ -34,15 +34,15 @@ module Yast
     # Returns the service for DHCP
     #
     # @return [Yast2::SystemService] status service
-    def dhcp_service
-      @dhcp_service ||= Yast2::SystemService.find(DhcpServer.ServiceName)
+    def service
+      @service ||= Yast2::SystemService.find(DhcpServer.ServiceName)
     end
 
     # Widget to define status and start mode of the service
     #
     # @return [::CWM::ServiceWidget]
     def service_widget
-      @service_widget ||= ::CWM::ServiceWidget.new(dhcp_service)
+      @service_widget ||= ::CWM::ServiceWidget.new(service)
     end
 
     # Function for deleting entry from section
@@ -1296,7 +1296,28 @@ module Yast
     def InitServiceWidget
       return if @widgets["service_widget"]
 
-      @widgets["service_widget"] = service_widget.cwm_definition
+      @widgets["service_widget"] = service_widget_content
+    end
+
+  private
+
+    # Returns the content to be displayed in the start up section
+    #
+    # Depending on whether the `dhcpd` is installed or not, it will return a
+    #
+    #   * ServiceWidget definition (when installed)
+    #   * Label with an information message (when not)
+    #
+    # @return [Hash]
+    def service_widget_content
+      if service
+        service_widget.cwm_definition
+      else
+        {
+          "widget"        => :custom,
+          "custom_widget" => Left(Label(_("Service dhcpd is not installed")))
+        }
+      end
     end
   end
 end
