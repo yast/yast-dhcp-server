@@ -49,15 +49,39 @@ describe "DhcpServerDialogsInclude" do
   before do
     allow(::CWM::ServiceWidget).to receive(:new).and_return(widget)
     allow(Yast2::SystemService).to receive(:find).with("dhcpd").and_return(service)
+    allow(Yast::DhcpServer).to receive(:Write).and_return(dhcp_configuration_written)
+  end
+
+  let(:dhcp_configuration_written) { true }
+
+  describe "#SaveAndRestart" do
+    before do
+      allow(dialog).to receive(:validate_and_save_widgets).and_return(true)
+      allow(dialog).to receive(:write_settings).and_return(true)
+    end
+
+    let(:event) { { "ID": ":next"} }
+
+    context "when service is installed" do
+      it "refreshes the service widget" do
+        expect(widget).to receive(:refresh)
+
+        dialog.SaveAndRestart(event)
+      end
+    end
+
+    context "when service is not installed" do
+      let(:service) { nil }
+
+      it "does not refresh the service widget" do
+        expect(widget).to_not receive(:refresh)
+
+        dialog.SaveAndRestart(event)
+      end
+    end
   end
 
   describe "#WriteDialog" do
-    let(:dhcp_configuration_written) { true }
-
-    before do
-      allow(Yast::DhcpServer).to receive(:Write).and_return(dhcp_configuration_written)
-    end
-
     it "writes needed configuration" do
       expect(Yast::DhcpServer).to receive(:Write)
 
@@ -76,7 +100,7 @@ describe "DhcpServerDialogsInclude" do
       end
 
       context "and is in `auto` Mode" do
-        before do 
+        before do
           allow(Yast::Mode).to receive(:auto).and_return(true)
         end
 
@@ -84,6 +108,14 @@ describe "DhcpServerDialogsInclude" do
           expect(service).to receive(:save).with(hash_including(keep_state: true))
 
           dialog.WriteDialog
+        end
+      end
+
+      context "and service is not installed" do
+        let(:service) { nil }
+
+        it "does not try to save the service" do
+          expect(service).to_not receive(:save)
         end
       end
     end
