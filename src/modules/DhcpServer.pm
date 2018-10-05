@@ -1518,7 +1518,7 @@ DHCP server will not be available."));
 	foreach my $iface (@allowed_interfaces) {
 	    my $iface_zone = FirewalldWrapper->zone_name_of_interface($iface);
 	    if (defined $iface_zone) {
-		$open_firewall = FirewalldWrapper->is_service_in_zone?("service:dhcp-server", $iface_zone);
+		$open_firewall = FirewalldWrapper->is_service_in_zone("service:dhcp-server", $iface_zone);
 	    } else {
 		$open_firewall = 0;
 	    }
