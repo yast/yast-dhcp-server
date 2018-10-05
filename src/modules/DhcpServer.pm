@@ -1514,7 +1514,7 @@ DHCP server will not be available."));
     @allowed_interfaces = split (/ /, $ifaces_list);
 
     # if firewall is enabled
-    if (FirewalldWrapper->enabled?()) {
+    if (FirewalldWrapper->is_enabled()) {
 	foreach my $iface (@allowed_interfaces) {
 	    my $iface_zone = FirewalldWrapper->zone_name_of_interface($iface);
 	    if (defined $iface_zone) {
