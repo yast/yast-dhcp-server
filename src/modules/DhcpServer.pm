@@ -1713,7 +1713,7 @@ sub Write {
     if (\@original_allowed_interfaces != \@allowed_interfaces) {
 	# disabling on all interfaces
 	my @all_ifaces;
-	foreach my $iface (@{FirewalldWrapper->all_known_interfaces()}) {
+	foreach my $iface (@{FirewalldWrapper->all_known_interfaces() // []}) {
 	    push @all_ifaces, $iface->{'id'};
 	}
 	FirewalldWrapper->set_services (["service:dhcp-server"], \@all_ifaces, 0);
