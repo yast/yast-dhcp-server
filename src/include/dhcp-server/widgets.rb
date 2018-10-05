@@ -1302,6 +1302,10 @@ module Yast
 
   private
 
+    def firewalld
+      Y2Firewall::Firewalld.instance
+    end
+  
     # Returns the content to be displayed in the start up section
     #
     # Depending on whether the `dhcpd` is installed or not, it will return a
