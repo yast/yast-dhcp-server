@@ -326,7 +326,7 @@ module Yast
         Builtins.foreach(@ifaces) do |ifcfg, interface|
           # interface is active
           if Ops.get_boolean(interface, "active", false) == true
-            if interface_zone(ifcfg) == nil
+            unless firewalld.zones.find { |z| z.interfaces.include?(ifcfg) }
               ifaces_not_in_fw = Builtins.add(ifaces_not_in_fw, ifcfg)
             end
           end
