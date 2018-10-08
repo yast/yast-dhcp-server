@@ -1518,7 +1518,7 @@ DHCP server will not be available."));
 	foreach my $iface (@allowed_interfaces) {
 	    my $iface_zone = FirewalldWrapper->zone_name_of_interface($iface);
 	    if (defined $iface_zone) {
-		$open_firewall = FirewalldWrapper->is_service_in_zone("service:dhcp-server", $iface_zone);
+		$open_firewall = FirewalldWrapper->is_service_in_zone("dhcp", $iface_zone);
 	    } else {
 		$open_firewall = 0;
 	    }
@@ -1716,10 +1716,10 @@ sub Write {
 	foreach my $iface (@{FirewalldWrapper->all_known_interfaces() // []}) {
 	    push @all_ifaces, $iface->{'id'};
 	}
-	FirewalldWrapper->set_services (["service:dhcp-server"], \@all_ifaces, 0);
+	FirewalldWrapper->set_services (["dhcp"], \@all_ifaces, 0);
 	if ($open_firewall) {
 	    # allowing on selected interfaces
-	    FirewalldWrapper->set_services (["service:dhcp-server"], \@allowed_interfaces, 1);
+	    FirewalldWrapper->set_services (["dhcp"], \@allowed_interfaces, 1);
 	}
     }
 
