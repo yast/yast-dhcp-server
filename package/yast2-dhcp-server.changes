@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Oct  9 14:53:26 CEST 2018 - schubi@suse.de
+
+- Adapting to new firewall API (bsc#1108942)
+- 4.0.4
+
+-------------------------------------------------------------------
 Mon Aug 13 10:32:56 UTC 2018 - igonzalezsosa@suse.com
 
 - Fix package building with yast2 4.0.84 (bsc#1104644).
