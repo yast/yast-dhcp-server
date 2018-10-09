@@ -1716,10 +1716,10 @@ sub Write {
 	foreach my $iface (@{FirewalldWrapper->all_known_interfaces() // []}) {
 	    push @all_ifaces, $iface->{'id'};
 	}
-	FirewalldWrapper->set_services (["dhcp"], \@all_ifaces, 0);
+	FirewalldWrapper->modify_interface_services (["dhcp"], \@all_ifaces, 0);
 	if ($open_firewall) {
 	    # allowing on selected interfaces
-	    FirewalldWrapper->set_services (["dhcp"], \@allowed_interfaces, 1);
+	    FirewalldWrapper->modify_interface_services (["dhcp"], \@allowed_interfaces, 1);
 	}
     }
 
