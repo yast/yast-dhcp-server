@@ -114,7 +114,7 @@ YaST::YCP::Import ("Service");
 YaST::YCP::Import ("Popup");
 YaST::YCP::Import ("Progress");
 YaST::YCP::Import ("Report");
-YaST::YCP::Import ("SuSEFirewall");
+YaST::YCP::Import ("FirewalldWrapper");
 YaST::YCP::Import ("DnsServerAPI");
 
 ##-------------------------------------------------------------------------
@@ -1496,7 +1496,7 @@ DHCP server will not be available."));
 
     if (! Mode->test ()) {
 	my $progress_orig = Progress->set (0);
-	SuSEFirewall->Read ();
+	FirewalldWrapper->read();
 	Progress->set ($progress_orig);
     }
 
@@ -1514,11 +1514,11 @@ DHCP server will not be available."));
     @allowed_interfaces = split (/ /, $ifaces_list);
 
     # if firewall is enabled
-    if (SuSEFirewall->GetEnableService()) {
+    if (FirewalldWrapper->is_enabled()) {
 	foreach my $iface (@allowed_interfaces) {
-	    my $iface_zone = SuSEFirewall->GetZoneOfInterface($iface);
+	    my $iface_zone = FirewalldWrapper->zone_name_of_interface($iface);
 	    if (defined $iface_zone) {
-		$open_firewall = SuSEFirewall->IsServiceSupportedInZone("service:dhcp-server", $iface_zone);
+		$open_firewall = FirewalldWrapper->is_service_in_zone("dhcp", $iface_zone);
 	    } else {
 		$open_firewall = 0;
 	    }
@@ -1656,7 +1656,7 @@ sub Write {
 
     my $ok = 1;
 
-    $modified = $modified || SuSEFirewall->GetModified ();
+    $modified = $modified || FirewalldWrapper->is_modified ();
 
     if (! $modified)
     {
@@ -1713,20 +1713,20 @@ sub Write {
     if (\@original_allowed_interfaces != \@allowed_interfaces) {
 	# disabling on all interfaces
 	my @all_ifaces;
-	foreach my $iface (@{SuSEFirewall->GetAllKnownInterfaces()}) {
+	foreach my $iface (@{FirewalldWrapper->all_known_interfaces() // []}) {
 	    push @all_ifaces, $iface->{'id'};
 	}
-	SuSEFirewall->SetServices (["service:dhcp-server"], \@all_ifaces, 0);
+	FirewalldWrapper->set_services (["dhcp"], \@all_ifaces, 0);
 	if ($open_firewall) {
 	    # allowing on selected interfaces
-	    SuSEFirewall->SetServices (["service:dhcp-server"], \@allowed_interfaces, 1);
+	    FirewalldWrapper->set_services (["dhcp"], \@allowed_interfaces, 1);
 	}
     }
 
     if (! Mode->test ())
     {
 	my $progress_orig = Progress->set (0);
-	SuSEFirewall->Write ();
+	FirewalldWrapper->write ();
 	Progress->set ($progress_orig);
     }
 
