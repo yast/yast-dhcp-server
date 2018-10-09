@@ -29,10 +29,12 @@ BuildRequires:	perl-Digest-SHA1 perl-X500-DN perl-XML-Writer docbook-xsl-stylesh
 BuildRequires:  yast2-devtools >= 3.1.10
 # UI::ServiceStatus
 BuildRequires:  yast2 >= 3.1.161
+BuildRequires:  rubygem(%rb_default_ruby_abi:rspec)
+BuildRequires:  rubygem(%rb_default_ruby_abi:yast-rake)
 
 Requires:       perl-gettext yast2-perl-bindings bind-utils perl-X500-DN yast2-ldap perl-Digest-SHA1 perl-Parse-RecDescent
-# UI::ServiceStatus
-Requires:       yast2 >= 3.1.161
+# firewalld_wrapper.rb
+Requires:       yast2 >= 4.0.100
 # DnsServerAPI::IsServiceConfigurableExternally
 Requires:       yast2-dns-server >= 2.13.16
 
@@ -48,6 +50,9 @@ configuration.
 
 %prep
 %setup -n %{name}-%{version}
+
+%check
+rake test:unit
 
 %build
 %yast_build
