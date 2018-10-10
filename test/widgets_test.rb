@@ -6,6 +6,7 @@ module Yast
   class Test < Yast::Client
     def initialize
       Yast.include self, "dhcp-server/widgets.rb"
+      @ifaces = {"eth0" => {"active" => true}}
     end
   end
 end
@@ -66,6 +67,48 @@ describe "Yast::DhcpServerWidgetsInclude" do
         .and_return("")
 
       expect(subject.DNSZonesValidate("ddns_enable", {})).to eq true
+    end
+  end
+
+  describe "#OpenFirewallValidate" do
+    context "firewall not enabled" do
+      it "returns true" do
+        expect(Y2Firewall::Firewalld.instance).to receive(:enabled?).and_return(false)
+        expect(Yast::Popup).not_to receive(:YesNo)
+        expect(Yast::Report).not_to receive(:Error)
+        expect(subject.OpenFirewallValidate("widget_id",0)).to eq true
+      end
+    end
+
+    context "firewall enabled" do
+      before do
+        allow(Y2Firewall::Firewalld.instance).to receive(:enabled?).and_return(true)
+      end
+
+      context "port is not opened" do
+        before do
+          allow(Yast::UI).to receive(:QueryWidget).with(Id("open_port"), :Value)
+            .and_return(false)
+        end
+
+        it "asks for continuing" do
+          expect(Yast::Popup).to receive(:YesNo).and_return(true)
+          expect(subject.OpenFirewallValidate("open_port",0)).to eq true
+        end
+      end
+
+      context "port is opened" do
+        before do
+          allow(Yast::UI).to receive(:QueryWidget).with(Id("open_port"), :Value)
+            .and_return(true)
+        end
+
+        it "reports interfaces which are not mentioned in any firewall zone" do
+          expect(Y2Firewall::Firewalld.instance).to receive(:zones).and_return([])
+          expect(Yast::Report).to receive(:Error)
+          expect(subject.OpenFirewallValidate("open_port",0)).to eq true
+        end
+      end
     end
   end
 end

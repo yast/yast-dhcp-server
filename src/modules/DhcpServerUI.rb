@@ -22,7 +22,8 @@ module Yast
       Yast.import "Mode"
       Yast.import "Popup"
       Yast.import "Report"
-      Yast.import "SuSEFirewall"
+      Yast.import "Service"
+      Yast.import "SystemdService"
 
       @current_entry_type = ""
       @current_entry_id = ""

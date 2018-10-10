@@ -17,7 +17,7 @@
 
 
 Name:           yast2-dhcp-server
-Version:        4.1.2
+Version:        4.1.3
 Release:        0
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
@@ -29,10 +29,13 @@ BuildRequires:	perl-Digest-SHA1 perl-X500-DN perl-XML-Writer docbook-xsl-stylesh
 BuildRequires:  yast2-devtools >= 3.1.10
 # Yast2::ServiceWidget
 BuildRequires:  yast2 >= 4.1.0
+BuildRequires:  rubygem(%rb_default_ruby_abi:rspec)
+BuildRequires:  rubygem(%rb_default_ruby_abi:yast-rake)
 
 Requires:       perl-gettext yast2-perl-bindings bind-utils perl-X500-DN yast2-ldap perl-Digest-SHA1 perl-Parse-RecDescent
-# Yast2::ServiceWidget
-Requires:       yast2 >= 4.1.0
+# firewalld_wrapper.rb
+Requires:       yast2 >= 4.1.22
+
 # DnsServerAPI::IsServiceConfigurableExternally
 Requires:       yast2-dns-server >= 2.13.16
 
@@ -48,6 +51,9 @@ configuration.
 
 %prep
 %setup -n %{name}-%{version}
+
+%check
+rake test:unit
 
 %build
 %yast_build
