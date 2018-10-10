@@ -23,7 +23,6 @@ module Yast
       Yast.import "Popup"
       Yast.import "Report"
       Yast.import "Service"
-      Yast.import "SuSEFirewall"
       Yast.import "SystemdService"
 
       @current_entry_type = ""
