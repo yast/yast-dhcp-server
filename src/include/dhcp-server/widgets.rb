@@ -8,13 +8,14 @@
 
 require "yast"
 require "ui/service_status"
-require "y2firewall/firewalld"
 require "y2firewall/helpers/interfaces"
 
 # Representation of the configuration of dhcp-server.
 # Input and output routines.
 module Yast
   module DhcpServerWidgetsInclude
+    include Y2Firewall::Helpers::Interfaces
+
     def initialize_dhcp_server_widgets(include_target)
       textdomain "dhcp-server"
 
@@ -326,7 +327,7 @@ module Yast
         Builtins.foreach(@ifaces) do |ifcfg, interface|
           # interface is active
           if Ops.get_boolean(interface, "active", false) == true
-            unless firewalld.zones.find { |z| z.interfaces.include?(ifcfg) }
+            unless interface_zone(ifcfg)
               ifaces_not_in_fw = Builtins.add(ifaces_not_in_fw, ifcfg)
             end
           end
