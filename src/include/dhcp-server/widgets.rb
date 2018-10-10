@@ -10,11 +10,14 @@ require "yast"
 require "yast2/system_service"
 require "cwm"
 require "cwm/service_widget"
+require "y2firewall/helpers/interfaces"
 
 # Representation of the configuration of dhcp-server.
 # Input and output routines.
 module Yast
   module DhcpServerWidgetsInclude
+    include Y2Firewall::Helpers::Interfaces
+
     def initialize_dhcp_server_widgets(include_target)
       textdomain "dhcp-server"
 
@@ -27,7 +30,6 @@ module Yast
       Yast.import "LogView"
       Yast.import "Popup"
       Yast.import "TablePopup"
-      Yast.import "SuSEFirewall"
       Yast.import "Mode"
     end
 
@@ -280,7 +282,7 @@ module Yast
     # Initialize the widget
     # @param [String] id any widget id
     def OpenFirewallInit(id)
-      enabled = SuSEFirewall.GetEnableService
+      enabled = firewalld.enabled?
       open = DhcpServer.GetOpenFirewall
       UI.ChangeWidget(Id(id), :Enabled, enabled)
       UI.ChangeWidget(Id(id), :Value, open)
@@ -303,7 +305,7 @@ module Yast
     def OpenFirewallValidate(id, event)
       event = deep_copy(event)
       open = Convert.to_boolean(UI.QueryWidget(Id(id), :Value))
-      enabled = SuSEFirewall.GetEnableService
+      enabled = firewalld.enabled?
 
       if enabled && !open
         # yes-no popup
@@ -325,7 +327,7 @@ module Yast
         Builtins.foreach(@ifaces) do |ifcfg, interface|
           # interface is active
           if Ops.get_boolean(interface, "active", false) == true
-            if SuSEFirewall.GetZoneOfInterface(ifcfg) == nil
+            unless interface_zone(ifcfg)
               ifaces_not_in_fw = Builtins.add(ifaces_not_in_fw, ifcfg)
             end
           end
