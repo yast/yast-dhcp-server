@@ -1321,11 +1321,4 @@ module Yast
         }
       end
     end
-
-  private
-
-    def firewalld
-      Y2Firewall::Firewalld.instance
-    end
-  end
 end
