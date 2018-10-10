@@ -100,7 +100,7 @@ describe "Yast::DhcpServerWidgetsInclude" do
       context "port is opened" do
         before do
           allow(Yast::UI).to receive(:QueryWidget).with(Id("open_port"), :Value)
-                               .and_return(true)
+            .and_return(true)
         end
 
         it "reports interfaces which are not mentioned in any firewall zone" do
