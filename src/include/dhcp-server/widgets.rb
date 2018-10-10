@@ -10,7 +10,6 @@ require "yast"
 require "yast2/system_service"
 require "cwm"
 require "cwm/service_widget"
-require "ui/service_status"
 require "y2firewall/helpers/interfaces"
 
 # Representation of the configuration of dhcp-server.
