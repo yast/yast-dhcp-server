@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Tue Oct 16 16:13:23 CEST 2018 - schubi@suse.de
+
+- Added license file to spec.
+
+-------------------------------------------------------------------
 Tue Oct  9 14:53:26 CEST 2018 - schubi@suse.de
 
 - Adapting to new firewall API (bsc#1108942)
