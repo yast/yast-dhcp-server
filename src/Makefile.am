@@ -42,6 +42,13 @@ schemafiles_DATA = \
 desktop_DATA = \
   desktop/dhcp-server.desktop
 
-EXTRA_DIST = $(module_DATA) $(module1_DATA) $(client_DATA) $(ynclude_DATA) $(scrconf_DATA) $(agent_SCRIPTS) $(schemafiles_DATA) $(desktop_DATA)
+symbolicdir = @icondir@/hicolor/symbolic/apps
+symbolic_DATA = \
+  icons/hicolor/symbolic/apps/yast-dhcp-server-symbolic.svg
+scalabledir = @icondir@/hicolor/scalable/apps
+scalable_DATA = \
+  icons/hicolor/scalable/apps/yast-dhcp-server.svg
+
+EXTRA_DIST = $(module_DATA) $(module1_DATA) $(client_DATA) $(ynclude_DATA) $(scrconf_DATA) $(agent_SCRIPTS) $(schemafiles_DATA) $(desktop_DATA) $(symbolic_DATA) $(scalable_DATA)
 
 include $(top_srcdir)/Makefile.am.common
