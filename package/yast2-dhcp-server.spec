@@ -75,6 +75,6 @@ rake test:unit
 %{yast_agentdir}/ag_dhcpd_conf
 %doc %{yast_docdir}
 %license COPYING
-%{_datadir}/icons/*
+%{yast_icondir}
 %{yast_schemadir}/autoyast/rnc/dhcp-server.rnc
 
