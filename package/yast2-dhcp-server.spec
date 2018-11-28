@@ -17,7 +17,7 @@
 
 
 Name:           yast2-dhcp-server
-Version:        4.1.3
+Version:        4.1.4
 Release:        0
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
@@ -75,5 +75,6 @@ rake test:unit
 %{yast_agentdir}/ag_dhcpd_conf
 %doc %{yast_docdir}
 %license COPYING
+%{yast_icondir}
 %{yast_schemadir}/autoyast/rnc/dhcp-server.rnc
 
