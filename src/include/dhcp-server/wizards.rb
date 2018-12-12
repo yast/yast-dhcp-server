@@ -10,6 +10,9 @@
 #
 # Representation of the configuration of dhcp-server.
 # Input and output routines.
+
+require "shellwords"
+
 module Yast
   module DhcpServerWizardsInclude
     def initialize_dhcp_server_wizards(include_target)
@@ -177,7 +180,7 @@ module Yast
       if ret == :next
         SCR.Execute(
           path(".target.bash"),
-          Ops.add(Ops.add("touch ", Directory.vardir), "/dhcp_server_done_once")
+          "/usr/bin/touch #{File.join(Directory.vardir, "dhcp_server_done_once").shellescape}"
         )
       end
 
