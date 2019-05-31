@@ -12,69 +12,82 @@
 # license that conforms to the Open Source Definition (Version 1.9)
 # published by the Open Source Initiative.
 
-# Please submit bugfixes or comments via http://bugs.opensuse.org/
+# Please submit bugfixes or comments via https://bugs.opensuse.org/
 #
 
 
 Name:           yast2-dhcp-server
 Version:        4.1.5
 Release:        0
-
-BuildRoot:      %{_tmppath}/%{name}-%{version}-build
-Source0:        %{name}-%{version}.tar.bz2
-
+Summary:        YaST2 - DHCP Server Configuration
 Group:          System/YaST
 License:        GPL-2.0-only
-BuildRequires:	perl-Digest-SHA1 perl-X500-DN perl-XML-Writer docbook-xsl-stylesheets doxygen libxslt perl-XML-Writer popt-devel sgml-skel update-desktop-files yast2-perl-bindings yast2-testsuite yast2-dns-server
+Url:            https://github.com/yast-dhcp-server
+
+Source0:        %{name}-%{version}.tar.bz2
+
+BuildRequires:  perl-Digest-SHA1
+BuildRequires:  perl-X500-DN
+BuildRequires:  perl-XML-Writer
+BuildRequires:  docbook-xsl-stylesheets
+BuildRequires:  doxygen
+BuildRequires:  libxslt
+BuildRequires:  perl-XML-Writer
+BuildRequires:  popt-devel
+BuildRequires:  sgml-skel
+BuildRequires:  update-desktop-files
+BuildRequires:  yast2-perl-bindings
+BuildRequires:  yast2-testsuite
+BuildRequires:  yast2-dns-server
 BuildRequires:  yast2-devtools >= 3.1.10
 # Yast2::ServiceWidget
 BuildRequires:  yast2 >= 4.1.0
 BuildRequires:  rubygem(%rb_default_ruby_abi:rspec)
 BuildRequires:  rubygem(%rb_default_ruby_abi:yast-rake)
 
-Requires:       perl-gettext yast2-perl-bindings bind-utils perl-X500-DN yast2-ldap perl-Digest-SHA1 perl-Parse-RecDescent
+Requires:       perl-gettext
+Requires:       yast2-perl-bindings
+Requires:       bind-utils
+Requires:       perl-X500-DN
+Requires:       yast2-ldap
+Requires:       perl-Digest-SHA1
+Requires:       perl-Parse-RecDescent
 # firewalld_wrapper.rb
 Requires:       yast2 >= 4.1.22
-
 # DnsServerAPI::IsServiceConfigurableExternally
 Requires:       yast2-dns-server >= 2.13.16
-
-BuildArchitectures:	noarch
-
 Requires:       yast2-ruby-bindings >= 1.0.0
 
-Summary:	YaST2 - DHCP Server Configuration
+BuildArch:      noarch
 
 %description
 This package contains the YaST2 component for DHCP server
 configuration.
 
 %prep
-%setup -n %{name}-%{version}
+%setup -q
 
 %check
-rake test:unit
+%yast_check
 
 %build
 %yast_build
 
 %install
 %yast_install
-
+%yast_metainfo
 
 %files
-%defattr(-,root,root)
-%dir %{yast_yncludedir}/dhcp-server
-%{yast_yncludedir}/dhcp-server/*
-%{yast_clientdir}/dhcp-server.rb
-%{yast_clientdir}/dhcp-server_*.rb
-%{yast_moduledir}/*
-%{yast_desktopdir}/dhcp-server.desktop
-%{yast_scrconfdir}/cfg_dhcpd.scr
-%{yast_scrconfdir}/etc_dhcpd_conf.scr
-%{yast_agentdir}/ag_dhcpd_conf
+%{yast_yncludedir}
+%{yast_clientdir}
+%{yast_moduledir}
+%{yast_desktopdir}
+%{yast_metainfodir}
+%{yast_scrconfdir}
+%{yast_agentdir}
 %doc %{yast_docdir}
 %license COPYING
 %{yast_icondir}
-%{yast_schemadir}/autoyast/rnc/dhcp-server.rnc
+%{yast_schemadir}
 
+%changelog
