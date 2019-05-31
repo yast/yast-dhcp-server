@@ -21,6 +21,7 @@ X-SuSE-YaST-AutoInstSchema=dhcp-server.rnc
 Icon=yast-dhcp-server
 Exec=xdg-su -c "/sbin/yast2 dhcp-server"
 
-Name=DHCP Server
-GenericName=Configure a DHCP server
+Name=YaST DHCP Server
+GenericName=DHCP Server
+Comment=Configure a DHCP server
 StartupNotify=true
