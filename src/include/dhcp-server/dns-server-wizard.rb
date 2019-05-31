@@ -1384,7 +1384,7 @@ module Yast
       }
 
       Wizard.CreateDialog
-      Wizard.SetDesktopTitleAndIcon("dhcp-server")
+      Wizard.SetDesktopTitleAndIcon("org.openSUSE.YaST.DHCPServer")
 
       dns_server_settings = DnsServer.Export
       ret = Sequencer.Run(aliases, sequence)

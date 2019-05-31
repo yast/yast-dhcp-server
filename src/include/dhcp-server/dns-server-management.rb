@@ -1091,7 +1091,7 @@ module Yast
         Label.CancelButton,
         Label.OKButton
       )
-      Wizard.SetDesktopTitleAndIcon("dhcp-server")
+      Wizard.SetDesktopTitleAndIcon("org.openSUSE.YaST.DHCPServer")
 
       InitDNSServerConfiguration(@current_settings)
 
