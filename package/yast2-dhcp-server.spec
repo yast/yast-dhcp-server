@@ -17,7 +17,7 @@
 
 
 Name:           yast2-dhcp-server
-Version:        4.1.5
+Version:        4.2.0
 Release:        0
 Summary:        YaST2 - DHCP Server Configuration
 Group:          System/YaST
