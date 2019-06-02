@@ -140,7 +140,7 @@ module Yast
     # @return sequence result
     def DhcpAutoSequence
       Wizard.CreateDialog
-      Wizard.SetDesktopTitleAndIcon("org.openSUSE.YaST.DHCPServer")
+      Wizard.SetDesktopTitleAndIcon("org.opensuse.yast.DHCPServer")
       Wizard.SetContentsButtons(
         "",
         VBox(),
@@ -172,7 +172,7 @@ module Yast
       }
 
       Wizard.CreateDialog
-      Wizard.SetDesktopTitleAndIcon("org.openSUSE.YaST.DHCPServer")
+      Wizard.SetDesktopTitleAndIcon("org.opensuse.yast.DHCPServer")
       ret = Sequencer.Run(aliases, sequence)
 
       UI.CloseDialog

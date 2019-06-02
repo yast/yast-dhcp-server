@@ -40,7 +40,7 @@ schemafiles_DATA = \
   autoyast-rnc/dhcp-server.rnc
 
 desktop_DATA = \
-  desktop/org.openSUSE.YaST.DHCPServer.desktop
+  desktop/org.opensuse.yast.DHCPServer.desktop
 
 symbolicdir = @icondir@/hicolor/symbolic/apps
 symbolic_DATA = \
