@@ -1611,7 +1611,7 @@ configured yet. Create a new configuration?");
 
     Progress->NextStage ();
 
-    $dns_server_available = DnsServerAPI->IsServiceConfigurableExternally();
+    $dns_server_available = (!Mode->test () && DnsServerAPI->IsServiceConfigurableExternally());
     if ($dns_server_available) {
 	DnsServerAPI->Read();
     }
@@ -1656,7 +1656,7 @@ sub Write {
 
     my $ok = 1;
 
-    $modified = $modified || FirewalldWrapper->is_modified ();
+    $modified = $modified || (!Mode->test () && FirewalldWrapper->is_modified ());
 
     if (! $modified)
     {
