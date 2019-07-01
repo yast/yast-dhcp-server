@@ -17,7 +17,7 @@
 
 
 Name:           yast2-dhcp-server
-Version:        4.2.0
+Version:        4.2.1
 Release:        0
 Summary:        YaST2 - DHCP Server Configuration
 Group:          System/YaST
@@ -40,8 +40,8 @@ BuildRequires:  yast2-perl-bindings
 BuildRequires:  yast2-testsuite
 BuildRequires:  yast2-dns-server
 BuildRequires:  yast2-devtools >= 4.2.2
-# Yast2::ServiceWidget
-BuildRequires:  yast2 >= 4.1.0
+# Fix old testsuite bind package absence mocks
+BuildRequires:  yast2 >= 4.2.11
 BuildRequires:  rubygem(%rb_default_ruby_abi:rspec)
 BuildRequires:  rubygem(%rb_default_ruby_abi:yast-rake)
 
