@@ -10,7 +10,9 @@ config.status
 config.sub
 configure
 configure.ac
+coverage/
 depcomp
+doc/
 install-sh
 missing
 mkinstalldirs
@@ -27,8 +29,10 @@ doc/autodocs/Yast/
 doc/autodocs/css/
 doc/autodocs/js/
 testsuite/*.exp
+testsuite/*.log
+testsuite/raw.tmp.*
 testsuite/tmp.err.*
 testsuite/tmp.out.*
-testsuite/*.log
 testsuite/yast2-dhcp-server.sum
 testsuite/yast2-dhcp-server.test/
+.yardoc/
