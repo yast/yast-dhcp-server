@@ -439,8 +439,8 @@ module Yast
         return false
       end
       if Builtins.haskey(options, "set")
-        key = Ops.get_string(options2, "key", "")
-        value = Ops.get_string(options2, "value", "")
+        key = Ops.get_string(options, "key", "")
+        value = Ops.get_string(options, "value", "")
         if key == ""
           # command-line error report
           CommandLine.Print(_("Option key must be set."))
