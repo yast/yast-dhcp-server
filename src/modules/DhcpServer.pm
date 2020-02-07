@@ -220,12 +220,6 @@ sub InitTSIGKeys {
 
 sub AdaptDDNS {
     my $self = shift;
-
-    # FIXME temporary hack because of testsuite
-    if (Mode->test ())
-    {
-	return 1;
-    }
     my @directives = @{$self->GetEntryDirectives ("", "") || []};
 
     @directives = grep {

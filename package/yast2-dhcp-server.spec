@@ -37,7 +37,6 @@ BuildRequires:  popt-devel
 BuildRequires:  sgml-skel
 BuildRequires:  update-desktop-files
 BuildRequires:  yast2-perl-bindings
-BuildRequires:  yast2-testsuite
 BuildRequires:  yast2-dns-server
 BuildRequires:  yast2-devtools >= 4.2.2
 # Fix old testsuite bind package absence mocks
