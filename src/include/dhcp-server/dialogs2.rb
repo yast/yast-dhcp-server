@@ -2059,7 +2059,7 @@ module Yast
           UI.SetFocus(Id("other_opts"))
           Popup.Error(
             Builtins.sformat(
-              _("\"-%1\" is not a valid DHCP server commandline option"),
+              _("\"-%1\" is not a valid DHCP server commandline option."),
               k
             )
           )
@@ -2070,7 +2070,7 @@ module Yast
             UI.SetFocus(Id("other_opts"))
             Popup.Error(
               Builtins.sformat(
-                _("DHCP server commandline option \"-%1\" requires an argument"),
+                _("DHCP server commandline option \"-%1\" requires an argument."),
                 k
               )
             )

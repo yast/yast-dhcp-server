@@ -142,9 +142,9 @@ module Yast
         # help text
         "other_options"         => _(
           "<p><b><big>DHCP Server Start-Up Arguments</big></b><br>\n" +
-            "Here you can specify parameters that you want DHCP Server to be started with \n" +
+            "Here you can specify parameters that you want the DHCP Server to be started with \n" +
             "(e.g. \"-p 1234\") for a non-standard port to listen on). For all possible options,\n" +
-            "consult dhcpd manual page. If left blank, default values will be used.</p>"
+            "consult the dhcpd manual page. If left blank, default values will be used.</p>"
         ),
         # Wizard Installation - Step 1 (version for expert UI)
         "card_selection_expert" => _(
