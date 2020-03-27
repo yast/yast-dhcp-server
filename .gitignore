@@ -19,7 +19,7 @@ dhcp-server.pot
 autom4te.cache
 Makefile.am.common
 *.ami
-doc/autodocs/*.html
+doc/autodocs/
 /testsuite/config/
 /testsuite/run/
 doc/autodocs/.yardoc/
@@ -27,8 +27,10 @@ doc/autodocs/Yast/
 doc/autodocs/css/
 doc/autodocs/js/
 testsuite/*.exp
-testsuite/tmp.err.*
+testsuite/*.err.*
 testsuite/tmp.out.*
 testsuite/*.log
 testsuite/yast2-dhcp-server.sum
 testsuite/yast2-dhcp-server.test/
+.yardoc
+/coverage

@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Aug  6 11:58:58 UTC 2019 - Knut Anderssen <kanderssen@suse.com>
+
+- Fix the check of the 'key' and 'value' options when modifying the
+  configuration using the CLI. (bsc#1144351)
+- 3.2.3
+
+-------------------------------------------------------------------
 Wed Jan 18 11:52:24 UTC 2017 - lslezak@suse.cz
 
 - Fixed a crash at start when the "dhcp-server" package was not
