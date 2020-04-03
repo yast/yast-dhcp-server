@@ -1610,16 +1610,6 @@ module Yast
                       Left(
                         TextEntry(Id("hosthwaddress"), _("&Hardware Address"))
                       ),
-                      # Radiobutton label - network type of the host
-                      RadioButtonGroup(
-                        Id("network_type"),
-                        HBox(
-                          Left(
-                            RadioButton(Id("ethernet"), _("&Ethernet"), true)
-                          ),
-                          Left(RadioButton(Id("token-ring"), _("&Token Ring")))
-                        )
-                      )
                     )
                   )
                 )
@@ -1669,11 +1659,6 @@ module Yast
         Id("hosthwaddress"),
         :Value,
         Ops.get(opts, "hardware", "")
-      )
-      UI.ChangeWidget(
-        Id("network_type"),
-        :CurrentButton,
-        Ops.get(opts, "type", "ethernet")
       )
 
       nil
@@ -1733,11 +1718,9 @@ module Yast
         Item(
           Id(id2),
           id2,
-          Ops.get(opts, "ip", ""),
-          Ops.get(opts, "hardware", ""),
-          Ops.get(opts, "type", "ethernet") == "ethernet" ?
-            _("Ethernet") :
-            _("Token Ring")
+          opts.fetch("ip", ""),
+          opts.fetch("hardware", ""),
+          _("Ethernet")
         )
       end
 
@@ -1783,18 +1766,7 @@ module Yast
       end
 
       value = Convert.to_string(UI.QueryWidget(Id("hosthwaddress"), :Value))
-      if Ops.greater_than(Builtins.size(value), 0)
-        # FIXME: validation
-        type = Convert.to_string(
-          UI.QueryWidget(Id("network_type"), :CurrentButton)
-        )
-        directives = Builtins.add(
-          directives,
-          { "key" => "hardware", "value" => Ops.add(Ops.add(type, " "), value) }
-        )
-      end
-
-      deep_copy(directives)
+      directives << { "key" => "hardware", "value" => "ethernet #{value}" }
     end
 
     def CheckMacAddrFormat
@@ -1805,19 +1777,18 @@ module Yast
       addr_type = Convert.to_string(
         UI.QueryWidget(Id("network_type"), :CurrentButton)
       )
-      if addr_type == "ethernet" || addr_type == "token-ring"
-        if !Address.CheckMAC(hosthwaddress)
-          UI.SetFocus(Id("hosthwaddress"))
-          Report.Error(
-            Ops.add(
-              # error popup
-              _("The hardware address is invalid.\n"),
-              Address.ValidMAC
-            )
+      if !Address.CheckMAC(hosthwaddress)
+        UI.SetFocus(Id("hosthwaddress"))
+        Report.Error(
+          Ops.add(
+            # error popup
+            _("The hardware address is invalid.\n"),
+            Address.ValidMAC
           )
-          return false
-        end
+        )
+        return false
       end
+
       true
     end
 
