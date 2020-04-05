@@ -124,7 +124,7 @@ module Yast
               "The hardware type of the host with a fixed address"
             ),
             "type"     => "enum",
-            "typespec" => ["ethernet", "token-ring"]
+            "typespec" => ["ethernet"]
           },
           "ip-address"         => {
             # command line help text for an option
