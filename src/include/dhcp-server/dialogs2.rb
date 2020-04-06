@@ -1578,9 +1578,7 @@ module Yast
               # Table header item - IP of the host
               _("IP"),
               # MAC address of the host
-              _("Hardware Address"),
-              # Network type of the host
-              _("Type")
+              _("Hardware Address")
             )
           )
         ),
@@ -1719,8 +1717,7 @@ module Yast
           Id(id2),
           id2,
           opts.fetch("ip", ""),
-          opts.fetch("hardware", ""),
-          _("Ethernet")
+          opts.fetch("hardware", "")
         )
       end
 
@@ -1774,9 +1771,6 @@ module Yast
         UI.QueryWidget(Id("hosthwaddress"), :Value)
       )
 
-      addr_type = Convert.to_string(
-        UI.QueryWidget(Id("network_type"), :CurrentButton)
-      )
       if !Address.CheckMAC(hosthwaddress)
         UI.SetFocus(Id("hosthwaddress"))
         Report.Error(
