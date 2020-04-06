@@ -892,7 +892,6 @@ module Yast
       value = Convert.to_string(fetchValue(opt_id, opt_key))
       l = Builtins.splitstring(value, " ")
       l = Builtins.filter(l) { |i| i != "" }
-      UI.ChangeWidget(Id(:hw), :Value, Ops.get(l, 0, "ethernet"))
       UI.ChangeWidget(Id(:addr), :Value, Ops.get(l, 1, ""))
 
       nil
@@ -907,11 +906,7 @@ module Yast
       storeValue(
         opt_id,
         opt_key,
-        Builtins.sformat(
-          "%1 %2",
-          Convert.to_string(UI.QueryWidget(Id(:hw), :Value)),
-          Convert.to_string(UI.QueryWidget(Id(:addr), :Value))
-        )
+        "ethernet #{UI.QueryWidget(Id(:addr), :Value)}"
       )
 
       nil
@@ -1029,17 +1024,6 @@ module Yast
           "popup" => {
             "widget"            => :custom,
             "custom_widget"     => VBox(
-              # combo box
-              ComboBox(
-                Id(:hw),
-                _("&Hardware Type"),
-                [
-                  # combo box entry, networking technology name
-                  Item(Id("ethernet"), _("Ethernet")),
-                  # combo box entry, networking technology name
-                  Item(Id("token-ring"), _("Token Ring"))
-                ]
-              ),
               # test entry, MAC better not to be translated,
               # translation would decrease the understandability
               TextEntry(Id(:addr), _("&MAC Address"))
