@@ -2,14 +2,18 @@ default namespace = "http://www.suse.com/1.0/yast2ns"
 namespace a = "http://relaxng.org/ns/compatibility/annotations/1.0"
 namespace config = "http://www.suse.com/1.0/configns"
 
+include "common.rnc"
 
 dhcp-server = element dhcp-server {
-    allowed_interfaces? &
-    element chroot             { "1" | "0" }? &
-    element start_service      { "1" | "0" }? &
-    element use_ldap           { "1" | "0" }? &
-    element other_options      { text } &
-    dhcp-server-settings?
+    MAP,
+    (
+      allowed_interfaces? &
+      element chroot             { STRING_ATTR, ("1" | "0") }? &
+      element start_service      { STRING_ATTR, ("1" | "0") }? &
+      element use_ldap           { STRING_ATTR, ("1" | "0") }? &
+      element other_options      { STRING } &
+      dhcp-server-settings?
+    )
 }
 
 allowed_interfaces = 
@@ -18,7 +22,7 @@ allowed_interfaces =
     allowed_interface*
 }
 
-allowed_interface = element allowed_interface { text }
+allowed_interface = element allowed_interface { STRING }
 
 dhcp-server-settings = element settings {
     LIST,
@@ -26,15 +30,18 @@ dhcp-server-settings = element settings {
 }
 
 dhcp-server-settings_entry = element settings_entry {
-    settings_entry_children? &
-    settings_entry_directives? &
+    MAP,
+    (
+      settings_entry_children? &
+      settings_entry_directives? &
 
 
-    element id          { text }? &
-    options?			  &
-    element parent_id   { text }? &
-    element parent_type { text }? &
-    element type        { text }? 
+      element id          { STRING }? &
+      options?			  &
+      element parent_id   { STRING }? &
+      element parent_type { STRING }? &
+      element type        { STRING }? 
+    )
 }
 
 settings_entry_children = element children {
@@ -43,8 +50,11 @@ settings_entry_children = element children {
 }
 
 settings_entry_child = element child {
-    element id   { text }? &
-    element type { text }?
+    MAP,
+    (
+      element id   { STRING }? &
+      element type { STRING }?
+    )
 }
 
 settings_entry_directives = element directives {
@@ -53,9 +63,12 @@ settings_entry_directives = element directives {
 }
 
 settings_entry_directives_listentry = element listentry {
-    element key   { text }? &
-    element type  { text }? &
-    element value { text }?
+    MAP,
+    (
+      element key   { STRING }? &
+      element type  { STRING }? &
+      element value { STRING }?
+    )
 }
 
 options = element options {
@@ -64,7 +77,10 @@ options = element options {
 }
 
 option = element option {
-    element key   { text }? &
-    element type  { text }? &
-    element value { text }?
+    MAP,
+    (
+      element key   { STRING }? &
+      element type  { STRING }? &
+      element value { STRING }?
+    )
 }
