@@ -22,7 +22,7 @@ Release:        0
 Summary:        YaST2 - DHCP Server Configuration
 Group:          System/YaST
 License:        GPL-2.0-only
-Url:            https://github.com/yast-dhcp-server
+Url:            https://github.com/yast/yast-dhcp-server
 
 Source0:        %{name}-%{version}.tar.bz2
 

@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Tue Oct 20 11:50:49 UTC 2020 - Bernhard Wiedemann <bwiedemann@suse.com>
+
+- Fix URL in .spec file
+
+-------------------------------------------------------------------
 Mon Aug 10 17:34:11 CEST 2020 - schubi@suse.de
 
 - AutoYaST: Added supplements: autoyast(dhcp-server) into the spec
