@@ -93,6 +93,8 @@ describe "Yast::DhcpServerWidgetsInclude" do
 
         it "asks for continuing" do
           expect(Yast::Popup).to receive(:YesNo).and_return(true)
+          # validation can fail
+          allow(Yast::Report).to receive(:Error)
           expect(subject.OpenFirewallValidate("open_port",0)).to eq true
         end
       end
