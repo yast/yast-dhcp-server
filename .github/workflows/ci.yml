@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: registry.opensuse.org/yast/head/containers/yast-ruby:latest
-      options: --privileged
 
     steps:
 
@@ -53,7 +52,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: registry.opensuse.org/yast/head/containers/yast-ruby:latest
-      options: --privileged
 
     steps:
 
@@ -67,7 +65,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: registry.opensuse.org/yast/head/containers/yast-ruby:latest
-      options: --privileged
 
     steps:
 
@@ -84,7 +81,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: registry.opensuse.org/yast/head/containers/yast-ruby:latest
-      options: --privileged
 
     steps:
 
