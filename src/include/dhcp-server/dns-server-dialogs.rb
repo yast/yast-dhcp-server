@@ -30,7 +30,7 @@ module Yast
       all_zones = DnsServerAPI.GetZones
 
       # found or not?
-      Ops.get(all_zones, zone_name) == nil
+      Ops.get(all_zones, zone_name) != nil
     end
 
     def IsDNSZoneMaster(zone_name)
