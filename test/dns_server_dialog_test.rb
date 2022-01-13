@@ -1,3 +1,5 @@
+#!/usr/bin/env rspec
+
 # Copyright (c) [2022] SUSE LLC
 #
 # All Rights Reserved.
@@ -22,9 +24,9 @@ require_relative "test_helper"
 Yast.import "DnsServerAPI"
 
 describe "DhcpServerDnsServerDialogsInclude" do
-  subject(:dialog) { TestDialog.new }
+  subject(:dialog) { TestDNSDialog.new }
 
-  class TestDialog
+  class TestDNSDialog
     include Yast::I18n
 
     def initialize
