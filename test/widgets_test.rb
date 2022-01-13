@@ -87,14 +87,13 @@ describe "Yast::DhcpServerWidgetsInclude" do
 
       context "port is not opened" do
         before do
+          allow(Yast::Report).to receive(:Error)
           allow(Yast::UI).to receive(:QueryWidget).with(Id("open_port"), :Value)
             .and_return(false)
         end
 
         it "asks for continuing" do
           expect(Yast::Popup).to receive(:YesNo).and_return(true)
-          # validation can fail
-          allow(Yast::Report).to receive(:Error)
           expect(subject.OpenFirewallValidate("open_port",0)).to eq true
         end
       end
