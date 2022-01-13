@@ -27,10 +27,7 @@ module Yast
         return nil
       end
 
-      all_zones = DnsServerAPI.GetZones
-
-      # found or not?
-      Ops.get(all_zones, zone_name) != nil
+      DnsServerAPI.GetZones.keys.include?(zone_name)
     end
 
     def IsDNSZoneMaster(zone_name)
