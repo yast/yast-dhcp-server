@@ -87,6 +87,7 @@ describe "Yast::DhcpServerWidgetsInclude" do
 
       context "port is not opened" do
         before do
+          allow(Yast::Report).to receive(:Error)
           allow(Yast::UI).to receive(:QueryWidget).with(Id("open_port"), :Value)
             .and_return(false)
         end
