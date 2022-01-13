@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Thu Jan 13 16:33:01 UTC 2022 - David Diaz <dgonzalez@suse.com>
+
+- Fix DNS zone creation by fixing a maintained DNS zone check.
+  Reported and fixed by Daniel Pätzold <obel1x@web.de>
+  See github#yast/yast-dhcp-server#59.
+- 4.3.2
+
+-------------------------------------------------------------------
 Tue Oct 20 11:50:49 UTC 2020 - Bernhard Wiedemann <bwiedemann@suse.com>
 
 - Fix URL in .spec file
